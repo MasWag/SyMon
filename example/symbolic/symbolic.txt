@@ -1,0 +1,3 @@
+event   Alice   1000    10
+event   Bob     2000    30
+event   Charlie     9000    60

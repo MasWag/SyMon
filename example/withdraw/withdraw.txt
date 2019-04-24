@@ -1,0 +1,6 @@
+withdraw        Alice   6000    10
+withdraw        Bob     300     20
+withdraw        Dan     300     20
+withdraw        Charlie 2000    20
+withdraw        Alice   6000    30
+withdraw        Charlie 9000    60

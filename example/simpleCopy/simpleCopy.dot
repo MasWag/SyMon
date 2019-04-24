@@ -1,0 +1,15 @@
+digraph G {
+        graph [
+               clock_variable_size = 1
+               string_variable_size = 0
+               number_variable_size = 1
+        ];
+        0 [init=1][match=0];
+        1 [init=0][match=0];
+        2 [init=0][match=1];
+        0->0 [label="0"];
+        0->1 [label="0"][reset="{0}"][s_constraints="{x0 == 'X'}"][n_update="{x0 := x1}"];
+        1->1 [label="0"][guard="{x0 < 4}"];
+        1->1 [label="0"][guard="{x0 >= 4, x0 <= 4}"][s_constraints="{x0 != 'Y'}"];
+        1->2 [label="0"][guard="{x0 >= 4, x0 <= 4}"][s_constraints="{x0 == 'Y'}"][n_constraints="{x0 - x1 != 0}"];
+}

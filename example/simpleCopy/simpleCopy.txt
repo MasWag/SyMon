@@ -1,0 +1,4 @@
+signal X 0 1
+signal Y 0 1
+signal X 15 5
+signal Y 20 5
