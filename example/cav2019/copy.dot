@@ -1,0 +1,24 @@
+digraph G {
+        graph [
+               clock_variable_size = 1
+               string_variable_size = 1
+               number_variable_size = 2
+               parameter_size = 1
+        ];
+        initial     [init=1][match=0];
+        notCopied   [init=0][match=0];
+        copied      [init=0][match=0];
+        failed      [init=0][match=1];
+
+        initial -> initial [label="0"][s_constraints="{x1 != 'Y'}"];
+        initial -> initial [label="0"][s_constraints="{x1 == 'Y'}"][n_update="{x1 := x2}"];
+        initial -> notCopied [label="0"][guard="{3 < p0, p0 < 10}"][reset="{0}"][s_constraints="{x1 != 'Y', x1 == x0}"][n_constraints="{x1 > x2}"][n_update="{x0 := x2}"];
+        initial -> notCopied [label="0"][guard="{3 < p0, p0 < 10}"][reset="{0}"][s_constraints="{x1 != 'Y', x1 == x0}"][n_constraints="{x1 < x2}"][n_update="{x0 := x2}"];
+        initial -> copied [label="0"][guard="{3 < p0, p0 < 10}"][reset="{0}"][s_constraints="{x1 != 'Y', x1 == x0}"][n_constraints="{x1 == x2}"][n_update="{x0 := x2}"];
+        notCopied -> notCopied [label="0"][guard="{x0 < p0}"][s_constraints="{x1 != 'Y'}"];
+        notCopied -> notCopied [label="0"][guard="{x0 < p0}"][s_constraints="{x1 == 'Y'}"][n_constraints="{x0 > x2}"][n_update="{x1 := x2}"];
+        notCopied -> notCopied [label="0"][guard="{x0 < p0}"][s_constraints="{x1 == 'Y'}"][n_constraints="{x0 < x2}"][n_update="{x1 := x2}"];
+        notCopied -> copied [label="0"][guard="{x0 < p0}"][s_constraints="{x1 == 'Y'}"][n_constraints="{x0 == x2}"][n_update="{x1 := x2}"];
+
+        notCopied -> failed [label="127"][guard="{x0 >= p0}"];
+}
