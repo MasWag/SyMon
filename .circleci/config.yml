@@ -1,0 +1,19 @@
+version: 2.1
+jobs:
+  build:
+    docker:
+      - image: maswag/monaa-test-env
+    steps:
+      - checkout
+      - restore_cache:
+          key: cache
+      - run:
+          name: Build
+          command: mkdir build && cd build && cmake .. && make unit_test
+      - save_cache:
+          key: cache
+          paths:
+            - ~/symon
+      - run:
+          name: Run the unit test
+          command: cd ./build && ./unit_test
