@@ -5,6 +5,8 @@ SyMon --- SYmbolic MONitor
 
 This is the source code repository for SyMon --- A tool for symbolic monitoring
 
+Demo on Google Colab is [HERE](https://colab.research.google.com/drive/17WNWuA3RxCA51xkDuVfOVeuUbRqHetDz)!!
+
 Usage
 -----
 
