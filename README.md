@@ -80,4 +80,4 @@ cd build && cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
 References
 ----------
 
-- [Masaki Waga](http://group-mmm.org/~mwaga/), [Étienne André](https://lipn.univ-paris13.fr/~andre/), and [Ichiro Hasuo](http://group-mmm.org/~ichiro/), **Symbolic Monitoring against Specifications Parametric in Time and Data**, To appear in *Proc. [CAV 2019](http://i-cav.org/2019/)*.
+- [Masaki Waga](http://group-mmm.org/~mwaga/), [Étienne André](https://lipn.univ-paris13.fr/~andre/), and [Ichiro Hasuo](http://group-mmm.org/~ichiro/), **Symbolic Monitoring against Specifications Parametric in Time and Data**, To appear in *Proc. [CAV 2019](http://i-cav.org/2019/)*. [arXiv version](https://arxiv.org/abs/1905.04486)
