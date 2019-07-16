@@ -1,7 +1,7 @@
 SyMon --- SYmbolic MONitor
 ==========================
 
-[![CircleCI](https://circleci.com/gh/MasWag/symon.svg?style=svg&circle-token=e1a4f010b0bdd82ba410aa57f64278f5323d33ff)](https://circleci.com/gh/MasWag/symon)
+[![CircleCI](https://circleci.com/gh/MasWag/SyMon.svg?style=svg)](https://circleci.com/gh/MasWag/SyMon)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](./LICENSE)
 
 This is the source code repository for SyMon --- A tool for symbolic monitoring
