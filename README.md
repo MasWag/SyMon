@@ -2,6 +2,7 @@ SyMon --- SYmbolic MONitor
 ==========================
 
 [![CircleCI](https://circleci.com/gh/MasWag/symon.svg?style=svg&circle-token=e1a4f010b0bdd82ba410aa57f64278f5323d33ff)](https://circleci.com/gh/MasWag/symon)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](./LICENSE)
 
 This is the source code repository for SyMon --- A tool for symbolic monitoring
 
@@ -80,4 +81,4 @@ cd build && cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ..
 References
 ----------
 
-- [Masaki Waga](http://group-mmm.org/~mwaga/), [Étienne André](https://lipn.univ-paris13.fr/~andre/), and [Ichiro Hasuo](http://group-mmm.org/~ichiro/), **Symbolic Monitoring against Specifications Parametric in Time and Data**, To appear in *Proc. [CAV 2019](http://i-cav.org/2019/)*. [arXiv version](https://arxiv.org/abs/1905.04486)
+- [Masaki Waga](http://group-mmm.org/~mwaga/), [Étienne André](https://lipn.univ-paris13.fr/~andre/), and [Ichiro Hasuo](http://group-mmm.org/~ichiro/), **Symbolic Monitoring against Specifications Parametric in Time and Data**, In *Proc. [CAV 2019](http://i-cav.org/2019/)*. [LNCS 11561, pp. 520-539](https://link.springer.com/chapter/10.1007/978-3-030-25540-4_30) [arXiv version](https://arxiv.org/abs/1905.04486)
