@@ -33,6 +33,7 @@ Example
     ./build/symon -pf ./example/copy/copy_parametric.dot -s ./example/copy/copy.sig < ./example/copy/copy.txt
     ./build/symon -pf ./example/copy/copy_tpm.dot -s ./example/copy/copy.sig < ./example/copy/copy.txt
 
+The examples used in our CAV 2019 paper is [here](example/cav2019/README.md).
 
 Installation
 ------------
