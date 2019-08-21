@@ -71,6 +71,27 @@ Specifications
 - The unobservable action is available only in the fully parametric mode (with **-p**).
 - The unobservable action is assigned to id `127`. This will be modified in a future version.
 
+The file format of the signature
+--------------------------------
+
+The format of the signature file is as follows.
+
+```
+<key0>	<StringSize>	<NumberSize>
+<key1>	<StringSize>	<NumberSize>
+...
+```
+
+For example, the following signature shows that:
+
+- the predicate 0 is open, which takes one string argument; and
+- the predicate 1 is put, which takes one string argument and one number argument.
+
+```
+open	1	0
+put	1	1
+```
+
 How to make compile_commands.json
 ---------------------------------
 
