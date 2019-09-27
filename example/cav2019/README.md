@@ -12,9 +12,9 @@ We compiled PPL [BHZ08] with the following options.
 
 > --disable-dependency-tracking --enable-coefficients=checked-int64 --disable-silent-rules --enable-optimization=speed
 
-The DOT and signature files are in this directory.
+The DOT and signature files are in this directory. The Evaluation data is available from the following link.
 
-- [timed data words]()
+- [Evaluation data for "Symbolic Monitoring against Specifications Parametric in Time and Data"](https://www.researchgate.net/publication/336086078_Evaluation_data_for_Symbolic_Monitoring_against_Specifications_Parametric_in_Time_and_Data)
 
 Description of the Benchmarks
 -----------------------------
