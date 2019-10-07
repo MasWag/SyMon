@@ -1,8 +1,8 @@
 Experiments Data for CAV 2019
 =============================
 
-This is a document on the experiment data for the CAV 2019 paper [WAH].
-We implemented and evaluated our tool SyMon. We compiled SyMon using GCC 7.3.0. See also [READMD.md](../README.md).
+This is a document on the experiment data for the CAV 2019 paper [WAH19].
+We implemented and evaluated our tool SyMon. We compiled SyMon using GCC 7.3.0. See also [README.md](../README.md).
 
 Experimental raw data
 ---------------------
@@ -43,10 +43,17 @@ References
 ----------
 
 <dl>
-<dt>[WAH]</dt>
-<dd>Masaki Waga, Étienne André, and Ichiro Hasuo, Symbolic Monitoring against Specifications Parametric in Time and Data, To appear in Proc. CAV 2019.</dd>
+<dt>[WAH19]</dt>
+<dd>Masaki Waga, Étienne André, and Ichiro Hasuo, Symbolic Monitoring against Specifications Parametric in Time and Data, Proc. CAV 2019, LNCS 11561, pp. 520-539.</dd>
 <dt>[BDSV14]</dt>
 <dd>Brim, L., Dluhoš, P., Šafránek, D., & Vejpustek, T. (2014). STL⁎: Extending signal temporal logic with signal-value freezing operator. Information and Computation, 236, 52-67.</dd>
 <dt>[BKZ17]</dt>
 <dd>Basin, D. A., Klaedtke, F., & Zalinescu, E. (2017, December). The MonPoly Monitoring Tool. In RV-CuBES (pp. 19-28).</dd>
 </dl>
+
+<!--  LocalWords:  CAV WAH19 SyMon README md Xeon PPL BHZ BDSV BKZ PTPM
+ -->
+<!--  LocalWords:  ptda txt dl dt tienne Andr Proc Dluho afr nek STL
+ -->
+<!--  LocalWords:  Vejpustek Klaedtke Zalinescu MonPoly CuBES
+ -->

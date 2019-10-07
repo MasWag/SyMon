@@ -41,7 +41,7 @@ target_link_libraries(symon
 ## Config for Test
 enable_testing()
 
-add_executable(unit_test
+add_executable(unit_test EXCLUDE_FROM_ALL
   test/unit_test.cc
   test/signature_test.cc
   test/timed_word_parser_test.cc
@@ -62,3 +62,6 @@ target_link_libraries(unit_test
 add_test(NAME unit_test
   COMMAND $<TARGET_FILE:unit_test>
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+
+# INSTALL
+install(TARGETS symon DESTINATION bin)
