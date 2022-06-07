@@ -22,20 +22,20 @@ jobs:
         mkdir -p gcc_build
         cd gcc_build && cmake .. && make unit_test && ./unit_test
 
-  ubuntu_bionic:
-    runs-on: ubuntu-18.04
-    strategy:
-      max-parallel: 4
-    steps:
-    - uses: actions/checkout@v2
-      with:
-        submodules: true
-    - name: Install required packages
-      run: sudo apt-get install cmake bison libbison-dev flex libfl-dev libeigen3-dev libboost-all-dev libppl-dev -y
-    - name: build and test
-      run: |
-        mkdir -p build
-        cd build && cmake .. && make unit_test && ./unit_test    
+  # ubuntu_bionic:
+  #   runs-on: ubuntu-18.04
+  #   strategy:
+  #     max-parallel: 4
+  #   steps:
+  #   - uses: actions/checkout@v2
+  #     with:
+  #       submodules: true
+  #   - name: Install required packages
+  #     run: sudo apt-get install cmake bison libbison-dev flex libfl-dev libeigen3-dev libboost-all-dev libppl-dev -y
+  #   - name: build and test
+  #     run: |
+  #       mkdir -p build
+  #       cd build && cmake .. && make unit_test && ./unit_test
 
   ubuntu_focal:
     runs-on: ubuntu-20.04
