@@ -251,15 +251,34 @@ public:
     }
     absTime = timestamp;
     index++;
+    boost::unordered_map<std::tuple<std::shared_ptr<PTAState>,
+            ParametricTimingValuation,
+            Symbolic::NumberValuation>,
+            std::vector<Symbolic::StringValuation>> stringMergedConfigurations;
     //merge numberEnv
     configurations.clear();
     for (auto &conf: mergedConfigurations) {
       conf.second.pairwise_reduce();
       for (auto numberEnv: conf.second) {
+        const auto key = std::make_tuple(std::get<0>(conf.first), std::get<1>(conf.first), numberEnv.pointset());
+        auto it = stringMergedConfigurations.find(key);
+        if (it == stringMergedConfigurations.end()) {
+          stringMergedConfigurations[key] = {std::get<2>(conf.first)};
+        } else {
+          it->second.push_back(std::get<2>(conf.first));
+        }
+      }
+    }
+
+    //merge stringEnv
+    configurations.clear();
+    for (auto &conf: stringMergedConfigurations) {
+      Symbolic::pairwise_reduce(conf.second);
+      for (const auto& stringEnv: conf.second) {
         configurations.insert(std::make_tuple(std::get<0>(conf.first),
                                               std::get<1>(conf.first),
-                                              std::get<2>(conf.first),
-                                              numberEnv.pointset()));
+                                              stringEnv,
+                                              std::get<2>(conf.first)));
       }
     }
   }
