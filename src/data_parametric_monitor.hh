@@ -24,6 +24,9 @@ struct DataParametricMonitorResult {
   Symbolic::StringValuation stringValuation;
 };
 
+/*!
+ * @note Unobservable transitions are not supported in DataParametricMonitor
+ */
 class DataParametricMonitor : public SingleSubject<DataParametricMonitorResult>,
                               public Observer<TimedWordEvent<Parma_Polyhedra_Library::Coefficient>> {
 public:

@@ -23,13 +23,13 @@ struct ParametricMonitorResult {
  * @tparam UseStringMerge Flag to enable string merge.
  * @note The Automaton can have unobservable transitions, but we assume that there is no loop of unobservable transitions.
  * @note The label of the unobservable events is 127 (This will be modified in a future version).
- * @note If the last trantision is an unobservable transition, the timestamp is that of the latest event.
+ * @note If the last transition is an unobservable transition, the timestamp is that of the latest event.
  */
 template<bool UseStringMerge>
 class ParametricMonitor : public SingleSubject<ParametricMonitorResult>,
                           public Observer<TimedWordEvent<Parma_Polyhedra_Library::Coefficient, Parma_Polyhedra_Library::Coefficient>> {
 public:
-  static const constexpr std::size_t unobservableActinoID = 127;
+  static const constexpr std::size_t unobservableActionID = 127;
 
   explicit ParametricMonitor(const ParametricTA &automaton) : automaton(automaton) {
     absTime = 0;
@@ -73,7 +73,7 @@ public:
     while (!currentConfigurations.empty()) {
       nextConfigurations.clear();
       for (const Configuration &conf: currentConfigurations) {
-        auto transitionIt = std::get<0>(conf)->next.find(unobservableActinoID);
+        auto transitionIt = std::get<0>(conf)->next.find(unobservableActionID);
         if (transitionIt == std::get<0>(conf)->next.end()) {
           continue;
         }
@@ -144,7 +144,7 @@ public:
     while (!currentConfigurations.empty()) {
       nextConfigurations.clear();
       for (const Configuration &conf: currentConfigurations) {
-        auto transitionIt = std::get<0>(conf)->next.find(unobservableActinoID);
+        auto transitionIt = std::get<0>(conf)->next.find(unobservableActionID);
         if (transitionIt == std::get<0>(conf)->next.end()) {
           continue;
         }
