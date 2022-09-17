@@ -68,6 +68,8 @@ namespace Symbolic {
    * Let \f$v\f$ and \f$v'\f$ be symbolic string valuations such that \f$x \not\in S\f$ and \f$x \not\in S'\}\f$, where
    * \f$S = \{s_1,s_2,\dots,s_m\}\f$ and \f$S' = \{s'_1,s'_2,\dots,s'_{m'}\f$.
    * The disjunction \f$v \lor v'\f$ is \f$x \not\in S \lor x \not\in S'\f$, which is \f$x \not\in S \cap S'\f$.
+   * Also, for symbolic string valuations \f$x = s\f$ and \f$x \not\in S\}\f$, where \f$s \in S\f$,
+   * their disjunction is \f$x \not\in S \setminus \{s\}\f$.
    *
    * @pre left.size() == right.size()
    * @post left.size() == result.size() if the merging succeeded.
