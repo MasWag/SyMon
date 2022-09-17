@@ -39,4 +39,54 @@ BOOST_AUTO_TEST_SUITE(SymbolicStringConstraintTests)
     }
 
   BOOST_AUTO_TEST_SUITE_END() // LexicalCastTests
+
+  BOOST_AUTO_TEST_SUITE(MergeTest)
+    using namespace Symbolic;
+
+    BOOST_AUTO_TEST_CASE(eq_eq) {
+      StringValuation left = {"x"};
+      StringValuation right = {"y"};
+      const auto merged = merge(left, right);
+      BOOST_TEST(!bool(merged));
+    }
+    BOOST_AUTO_TEST_CASE(ne_eq_not_included) {
+      StringValuation left = {std::vector<std::string>{"x"}};
+      StringValuation right = {"y"};
+      const auto merged = merge(left, right);
+      BOOST_TEST(!bool(merged));
+    }
+    BOOST_AUTO_TEST_CASE(ne_eq_included) {
+      StringValuation left = {std::vector<std::string>{"x", "y"}};
+      StringValuation right = {"y"};
+      const auto merged = merge(left, right);
+      BOOST_TEST(bool(merged));
+      BOOST_CHECK_EQUAL(1, merged->size());
+      BOOST_CHECK_EQUAL(0, merged->front().index());
+      BOOST_CHECK_EQUAL((std::vector<std::string>{"x"}), std::get<std::vector<std::string>>(merged->front()));
+    }
+    BOOST_AUTO_TEST_CASE(eq_ne_not_included) {
+      StringValuation left = {"x"};
+      StringValuation right = {std::vector<std::string>{"y"}};
+      const auto merged = merge(left, right);
+      BOOST_TEST(!bool(merged));
+    }
+    BOOST_AUTO_TEST_CASE(eq_ne_included) {
+      StringValuation left = {"x"};
+      StringValuation right = {std::vector<std::string>{"x", "y"}};
+      const auto merged = merge(left, right);
+      BOOST_TEST(bool(merged));
+      BOOST_CHECK_EQUAL(1, merged->size());
+      BOOST_CHECK_EQUAL(0, merged->front().index());
+      BOOST_CHECK_EQUAL((std::vector<std::string>{"y"}), std::get<std::vector<std::string>>(merged->front()));
+    }
+    BOOST_AUTO_TEST_CASE(ne_ne) {
+      StringValuation left = {std::vector<std::string>{"x", "z"}};
+      StringValuation right = {std::vector<std::string>{"y", "z"}};
+      const auto merged = merge(left, right);
+      BOOST_TEST(bool(merged));
+      BOOST_CHECK_EQUAL(1, merged->size());
+      BOOST_CHECK_EQUAL(0, merged->front().index());
+      BOOST_CHECK_EQUAL((std::vector<std::string>{"z"}), std::get<std::vector<std::string>>(merged->front()));
+    }
+  BOOST_AUTO_TEST_SUITE_END() // MergeTest
 BOOST_AUTO_TEST_SUITE_END() // SymbolicStringConstraintTests

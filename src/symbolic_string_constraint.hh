@@ -6,6 +6,7 @@
 #include <string>
 
 #include "common_types.hh"
+#include <iostream>
 
 /*!
  * @file symbolic_string_constraint.hh
@@ -23,6 +24,15 @@ void insert_sorted(std::vector<T> &vec, const T &value) {
   }
 }
 
+namespace std {
+  static inline std::ostream &operator<<(std::ostream &stream, const std::vector<std::string> &valuation) {
+    for (const auto &str: valuation) {
+      stream << "Var != " << str << ", ";
+    }
+
+    return stream;
+  }
+}
 namespace Symbolic {
   /*!
    * @brief Symbolic valuation over strings
@@ -31,6 +41,22 @@ namespace Symbolic {
    * \f$v_i\f$ is either \f$x_i = s\f$ or \f$x_i \not\in \{s_1,s_2,\dots,s_m\}\f$ for strings \f$s, s_1, s_2, \dots s_m\f$.
    */
   using StringValuation = std::vector<std::variant<std::vector<std::string>, std::string>>;
+
+  static inline std::ostream &operator<<(std::ostream &stream, const StringValuation &valuation) {
+    stream << "{";
+    for (int i = 0; i < valuation.size(); ++i) {
+      if (valuation.at(i).index() == 0) {
+        for (const auto &str: std::get<std::vector<std::string>>(valuation.at(i))) {
+          stream << "x" << i << " != " << str << ", ";
+        }
+      } else {
+        stream << "x" << i << " == " << std::get<std::string>(valuation.at(i)) << ", ";
+      }
+    }
+    stream << "}";
+
+    return stream;
+  }
 
   /*!
    * @brief Merge two symbolic string valuations if possible
@@ -53,8 +79,28 @@ namespace Symbolic {
     for (int i = 0; i < left.size(); ++i) {
       if (left.at(i) == right.at(i)) {
         result.push_back(left.at(i));
-      } else if (left.at(i).index() == 1 || right.at(i).index() == 1) {
+      } else if (left.at(i).index() == 1 && right.at(i).index() == 1) {
         return std::nullopt;
+      } else if (left.at(i).index() == 1) {
+        const std::string value = std::get<std::string>(left.at(i));
+        auto rightVector = std::get<std::vector<std::string>>(right.at(i));
+        auto it = std::find(rightVector.begin(), rightVector.end(), value);
+        if (it == rightVector.end()) {
+          return std::nullopt;
+        } else {
+          rightVector.erase(it);
+          result.push_back(rightVector);
+        }
+      } else if (right.at(i).index() == 1) {
+        const std::string value = std::get<std::string>(right.at(i));
+        auto leftVector = std::get<std::vector<std::string>>(left.at(i));
+        auto it = std::find(leftVector.begin(), leftVector.end(), value);
+        if (it == leftVector.end()) {
+          return std::nullopt;
+        } else {
+          leftVector.erase(it);
+          result.push_back(leftVector);
+        }
       } else {
         auto leftElem = left.at(i);
         std::sort(std::get<0>(leftElem).begin(), std::get<0>(leftElem).end());
@@ -75,9 +121,9 @@ namespace Symbolic {
 
   static inline void pairwise_reduce(std::vector<StringValuation> &value) {
     std::vector<StringValuation> result;
-    for (const auto &elem : value) {
+    for (const auto &elem: value) {
       bool merged = false;
-      for (auto &resultElem : result) {
+      for (auto &resultElem: result) {
         const auto opt = merge(elem, resultElem);
         if (opt) {
           resultElem = *opt;
