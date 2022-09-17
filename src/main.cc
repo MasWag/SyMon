@@ -28,7 +28,7 @@ using ::operator<<;
  * @brief Execute the monitoring procedure
  *
  * @param [in] timedAutomatonFileName filename of the timed automaton
- * @param [in] signatureFileName filename of the sugnature
+ * @param [in] signatureFileName filename of the signature
  * @param [in] timedWordFileName filename of the timed word. When it is "stdin", the monitor reads from standard input.
  */
 template<typename TAType, typename BoostTAType, typename Number, typename Timestamp, typename Monitor, typename Printer>
@@ -87,10 +87,10 @@ int execute(const std::string &timedAutomatonFileName,
 
 int main(int argc, char *argv[]) {
   using Number = double;
-  const auto programName = "dataMonitor";
+  const auto programName = "SyMon";
   std::cin.tie(0);
   std::ios::sync_with_stdio(false);
-  const auto errorHeader = "dataMonitor: ";
+  const auto errorHeader = "SyMon: ";
 
   const auto die = [&errorHeader](const char *message, int status) {
     std::cerr << errorHeader << message << std::endl;
@@ -128,7 +128,7 @@ int main(int argc, char *argv[]) {
     return 0;
   }
   if (vm.count("version")) {
-    std::cout << "dataMonitor 0.0.2\n"
+    std::cout << programName << " 0.0.2\n"
               << visible << std::endl;
     return 0;
   }
