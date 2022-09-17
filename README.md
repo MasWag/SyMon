@@ -24,6 +24,7 @@ Usage
 **-b**, **-boolean** non-parametric and Boolean mode (default). <br />
 **-d**, **-dataparametric** data-parametric mode. <br />
 **-p**, **-parametric** fully parametric mode. <br />
+**--enable-string-merging** Enable merging of symbolic string valuations. This is supported only in the fully parametric mode. <br />
 
 Example
 -------
