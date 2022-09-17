@@ -111,7 +111,9 @@ int main(int argc, char *argv[]) {
           ("input,i", value<std::string>(&timedWordFileName)->default_value("stdin"), "input file of Timed Words")
           ("automaton,f", value<std::string>(&timedAutomatonFileName)->default_value(""),
            "input file of Timed Automaton")
-          ("signature,s", value<std::string>(&signatureFileName)->default_value(""), "input file of signature");
+          ("signature,s", value<std::string>(&signatureFileName)->default_value(""), "input file of signature")
+          ("enable-string-merging", "Enable merging of string valuations")
+          ;
 
   command_line_parser parser(argc, argv);
   parser.options(visible);
@@ -137,8 +139,13 @@ int main(int argc, char *argv[]) {
 
   if (vm.count("parametric")) {
     // parametric
-    return execute<ParametricTA, BoostPTA, Parma_Polyhedra_Library::Coefficient, Parma_Polyhedra_Library::Coefficient, ParametricMonitor, ParametricPrinter>(
-            timedAutomatonFileName, signatureFileName, timedWordFileName);
+    if (vm.count("enable-string-merging")) {
+      return execute<ParametricTA, BoostPTA, Parma_Polyhedra_Library::Coefficient, Parma_Polyhedra_Library::Coefficient, ParametricMonitor<true>, ParametricPrinter>(
+              timedAutomatonFileName, signatureFileName, timedWordFileName);
+    } else {
+      return execute<ParametricTA, BoostPTA, Parma_Polyhedra_Library::Coefficient, Parma_Polyhedra_Library::Coefficient, ParametricMonitor<false>, ParametricPrinter>(
+              timedAutomatonFileName, signatureFileName, timedWordFileName);
+    }
   } else if (vm.count("dataparametric")) {
     // data parametric
     return execute<DataParametricTA, DataParametricBoostTA, Parma_Polyhedra_Library::Coefficient, double, DataParametricMonitor, DataParametricPrinter>(

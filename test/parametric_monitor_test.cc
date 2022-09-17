@@ -46,7 +46,7 @@ struct DummyParametricMonitorObserver : public Observer<ParametricMonitorResult>
 
 struct ParametricMonitorFixture {
   void feed(ParametricTA automaton, std::vector<TWEvent> &&vec) {
-    auto monitor = std::make_shared<ParametricMonitor>(automaton);
+    auto monitor = std::make_shared<ParametricMonitor<false>>(automaton);
     auto observer = std::make_shared<DummyParametricMonitorObserver>();
     monitor->addObserver(observer);
     DummyParametricTimedWordSubject subject{std::move(vec)};
