@@ -2,6 +2,7 @@ SyMon --- SYmbolic MONitor
 ==========================
 
 [![Boost.Test](https://github.com/MasWag/SyMon/actions/workflows/boosttest.yml/badge.svg?branch=master)](https://github.com/MasWag/SyMon/actions/workflows/boosttest.yml)
+[![Docker Pulls](https://img.shields.io/docker/pulls/maswag/symon)](https://hub.docker.com/r/maswag/symon)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](./LICENSE)
 
 This is the source code repository for SyMon --- A tool for symbolic monitoring
