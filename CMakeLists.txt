@@ -2,7 +2,7 @@ project(SyMon CXX)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.5)
 include(CheckCXXCompilerFlag)
 
 check_cxx_compiler_flag("-march=native" COMPILER_SUPPORTS_MARCH_NATIVE)
