@@ -32,4 +32,26 @@ static ParametricTimingConstraint shift(const ParametricTimingConstraint &guard,
     return result;
 }
 
+/*!
+ * @brief Compute the intersection of two ParametricTimingConstraints.
+ *
+ * @param left the first ParametricTimingConstraint
+ * @param right the second ParametricTimingConstraint
+ * @return a new ParametricTimingConstraint that is the intersection of the two
+ */
+static ParametricTimingConstraint operator&&(const ParametricTimingConstraint &left,
+                                             const ParametricTimingConstraint &right) {
+    auto result = left;
+    if (result.space_dimension() < right.space_dimension()) {
+        result.add_space_dimensions_and_embed(right.space_dimension() - result.space_dimension());
+    } else if (result.space_dimension() > right.space_dimension()) {
+        auto shiftedRight = right;
+        shiftedRight.add_space_dimensions_and_embed(result.space_dimension() - right.space_dimension());
+        result.concatenate_assign(shiftedRight);
+        return result;
+    }
+    result.intersection_assign(right);
+    return result;
+}
+
 #endif //DATAMONITOR_PARAMETRIC_TIMING_CONSTRAINT_HH

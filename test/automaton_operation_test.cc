@@ -125,6 +125,53 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
             BOOST_CHECK(finalState->isMatch);
         }
 
+        BOOST_FIXTURE_TEST_CASE(ConjunctionTest, CopyAndWithdrawFixture) {
+            auto copy = this->CopyFixture::automaton;
+            auto withdraw = this->WithdrawFixture::automaton;
+
+            // Verify the initial state of the automata
+            BOOST_CHECK_EQUAL(copy.states.size(), 4);
+            BOOST_CHECK_EQUAL(copy.initialStates.size(), 1);
+            BOOST_CHECK_EQUAL(withdraw.states.size(), 3);
+            BOOST_CHECK_EQUAL(withdraw.initialStates.size(), 1);
+
+            // Count final states in both automata
+            size_t copyFinalStatesCount = 0;
+            for (const auto &state: copy.states) {
+                if (state->isMatch) {
+                    copyFinalStatesCount++;
+                }
+            }
+            BOOST_CHECK_EQUAL(copyFinalStatesCount, 1);
+            BOOST_CHECK(copy.states[3]->isMatch);
+
+            size_t withdrawFinalStatesCount = 0;
+            for (const auto &state: withdraw.states) {
+                if (state->isMatch) {
+                    withdrawFinalStatesCount++;
+                }
+            }
+            BOOST_CHECK_EQUAL(withdrawFinalStatesCount, 1);
+            BOOST_CHECK(withdraw.states[2]->isMatch);
+
+            // Perform conjunction
+            const auto result = conjunction(copy, withdraw);
+
+            // Check basic properties of the result
+            BOOST_CHECK_EQUAL(result.clockVariableSize, copy.clockVariableSize + withdraw.clockVariableSize);
+            BOOST_CHECK_EQUAL(result.stringVariableSize, std::max(copy.stringVariableSize, withdraw.stringVariableSize));
+            BOOST_CHECK_EQUAL(result.numberVariableSize, std::max(copy.numberVariableSize, withdraw.numberVariableSize));
+
+            // Check initial states (should be the product of initial states)
+            BOOST_CHECK_EQUAL(result.initialStates.size(), copy.initialStates.size() * withdraw.initialStates.size());
+
+            // Check total states (should be less than or equal to the product of all states)
+            BOOST_CHECK_LE(result.states.size(), copy.states.size() * withdraw.states.size());
+
+            // Check that the initial state has transitions
+            BOOST_CHECK(!result.initialStates[0]->next.empty());
+        }
+
     BOOST_AUTO_TEST_SUITE_END() // NonParametric
 
     BOOST_AUTO_TEST_SUITE(DataParametric)
@@ -246,6 +293,53 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
             BOOST_CHECK(finalState->isMatch);
         }
 
+        BOOST_FIXTURE_TEST_CASE(ConjunctionTest, CopyAndWithdrawFixture) {
+            auto copy = this->DataParametricCopy::automaton;
+            auto withdraw = this->DataParametricWithdrawFixture::automaton;
+
+            // Verify the initial state of the automata
+            BOOST_CHECK_EQUAL(copy.states.size(), 4);
+            BOOST_CHECK_EQUAL(copy.initialStates.size(), 1);
+            BOOST_CHECK_EQUAL(withdraw.states.size(), 3);
+            BOOST_CHECK_EQUAL(withdraw.initialStates.size(), 1);
+
+            // Count final states in both automata
+            size_t copyFinalStatesCount = 0;
+            for (const auto &state: copy.states) {
+                if (state->isMatch) {
+                    copyFinalStatesCount++;
+                }
+            }
+            BOOST_CHECK_EQUAL(copyFinalStatesCount, 1);
+            BOOST_CHECK(copy.states[3]->isMatch);
+
+            size_t withdrawFinalStatesCount = 0;
+            for (const auto &state: withdraw.states) {
+                if (state->isMatch) {
+                    withdrawFinalStatesCount++;
+                }
+            }
+            BOOST_CHECK_EQUAL(withdrawFinalStatesCount, 1);
+            BOOST_CHECK(withdraw.states[2]->isMatch);
+
+            // Perform conjunction
+            const auto result = conjunction(copy, withdraw);
+
+            // Check basic properties of the result
+            BOOST_CHECK_EQUAL(result.clockVariableSize, copy.clockVariableSize + withdraw.clockVariableSize);
+            BOOST_CHECK_EQUAL(result.stringVariableSize, std::max(copy.stringVariableSize, withdraw.stringVariableSize));
+            BOOST_CHECK_EQUAL(result.numberVariableSize, std::max(copy.numberVariableSize, withdraw.numberVariableSize));
+
+            // Check initial states (should be the product of initial states)
+            BOOST_CHECK_EQUAL(result.initialStates.size(), copy.initialStates.size() * withdraw.initialStates.size());
+
+            // Check total states (should be less than or equal to the product of all states)
+            BOOST_CHECK_LE(result.states.size(), copy.states.size() * withdraw.states.size());
+
+            // Check that the initial state has transitions
+            BOOST_CHECK(!result.initialStates[0]->next.empty());
+        }
+
     BOOST_AUTO_TEST_SUITE_END() // DataParametric
 
     BOOST_AUTO_TEST_SUITE(Parametric)
@@ -365,6 +459,53 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
 
             // Check that the final state is still final
             BOOST_CHECK(finalState->isMatch);
+        }
+
+        BOOST_FIXTURE_TEST_CASE(ConjunctionTest, CopyAndWithdrawFixture) {
+            auto copy = this->ParametricCopy::automaton;
+            auto withdraw = this->ParametricWithdrawFixture::automaton;
+
+            // Verify the initial state of the automata
+            BOOST_CHECK_EQUAL(copy.states.size(), 4);
+            BOOST_CHECK_EQUAL(copy.initialStates.size(), 1);
+            BOOST_CHECK_EQUAL(withdraw.states.size(), 3);
+            BOOST_CHECK_EQUAL(withdraw.initialStates.size(), 1);
+
+            // Count final states in both automata
+            size_t copyFinalStatesCount = 0;
+            for (const auto &state: copy.states) {
+                if (state->isMatch) {
+                    copyFinalStatesCount++;
+                }
+            }
+            BOOST_CHECK_EQUAL(copyFinalStatesCount, 1);
+            BOOST_CHECK(copy.states[3]->isMatch);
+
+            size_t withdrawFinalStatesCount = 0;
+            for (const auto &state: withdraw.states) {
+                if (state->isMatch) {
+                    withdrawFinalStatesCount++;
+                }
+            }
+            BOOST_CHECK_EQUAL(withdrawFinalStatesCount, 1);
+            BOOST_CHECK(withdraw.states[2]->isMatch);
+
+            // Perform conjunction
+            const auto result = conjunction(copy, withdraw);
+
+            // Check basic properties of the result
+            BOOST_CHECK_EQUAL(result.clockVariableSize, copy.clockVariableSize + withdraw.clockVariableSize);
+            BOOST_CHECK_EQUAL(result.stringVariableSize, std::max(copy.stringVariableSize, withdraw.stringVariableSize));
+            BOOST_CHECK_EQUAL(result.numberVariableSize, std::max(copy.numberVariableSize, withdraw.numberVariableSize));
+
+            // Check initial states (should be the product of initial states)
+            BOOST_CHECK_EQUAL(result.initialStates.size(), copy.initialStates.size() * withdraw.initialStates.size());
+
+            // Check total states (should be less than or equal to the product of all states)
+            BOOST_CHECK_LE(result.states.size(), copy.states.size() * withdraw.states.size());
+
+            // Check that the initial state has transitions
+            BOOST_CHECK(!result.initialStates[0]->next.empty());
         }
 
     BOOST_AUTO_TEST_SUITE_END() // Parametric
