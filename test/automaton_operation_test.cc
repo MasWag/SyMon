@@ -9,6 +9,7 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
     BOOST_AUTO_TEST_SUITE(NonParametric)
 
 #include "fixture/star_automaton_fixture.hh"
+#include "fixture/time_restriction_automaton_fixture.hh"
 
         struct CopyAndWithdrawFixture : CopyFixture, WithdrawFixture {
         };
@@ -229,6 +230,69 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
 
             // Check that the initial state has transitions
             BOOST_CHECK(!result.initialStates[0]->next.empty());
+        }
+
+        BOOST_FIXTURE_TEST_CASE(TimeRestrictionTest, NonParametric::TimeRestrictionFixture) {
+            auto automaton_copy = this->automaton;
+            
+            // Verify the initial state of the automaton
+            BOOST_CHECK_EQUAL(automaton_copy.states.size(), 2);
+            BOOST_CHECK_EQUAL(automaton_copy.initialStates.size(), 1);
+            BOOST_CHECK_EQUAL(automaton_copy.clockVariableSize, 1);
+            
+            // Verify there's only one final state initially
+            size_t finalStatesCount = 0;
+            for (const auto &state: automaton_copy.states) {
+                if (state->isMatch) {
+                    finalStatesCount++;
+                }
+            }
+            BOOST_CHECK_EQUAL(finalStatesCount, 1);
+            BOOST_CHECK(automaton_copy.states[1]->isMatch);
+            BOOST_CHECK(!automaton_copy.states[0]->isMatch);
+            
+            // Store a pointer to the original final state
+            auto originalFinalState = automaton_copy.states[1];
+            
+            // Create a timing constraint for the time restriction
+            std::vector<TimingConstraint> timeGuard;
+            timeGuard.push_back(ConstraintMaker(0) <= 10);
+            
+            // Apply the time restriction operation
+            auto result = timeRestriction(std::move(automaton_copy), timeGuard);
+            
+            // Check that the clock variable size is increased by 1
+            BOOST_CHECK_EQUAL(result.clockVariableSize, 2);
+            
+            // Check that a new state has been added (the new final state), but the original final state is removed
+            BOOST_CHECK_EQUAL(result.states.size(), 2);
+            
+            // Check that the new final state is final
+            BOOST_CHECK(result.states.back()->isMatch);
+            
+            // Check that there's exactly one final state
+            finalStatesCount = 0;
+            for (const auto &state: result.states) {
+                if (state->isMatch) {
+                    finalStatesCount++;
+                }
+            }
+            BOOST_CHECK_EQUAL(finalStatesCount, 1);
+            
+            // Check that the transition to the new final state has the time guard applied
+            bool hasTransitionToNewFinal = false;
+            for (const auto &state: result.states) {
+                for (const auto &[label, transitions]: state->next) {
+                    for (const auto &transition: transitions) {
+                        if (transition.target.lock() == result.states.back()) {
+                            hasTransitionToNewFinal = true;
+                            // The transition should have the time guard applied
+                            BOOST_CHECK(!transition.guard.empty());
+                        }
+                    }
+                }
+            }
+            BOOST_CHECK(hasTransitionToNewFinal);
         }
 
         BOOST_FIXTURE_TEST_CASE(StarAutomatonTest, NonParametric::StarAutomatonFixture) {
@@ -507,6 +571,71 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
             BOOST_CHECK(!result.initialStates[0]->next.empty());
         }
 
+        BOOST_FIXTURE_TEST_CASE(TimeRestrictionTest, NonParametric::NonParametric::DataParametricTimeRestrictionFixture) {
+            auto automaton_copy = this->automaton;
+            
+            // Verify the initial state of the automaton
+            BOOST_CHECK_EQUAL(automaton_copy.states.size(), 2);
+            BOOST_CHECK_EQUAL(automaton_copy.initialStates.size(), 1);
+            BOOST_CHECK_EQUAL(automaton_copy.clockVariableSize, 1);
+            
+            // Verify there's only one final state initially
+            size_t finalStatesCount = 0;
+            for (const auto &state: automaton_copy.states) {
+                if (state->isMatch) {
+                    finalStatesCount++;
+                }
+            }
+            BOOST_CHECK_EQUAL(finalStatesCount, 1);
+            BOOST_CHECK(automaton_copy.states[1]->isMatch);
+            BOOST_CHECK(!automaton_copy.states[0]->isMatch);
+            
+            // Store a pointer to the original final state
+            auto originalFinalState = automaton_copy.states[1];
+            
+            // Create a timing constraint for the time restriction
+            using namespace Parma_Polyhedra_Library;
+            using namespace Symbolic;
+            std::vector<TimingConstraint> timeGuard;
+            timeGuard.push_back(ConstraintMaker(0) <= 10);
+            
+            // Apply the time restriction operation
+            auto result = timeRestriction(std::move(automaton_copy), timeGuard);
+            
+            // Check that the clock variable size is increased by 1
+            BOOST_CHECK_EQUAL(result.clockVariableSize, 2);
+            
+            // Check that a new state has been added (the new final state), but the finial state is removed
+            BOOST_CHECK_EQUAL(result.states.size(), 2);
+            
+            // Check that the new final state is final
+            BOOST_CHECK(result.states.back()->isMatch);
+            
+            // Check that there's exactly one final state
+            finalStatesCount = 0;
+            for (const auto &state: result.states) {
+                if (state->isMatch) {
+                    finalStatesCount++;
+                }
+            }
+            BOOST_CHECK_EQUAL(finalStatesCount, 1);
+            
+            // Check that the transition to the new final state exists and has the time guard applied
+            bool hasTransitionToNewFinal = false;
+            for (const auto &state: result.states) {
+                for (const auto &[label, transitions]: state->next) {
+                    for (const auto &transition: transitions) {
+                        if (transition.target.lock() == result.states.back()) {
+                            hasTransitionToNewFinal = true;
+                        }
+                        // The transition should have the time guard applied
+                        BOOST_CHECK(!transition.guard.empty());
+                    }
+                }
+            }
+            BOOST_CHECK(hasTransitionToNewFinal);
+        }
+        
         BOOST_FIXTURE_TEST_CASE(StarAutomatonTest, NonParametric::NonParametric::DataParametricStarAutomaton) {
             auto automaton_copy = this->automaton;
 
@@ -783,6 +912,71 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
             BOOST_CHECK(!result.initialStates[0]->next.empty());
         }
 
+        BOOST_FIXTURE_TEST_CASE(TimeRestrictionTest, NonParametric::NonParametric::ParametricTimeRestrictionFixture) {
+            auto automaton_copy = this->automaton;
+            
+            // Verify the initial state of the automaton
+            BOOST_CHECK_EQUAL(automaton_copy.states.size(), 2);
+            BOOST_CHECK_EQUAL(automaton_copy.initialStates.size(), 1);
+            BOOST_CHECK_EQUAL(automaton_copy.clockVariableSize, 1);
+            
+            // Verify there's only one final state initially
+            size_t finalStatesCount = 0;
+            for (const auto &state: automaton_copy.states) {
+                if (state->isMatch) {
+                    finalStatesCount++;
+                }
+            }
+            BOOST_CHECK_EQUAL(finalStatesCount, 1);
+            BOOST_CHECK(automaton_copy.states[1]->isMatch);
+            BOOST_CHECK(!automaton_copy.states[0]->isMatch);
+            
+            // Store a pointer to the original final state
+            const auto originalFinalState = automaton_copy.states[1];
+            
+            // Create a timing constraint for the time restriction
+            using namespace Parma_Polyhedra_Library;
+            using namespace Symbolic;
+            ParametricTimingConstraint timeGuard = ParametricTimingConstraint(1);
+            timeGuard.add_constraint(Variable(0) <= 10);
+            
+            // Apply the time restriction operation
+            const auto result = timeRestriction(std::move(automaton_copy), timeGuard);
+            
+            // Check that the clock variable size is increased by 1
+            BOOST_CHECK_EQUAL(result.clockVariableSize, 2);
+            
+            // Check that a new state has been added (the new final state), but the original final state is removed
+            BOOST_CHECK_EQUAL(result.states.size(), 2);
+            
+            // Check that the new final state is final
+            BOOST_CHECK(result.states.back()->isMatch);
+            
+            // Check that there's exactly one final state
+            finalStatesCount = 0;
+            for (const auto &state: result.states) {
+                if (state->isMatch) {
+                    finalStatesCount++;
+                }
+            }
+            BOOST_CHECK_EQUAL(finalStatesCount, 1);
+            
+            // Check that the transition to the new final state exists and has the time guard applied
+            bool hasTransitionToNewFinal = false;
+            for (const auto &state: result.states) {
+                for (const auto &[label, transitions]: state->next) {
+                    for (const auto &transition: transitions) {
+                        if (transition.target.lock() == result.states.back()) {
+                            hasTransitionToNewFinal = true;
+                        }
+                        // The transition should have the time guard applied
+                        BOOST_CHECK(!transition.guard.is_universe());
+                    }
+                }
+            }
+            BOOST_CHECK(hasTransitionToNewFinal);
+        }
+        
         BOOST_FIXTURE_TEST_CASE(StarAutomatonTest, NonParametric::NonParametric::ParametricStarAutomaton) {
             auto automaton_copy = this->automaton;
 

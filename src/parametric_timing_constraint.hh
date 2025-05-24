@@ -54,4 +54,21 @@ static ParametricTimingConstraint operator&&(const ParametricTimingConstraint &l
     return result;
 }
 
+/*!
+ * @brief Modify the guard to the given size.
+ *
+ * @param guard the vector of TimingConstraint to adjust.
+ * @param size the size to adjust the guard to
+ * @return a new vector of TimingConstraint with the clock variables adjusted
+ */
+static ParametricTimingConstraint adjustDimension(const ParametricTimingConstraint &guard, const std::size_t size) {
+    auto result = guard;
+    if (result.space_dimension() < size) {
+        result.add_space_dimensions_and_embed(size - result.space_dimension());
+    } else if (result.space_dimension() > size) {
+        result.remove_higher_space_dimensions(result.space_dimension() - size);
+    }
+    return result;
+}
+
 #endif //DATAMONITOR_PARAMETRIC_TIMING_CONSTRAINT_HH
