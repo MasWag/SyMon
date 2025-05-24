@@ -102,3 +102,43 @@ TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> con
 
     return left;
 }
+
+/*!
+ * @brief Compute the Kleene-Plus of the given timed automaton.
+ *
+ * @param[in] given The given timed automaton.
+ * @return A TimedAutomaton representing the concatenation of two automata.
+ */
+template<typename StringConstraint, typename NumberConstraint, typename TimingConstraint, typename Update>
+TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> plus(
+    TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> &&given) {
+    // For each transition to the final state, we duplicate it and make a transition to the initial state
+    
+    for (const auto &sourceState : given.states) {
+        for (auto &[label, transitions] : sourceState->next) {
+            std::vector<AutomatonTransition<StringConstraint, NumberConstraint, TimingConstraint, Update>> newTransitions;
+            
+            for (const auto &transition : transitions) {
+                if (transition.target.lock()->isMatch) {
+                    // If this transition leads to a final state, duplicate it to also lead to all initial states
+                    for (auto &initialState : given.initialStates) {
+                        newTransitions.push_back({
+                            transition.stringConstraints,
+                            transition.numConstraints,
+                            transition.update,
+                            transition.resetVars,
+                            transition.guard,
+                            initialState
+                        });
+                    }
+                }
+            }
+            
+            // Add the new transitions
+            transitions.reserve(transitions.size() + newTransitions.size());
+            std::move(newTransitions.begin(), newTransitions.end(), std::back_inserter(transitions));
+        }
+    }
+    
+    return given;
+}
