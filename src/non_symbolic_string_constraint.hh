@@ -91,16 +91,25 @@ namespace NonSymbolic {
 
   class SCMaker {
   public:
-    SCMaker(VariableID id) : first({id}) {
-    }
+    explicit SCMaker(VariableID id) : first({id}) {}
 
-    StringConstraint operator==(std::string str) {
-      StringAtom second{str};
+    StringConstraint operator==(const std::string &str) const {
+      const StringAtom second{str};
       return {{first, second}, StringConstraint::kind_t::EQ};
     }
 
-    StringConstraint operator!=(std::string str) {
-      StringAtom second{str};
+    StringConstraint operator==(const VariableID id) const {
+      const StringAtom second{id};
+      return {{first, second}, StringConstraint::kind_t::EQ};
+    }
+
+    StringConstraint operator!=(const std::string &str) const {
+      const StringAtom second{str};
+      return {{first, second}, StringConstraint::kind_t::NE};
+    }
+
+    StringConstraint operator!=(const VariableID id) const {
+      const StringAtom second{id};
       return {{first, second}, StringConstraint::kind_t::NE};
     }
 

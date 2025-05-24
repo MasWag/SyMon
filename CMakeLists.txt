@@ -18,6 +18,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(BOOST_COMPONENTS program_options unit_test_framework graph)
 find_package(Boost 1.67.0 REQUIRED COMPONENTS ${BOOST_COMPONENTS})
+
 find_package(PPL REQUIRED)
 
 find_path(GMP_INCLUDE_DIRS NAMES gmp.h gmpxx.h)
@@ -53,7 +54,8 @@ add_executable(
   test/parametric_timing_constraint_helper_test.cc
   test/pta_parser_test.cc
   test/parametric_monitor_test.cc
-  test/ppl_rational_test.cc)
+  test/ppl_rational_test.cc
+  test/automaton_operation_test.cc)
 
 target_link_libraries(
   unit_test ${GMP_LIBRARY} ${Boost_GRAPH_LIBRARY} ${PPL_PPL_LIBRARY}
