@@ -299,3 +299,73 @@ TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> sta
 
     return plus(std::move(given));
 }
+
+/*!
+ * @brief Compute the time restriction of the given timed automaton.
+ *
+ * @param[in] given The given timed automaton.
+ * @param[in] guard The timing constraint that restricts the time.
+ * @return A TimedAutomaton with the new timing constraint on the total elapsed time.
+ */
+template<typename StringConstraint, typename NumberConstraint, typename TimingConstraint, typename Update>
+TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> timeRestriction(
+    TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> &&given, TimingConstraint guard){
+    given.clockVariableSize += 1; // Add a new clock variable for the time restriction
+
+    // Add a new final state that has no outgoing transitions and add transitions to this state from all transitions to the original final states.
+    auto newFinalState = std::make_shared<AutomatonState<StringConstraint, NumberConstraint, TimingConstraint, Update> >(true);
+    given.states.push_back(newFinalState);
+    guard = adjustDimension(guard, given.clockVariableSize); // Adjust the guard to include the new clock variable
+
+    // For each transition, we update the dimensions of the guard
+    for (const auto &sourceState: given.states) {
+        for (auto &[label, transitions]: sourceState->next) {
+            std::vector<AutomatonTransition<StringConstraint, NumberConstraint, TimingConstraint, Update> > newTransitions;
+            for (auto it = transitions.begin(); it != transitions.end();) {
+                // Update the guard to include the new clock variable
+                it->guard = adjustDimension(it->guard, given.clockVariableSize);
+
+                // If the target state is a final state, we add a transition to the new final state
+                if (it->target.lock()->isMatch) {
+                    newTransitions.push_back({
+                        it->stringConstraints,
+                        it->numConstraints,
+                        it->update,
+                        it->resetVars,
+                        guard && it->guard, // Combine the original guard with the new time restriction
+                        newFinalState
+                    });
+                    // If the target state has no successor, we remove it
+                    if (it->target.lock()->next.empty()) {
+                        it = transitions.erase(it);
+                    } else {
+                        ++it;
+                    }
+                } else {
+                    ++it; // If not a final state, just move to the next transition
+                }
+            }
+            // Add the new transitions to the source state
+            transitions.reserve(transitions.size() + newTransitions.size());
+            std::move(newTransitions.begin(), newTransitions.end(), std::back_inserter(transitions));
+        }
+    }
+
+    // Remove the original final states with no outgoing transitions
+    for (auto it = given.states.begin(); it != given.states.end();) {
+        if ((*it)->isMatch && (*it)->next.empty() && *it != newFinalState) {
+            it = given.states.erase(it);
+        } else {
+            ++it;
+        }
+    }
+
+    // Make the original final states non-final
+    for (auto &state: given.states) {
+        if (state != newFinalState && state->isMatch) {
+            state->isMatch = false;
+        }
+    }
+
+    return given;
+}

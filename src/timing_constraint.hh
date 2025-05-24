@@ -113,7 +113,7 @@ static bool eval(const TimingValuation &clockValuation,
  * @param width the width to shift the clock variable id
  * @return a new vector of TimingConstraint with the clock variables shifted
  */
-static std::vector<TimingConstraint> shift(const std::vector<TimingConstraint> &guard, ClockVariables width) {
+static std::vector<TimingConstraint> shift(const std::vector<TimingConstraint> &guard, const ClockVariables width) {
     std::vector<TimingConstraint> shiftedGuard;
     shiftedGuard.reserve(guard.size());
     for (const auto &g: guard) {
@@ -136,4 +136,15 @@ static std::vector<TimingConstraint> operator&&(const std::vector<TimingConstrai
     result.reserve(left.size() + right.size());
     std::copy(right.begin(), right.end(), std::back_inserter(result));
     return result;
+}
+
+/*!
+ * @brief Modify the guard to the given size.
+ *
+ * @param guard the vector of TimingConstraint to adjust.
+ * @param size the size to adjust the guard to
+ * @return a new vector of TimingConstraint with the clock variables adjusted
+ */
+static std::vector<TimingConstraint> adjustDimension(const std::vector<TimingConstraint> &guard, const ClockVariables size) {
+    return guard;
 }
