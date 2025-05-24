@@ -50,8 +50,8 @@ TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> con
     result.states.reserve(left.states.size() * right.states.size());
     result.initialStates.reserve(left.initialStates.size() * right.initialStates.size());
     // Create a map to hold the states of the product automaton
-    std::unordered_map<State*, std::pair<StatePtr, StatePtr> > stateMap;
-    boost::unordered_map<std::pair<State*, State*>, StatePtr> reverseStateMap;
+    std::unordered_map<State *, std::pair<StatePtr, StatePtr> > stateMap;
+    boost::unordered_map<std::pair<State *, State *>, StatePtr> reverseStateMap;
     std::vector<StatePtr> waitingStates;
     waitingStates.reserve(left.states.size() * right.states.size());
     // Create the initial states of the product automaton
@@ -148,7 +148,8 @@ TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> con
                         auto newTargetState = std::make_shared<State>(
                             leftTransition.target.lock()->isMatch && rightTransition.target.lock()->isMatch);
                         stateMap[newTargetState.get()] = {leftTransition.target.lock(), rightTransition.target.lock()};
-                        reverseStateMap[std::make_pair(leftTransition.target.lock().get(), rightTransition.target.lock().get())] = newTargetState;
+                        reverseStateMap[std::make_pair(leftTransition.target.lock().get(),
+                                                       rightTransition.target.lock().get())] = newTargetState;
                         currentState->next[label].push_back({
                             std::move(stringConstraints), std::move(numConstraints), std::move(update),
                             std::move(resetVars), std::move(guard), newTargetState
@@ -287,3 +288,14 @@ TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> plu
  * @param[in] given The given timed automaton.
  * @return A TimedAutomaton representing the Kleene-Star of the given automaton.
  */
+template<typename StringConstraint, typename NumberConstraint, typename TimingConstraint, typename Update>
+TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> star(
+    TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> &&given) {
+    // Add a new initial state that is also a final state and has no outgoing transitions.
+    auto newInitialState = std::make_shared<AutomatonState<StringConstraint, NumberConstraint, TimingConstraint,
+        Update> >(true);
+    given.states.insert(given.states.begin(), newInitialState);
+    given.initialStates.push_back(newInitialState);
+
+    return plus(std::move(given));
+}
