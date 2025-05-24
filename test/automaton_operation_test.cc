@@ -8,6 +8,8 @@
 BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
     BOOST_AUTO_TEST_SUITE(NonParametric)
 
+#include "fixture/star_automaton_fixture.hh"
+
         struct CopyAndWithdrawFixture : CopyFixture, WithdrawFixture {
         };
 
@@ -125,6 +127,61 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
             BOOST_CHECK(finalState->isMatch);
         }
 
+        BOOST_FIXTURE_TEST_CASE(StarTest, CopyFixture) {
+            auto copy = this->automaton;
+
+            // Verify the initial state of the automaton
+            BOOST_CHECK_EQUAL(copy.states.size(), 4);
+            BOOST_CHECK_EQUAL(copy.initialStates.size(), 1);
+
+            // Verify final states in the automaton
+            size_t finalStatesCount = 0;
+            for (const auto &state: copy.states) {
+                if (state->isMatch) {
+                    finalStatesCount++;
+                }
+            }
+            BOOST_CHECK_EQUAL(finalStatesCount, 1);
+            BOOST_CHECK(copy.states[3]->isMatch);
+
+            // Store a pointer to the original final state
+            const auto originalFinalState = copy.states[3];
+
+            // Apply the star operation
+            const auto result = star(std::move(copy));
+
+            // Check that a new state has been added
+            BOOST_CHECK_EQUAL(result.states.size(), 5);
+
+            // Check that the new state is at the beginning
+            BOOST_CHECK(result.states[0]->isMatch);
+
+            // Check that the initial states now include the new state
+            BOOST_CHECK_EQUAL(result.initialStates.size(), 2);
+
+            // Check that the new initial state is also a final state
+            bool newInitialStateIsFinal = false;
+            for (const auto &initialState: result.initialStates) {
+                if (initialState->isMatch) {
+                    newInitialStateIsFinal = true;
+                    break;
+                }
+            }
+            BOOST_CHECK(newInitialStateIsFinal);
+
+            // Check that the original final state is still final
+            BOOST_CHECK(originalFinalState->isMatch);
+
+            // Verify that the plus operation was applied (by checking total final states)
+            finalStatesCount = 0;
+            for (const auto &state: result.states) {
+                if (state->isMatch) {
+                    finalStatesCount++;
+                }
+            }
+            BOOST_CHECK_EQUAL(finalStatesCount, 2);
+        }
+
         BOOST_FIXTURE_TEST_CASE(ConjunctionTest, CopyAndWithdrawFixture) {
             auto copy = this->CopyFixture::automaton;
             auto withdraw = this->WithdrawFixture::automaton;
@@ -159,8 +216,10 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
 
             // Check basic properties of the result
             BOOST_CHECK_EQUAL(result.clockVariableSize, copy.clockVariableSize + withdraw.clockVariableSize);
-            BOOST_CHECK_EQUAL(result.stringVariableSize, std::max(copy.stringVariableSize, withdraw.stringVariableSize));
-            BOOST_CHECK_EQUAL(result.numberVariableSize, std::max(copy.numberVariableSize, withdraw.numberVariableSize));
+            BOOST_CHECK_EQUAL(result.stringVariableSize,
+                              std::max(copy.stringVariableSize, withdraw.stringVariableSize));
+            BOOST_CHECK_EQUAL(result.numberVariableSize,
+                              std::max(copy.numberVariableSize, withdraw.numberVariableSize));
 
             // Check initial states (should be the product of initial states)
             BOOST_CHECK_EQUAL(result.initialStates.size(), copy.initialStates.size() * withdraw.initialStates.size());
@@ -170,6 +229,57 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
 
             // Check that the initial state has transitions
             BOOST_CHECK(!result.initialStates[0]->next.empty());
+        }
+
+        BOOST_FIXTURE_TEST_CASE(StarAutomatonTest, NonParametric::StarAutomatonFixture) {
+            auto automaton_copy = this->automaton;
+
+            // Verify the initial state of the automaton
+            BOOST_CHECK_EQUAL(automaton_copy.states.size(), 3);
+            BOOST_CHECK_EQUAL(automaton_copy.initialStates.size(), 1);
+
+            // Verify there's only one final state initially
+            size_t finalStatesCount = 0;
+            for (const auto &state: automaton_copy.states) {
+                if (state->isMatch) {
+                    finalStatesCount++;
+                }
+            }
+            BOOST_CHECK_EQUAL(finalStatesCount, 1);
+            BOOST_CHECK(automaton_copy.states[2]->isMatch);
+            BOOST_CHECK(!automaton_copy.states[0]->isMatch);
+
+            // Apply the star operation
+            const auto result = star(std::move(automaton_copy));
+
+            // Check that a new state has been added
+            BOOST_CHECK_EQUAL(result.states.size(), 4);
+
+            // Check that the new state is at the beginning and is final
+            BOOST_CHECK(result.states[0]->isMatch);
+
+            // Check that we now have two initial states
+            BOOST_CHECK_EQUAL(result.initialStates.size(), 2);
+
+            // Check that one of the initial states is also final
+            bool hasInitialFinalState = false;
+            for (const auto &initialState: result.initialStates) {
+                if (initialState->isMatch) {
+                    hasInitialFinalState = true;
+                    break;
+                }
+            }
+            BOOST_CHECK(hasInitialFinalState);
+
+            // Check that the original final state is still final
+            bool originalFinalStateStillFinal = false;
+            for (const auto &state: result.states) {
+                if (state != result.states[0] && state->isMatch) {
+                    originalFinalStateStillFinal = true;
+                    break;
+                }
+            }
+            BOOST_CHECK(originalFinalStateStillFinal);
         }
 
     BOOST_AUTO_TEST_SUITE_END() // NonParametric
@@ -293,6 +403,61 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
             BOOST_CHECK(finalState->isMatch);
         }
 
+        BOOST_FIXTURE_TEST_CASE(StarTest, DataParametricCopy) {
+            auto copy = this->automaton;
+
+            // Verify the initial state of the automaton
+            BOOST_CHECK_EQUAL(copy.states.size(), 4);
+            BOOST_CHECK_EQUAL(copy.initialStates.size(), 1);
+
+            // Verify final states in the automaton
+            size_t finalStatesCount = 0;
+            for (const auto &state: copy.states) {
+                if (state->isMatch) {
+                    finalStatesCount++;
+                }
+            }
+            BOOST_CHECK_EQUAL(finalStatesCount, 1);
+            BOOST_CHECK(copy.states[3]->isMatch);
+
+            // Store a pointer to the original final state
+            auto originalFinalState = copy.states[3];
+
+            // Apply the star operation
+            auto result = star(std::move(copy));
+
+            // Check that a new state has been added
+            BOOST_CHECK_EQUAL(result.states.size(), 5);
+
+            // Check that the new state is at the beginning
+            BOOST_CHECK(result.states[0]->isMatch);
+
+            // Check that the initial states now include the new state
+            BOOST_CHECK_EQUAL(result.initialStates.size(), 2);
+
+            // Check that the new initial state is also a final state
+            bool newInitialStateIsFinal = false;
+            for (const auto &initialState: result.initialStates) {
+                if (initialState->isMatch) {
+                    newInitialStateIsFinal = true;
+                    break;
+                }
+            }
+            BOOST_CHECK(newInitialStateIsFinal);
+
+            // Check that the original final state is still final
+            BOOST_CHECK(originalFinalState->isMatch);
+
+            // Verify that the plus operation was applied (by checking total final states)
+            finalStatesCount = 0;
+            for (const auto &state: result.states) {
+                if (state->isMatch) {
+                    finalStatesCount++;
+                }
+            }
+            BOOST_CHECK_EQUAL(finalStatesCount, 2);
+        }
+
         BOOST_FIXTURE_TEST_CASE(ConjunctionTest, CopyAndWithdrawFixture) {
             auto copy = this->DataParametricCopy::automaton;
             auto withdraw = this->DataParametricWithdrawFixture::automaton;
@@ -327,8 +492,10 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
 
             // Check basic properties of the result
             BOOST_CHECK_EQUAL(result.clockVariableSize, copy.clockVariableSize + withdraw.clockVariableSize);
-            BOOST_CHECK_EQUAL(result.stringVariableSize, std::max(copy.stringVariableSize, withdraw.stringVariableSize));
-            BOOST_CHECK_EQUAL(result.numberVariableSize, std::max(copy.numberVariableSize, withdraw.numberVariableSize));
+            BOOST_CHECK_EQUAL(result.stringVariableSize,
+                              std::max(copy.stringVariableSize, withdraw.stringVariableSize));
+            BOOST_CHECK_EQUAL(result.numberVariableSize,
+                              std::max(copy.numberVariableSize, withdraw.numberVariableSize));
 
             // Check initial states (should be the product of initial states)
             BOOST_CHECK_EQUAL(result.initialStates.size(), copy.initialStates.size() * withdraw.initialStates.size());
@@ -338,6 +505,57 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
 
             // Check that the initial state has transitions
             BOOST_CHECK(!result.initialStates[0]->next.empty());
+        }
+
+        BOOST_FIXTURE_TEST_CASE(StarAutomatonTest, NonParametric::NonParametric::DataParametricStarAutomaton) {
+            auto automaton_copy = this->automaton;
+
+            // Verify the initial state of the automaton
+            BOOST_CHECK_EQUAL(automaton_copy.states.size(), 3);
+            BOOST_CHECK_EQUAL(automaton_copy.initialStates.size(), 1);
+
+            // Verify there's only one final state initially
+            size_t finalStatesCount = 0;
+            for (const auto &state: automaton_copy.states) {
+                if (state->isMatch) {
+                    finalStatesCount++;
+                }
+            }
+            BOOST_CHECK_EQUAL(finalStatesCount, 1);
+            BOOST_CHECK(automaton_copy.states[2]->isMatch);
+            BOOST_CHECK(!automaton_copy.states[0]->isMatch);
+
+            // Apply the star operation
+            auto result = star(std::move(automaton_copy));
+
+            // Check that a new state has been added
+            BOOST_CHECK_EQUAL(result.states.size(), 4);
+
+            // Check that the new state is at the beginning and is final
+            BOOST_CHECK(result.states[0]->isMatch);
+
+            // Check that we now have two initial states
+            BOOST_CHECK_EQUAL(result.initialStates.size(), 2);
+
+            // Check that one of the initial states is also final
+            bool hasInitialFinalState = false;
+            for (const auto &initialState: result.initialStates) {
+                if (initialState->isMatch) {
+                    hasInitialFinalState = true;
+                    break;
+                }
+            }
+            BOOST_CHECK(hasInitialFinalState);
+
+            // Check that the original final state is still final
+            bool originalFinalStateStillFinal = false;
+            for (const auto &state: result.states) {
+                if (state != result.states[0] && state->isMatch) {
+                    originalFinalStateStillFinal = true;
+                    break;
+                }
+            }
+            BOOST_CHECK(originalFinalStateStillFinal);
         }
 
     BOOST_AUTO_TEST_SUITE_END() // DataParametric
@@ -461,6 +679,61 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
             BOOST_CHECK(finalState->isMatch);
         }
 
+        BOOST_FIXTURE_TEST_CASE(StarTest, ParametricCopy) {
+            auto copy = this->automaton;
+
+            // Verify the initial state of the automaton
+            BOOST_CHECK_EQUAL(copy.states.size(), 4);
+            BOOST_CHECK_EQUAL(copy.initialStates.size(), 1);
+
+            // Verify final states in the automaton
+            size_t finalStatesCount = 0;
+            for (const auto &state: copy.states) {
+                if (state->isMatch) {
+                    finalStatesCount++;
+                }
+            }
+            BOOST_CHECK_EQUAL(finalStatesCount, 1);
+            BOOST_CHECK(copy.states[3]->isMatch);
+
+            // Store a pointer to the original final state
+            auto originalFinalState = copy.states[3];
+
+            // Apply the star operation
+            auto result = star(std::move(copy));
+
+            // Check that a new state has been added
+            BOOST_CHECK_EQUAL(result.states.size(), 5);
+
+            // Check that the new state is at the beginning
+            BOOST_CHECK(result.states[0]->isMatch);
+
+            // Check that the initial states now include the new state
+            BOOST_CHECK_EQUAL(result.initialStates.size(), 2);
+
+            // Check that the new initial state is also a final state
+            bool newInitialStateIsFinal = false;
+            for (const auto &initialState: result.initialStates) {
+                if (initialState->isMatch) {
+                    newInitialStateIsFinal = true;
+                    break;
+                }
+            }
+            BOOST_CHECK(newInitialStateIsFinal);
+
+            // Check that the original final state is still final
+            BOOST_CHECK(originalFinalState->isMatch);
+
+            // Verify that the plus operation was applied (by checking total final states)
+            finalStatesCount = 0;
+            for (const auto &state: result.states) {
+                if (state->isMatch) {
+                    finalStatesCount++;
+                }
+            }
+            BOOST_CHECK_EQUAL(finalStatesCount, 2);
+        }
+
         BOOST_FIXTURE_TEST_CASE(ConjunctionTest, CopyAndWithdrawFixture) {
             auto copy = this->ParametricCopy::automaton;
             auto withdraw = this->ParametricWithdrawFixture::automaton;
@@ -495,8 +768,10 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
 
             // Check basic properties of the result
             BOOST_CHECK_EQUAL(result.clockVariableSize, copy.clockVariableSize + withdraw.clockVariableSize);
-            BOOST_CHECK_EQUAL(result.stringVariableSize, std::max(copy.stringVariableSize, withdraw.stringVariableSize));
-            BOOST_CHECK_EQUAL(result.numberVariableSize, std::max(copy.numberVariableSize, withdraw.numberVariableSize));
+            BOOST_CHECK_EQUAL(result.stringVariableSize,
+                              std::max(copy.stringVariableSize, withdraw.stringVariableSize));
+            BOOST_CHECK_EQUAL(result.numberVariableSize,
+                              std::max(copy.numberVariableSize, withdraw.numberVariableSize));
 
             // Check initial states (should be the product of initial states)
             BOOST_CHECK_EQUAL(result.initialStates.size(), copy.initialStates.size() * withdraw.initialStates.size());
@@ -506,6 +781,57 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
 
             // Check that the initial state has transitions
             BOOST_CHECK(!result.initialStates[0]->next.empty());
+        }
+
+        BOOST_FIXTURE_TEST_CASE(StarAutomatonTest, NonParametric::NonParametric::ParametricStarAutomaton) {
+            auto automaton_copy = this->automaton;
+
+            // Verify the initial state of the automaton
+            BOOST_CHECK_EQUAL(automaton_copy.states.size(), 3);
+            BOOST_CHECK_EQUAL(automaton_copy.initialStates.size(), 1);
+
+            // Verify there's only one final state initially
+            size_t finalStatesCount = 0;
+            for (const auto &state: automaton_copy.states) {
+                if (state->isMatch) {
+                    finalStatesCount++;
+                }
+            }
+            BOOST_CHECK_EQUAL(finalStatesCount, 1);
+            BOOST_CHECK(automaton_copy.states[2]->isMatch);
+            BOOST_CHECK(!automaton_copy.states[0]->isMatch);
+
+            // Apply the star operation
+            const auto result = star(std::move(automaton_copy));
+
+            // Check that a new state has been added
+            BOOST_CHECK_EQUAL(result.states.size(), 4);
+
+            // Check that the new state is at the beginning and is final
+            BOOST_CHECK(result.states[0]->isMatch);
+
+            // Check that we now have two initial states
+            BOOST_CHECK_EQUAL(result.initialStates.size(), 2);
+
+            // Check that one of the initial states is also final
+            bool hasInitialFinalState = false;
+            for (const auto &initialState: result.initialStates) {
+                if (initialState->isMatch) {
+                    hasInitialFinalState = true;
+                    break;
+                }
+            }
+            BOOST_CHECK(hasInitialFinalState);
+
+            // Check that the original final state is still final
+            bool originalFinalStateStillFinal = false;
+            for (const auto &state: result.states) {
+                if (state != result.states[0] && state->isMatch) {
+                    originalFinalStateStillFinal = true;
+                    break;
+                }
+            }
+            BOOST_CHECK(originalFinalStateStillFinal);
         }
 
     BOOST_AUTO_TEST_SUITE_END() // Parametric
