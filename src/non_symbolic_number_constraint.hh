@@ -97,7 +97,7 @@ namespace NonSymbolic {
     }
   };
 
-  //! @todo Write other operators e.g., 
+  //! @todo Write other operators e.g.,
   template<typename Number>
   class NCMakerVar {
   public:
@@ -105,7 +105,7 @@ namespace NonSymbolic {
     }
 
     NonSymbolic::NumberConstraint<Number> operator==(Number num) {
-      NumberExpression expr{NumberExpression::kind_t::ATOM, id};
+      NumberExpression expr {id};
       return {expr, NonSymbolic::NumberConstraint<Number>::kind_t::EQ, num};
     }
 
@@ -117,7 +117,7 @@ namespace NonSymbolic {
     }
 
     NonSymbolic::NumberConstraint<Number> operator!=(Number num) {
-      NumberExpression expr{NumberExpression::kind_t::ATOM, id};
+      NumberExpression expr {id};
       return {expr, NonSymbolic::NumberConstraint<Number>::kind_t::NE, num};
     }
 
@@ -126,6 +126,18 @@ namespace NonSymbolic {
       auto second = std::make_shared<NumberExpression>(maker.id);
       return {{NumberExpression::kind_t::MINUS, std::move(first), std::move(second)},
               NonSymbolic::NumberConstraint<Number>::kind_t::NE, 0};
+    }
+
+    NonSymbolic::NumberConstraint<Number> operator>(Number num) {
+      NumberExpression expr{id};
+      return {expr, NonSymbolic::NumberConstraint<Number>::kind_t::GT, num};
+    }
+
+    NonSymbolic::NumberConstraint<Number> operator>(NCMakerVar maker) {
+      auto first = std::make_shared<NumberExpression>(id);
+      auto second = std::make_shared<NumberExpression>(maker.id);
+      return {{NumberExpression::kind_t::MINUS, std::move(first), std::move(second)},
+        NonSymbolic::NumberConstraint<Number>::kind_t::GT, 0};
     }
 
   private:
