@@ -25,7 +25,7 @@ struct TimingConstraint {
   Order odr;
   int c;
 
-  bool satisfy(double d) const {
+  [[nodiscard]] bool satisfy(double d) const {
     switch (odr) {
       case Order::lt:
         return d < c;
@@ -50,13 +50,23 @@ struct TimingConstraint {
       return ::Order::LT;
     }
   }
+
+  /*!
+   * @brief Shift the id of the clock variable by a given width.
+   *
+   * @param width the width to shift the clock variable id
+   * @return a new TimingConstraint with the clock variable shifted
+   */
+  [[nodiscard]] TimingConstraint shift(ClockVariables width) const {
+    return TimingConstraint{x + width, odr, c};
+  }
 };
 
 // An interface to write an inequality constrait easily
 class ConstraintMaker {
   ClockVariables x;
 public:
-  ConstraintMaker(ClockVariables x) : x(x) {}
+  explicit ConstraintMaker(ClockVariables x) : x(x) {}
 
   TimingConstraint operator<(int c) {
     return TimingConstraint{x, TimingConstraint::Order::lt, c};
@@ -78,7 +88,7 @@ public:
 /*!
   @brief remove any inequality x > c or x >= c
  */
-static inline void widen(std::vector<TimingConstraint> &guard) {
+static void widen(std::vector<TimingConstraint> &guard) {
   guard.erase(std::remove_if(guard.begin(), guard.end(), [](TimingConstraint g) {
     return g.odr == TimingConstraint::Order::ge || g.odr == TimingConstraint::Order::gt;
   }), guard.end());
@@ -86,11 +96,27 @@ static inline void widen(std::vector<TimingConstraint> &guard) {
 
 using TimingValuation = std::vector<double>;
 
-static inline
-bool eval(const TimingValuation &clockValuation,
+static bool eval(const TimingValuation &clockValuation,
           const std::vector<TimingConstraint> &guard) {
   return std::all_of(guard.begin(), guard.end(),
                      [&clockValuation](const TimingConstraint &g) {
                        return g.satisfy(clockValuation.at(g.x));
                      });
+}
+
+/*!
+ * @brief Shift the clock variables in the guard by a given width.
+ *
+ * @param guard the vector of TimingConstraint to shift
+ * @param width the width to shift the clock variable id
+ * @return a new vector of TimingConstraint with the clock variables shifted
+ */
+static std::vector<TimingConstraint> shift(const std::vector<TimingConstraint>& guard, ClockVariables width) {
+  std::vector<TimingConstraint> shiftedGuard;
+  shiftedGuard.reserve(guard.size());
+  for (const auto &g: guard) {
+    shiftedGuard.push_back(g.shift(width));
+  }
+
+  return shiftedGuard;
 }

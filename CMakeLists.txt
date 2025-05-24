@@ -55,7 +55,8 @@ add_executable(
   test/pta_parser_test.cc
   test/parametric_monitor_test.cc
   test/ppl_rational_test.cc
-  test/automaton_operation_test.cc)
+  test/automaton_operation_test.cc
+  test/timing_constraint_test.cc)
 
 target_link_libraries(
   unit_test ${GMP_LIBRARY} ${Boost_GRAPH_LIBRARY} ${PPL_PPL_LIBRARY}
