@@ -91,6 +91,40 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
             BOOST_CHECK_GT(finalStatesCount, 0);
         }
 
+        BOOST_FIXTURE_TEST_CASE(PlusTest, CopyFixture) {
+            auto copy = this->automaton;
+
+            // Verify the initial state of the automaton
+            BOOST_CHECK_EQUAL(copy.states.size(), 4);
+            BOOST_CHECK_EQUAL(copy.initialStates.size(), 1);
+
+            // Verify final states in the automaton
+            size_t finalStatesCount = 0;
+            for (const auto &state: copy.states) {
+                if (state->isMatch) {
+                    finalStatesCount++;
+                }
+            }
+            BOOST_CHECK_EQUAL(finalStatesCount, 1);
+            BOOST_CHECK(copy.states[3]->isMatch);
+
+            // Store a pointer to the final state before applying plus operation
+            const auto finalState = copy.states[3];
+            const auto initialState = copy.initialStates[0];
+
+            // Apply the plus operation
+            const auto result = plus(std::move(copy));
+
+            // Check that the number of states remains the same
+            BOOST_CHECK_EQUAL(result.states.size(), 4);
+
+            // Check that the initial states remain the same
+            BOOST_CHECK_EQUAL(result.initialStates.size(), 1);
+
+            // Check that the final state is still final
+            BOOST_CHECK(finalState->isMatch);
+        }
+
     BOOST_AUTO_TEST_SUITE_END() // NonParametric
 
     BOOST_AUTO_TEST_SUITE(DataParametric)
@@ -178,6 +212,40 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
             BOOST_CHECK_GT(finalStatesCount, 0);
         }
 
+        BOOST_FIXTURE_TEST_CASE(PlusTest, DataParametricCopy) {
+            auto copy = this->automaton;
+
+            // Verify the initial state of the automaton
+            BOOST_CHECK_EQUAL(copy.states.size(), 4);
+            BOOST_CHECK_EQUAL(copy.initialStates.size(), 1);
+
+            // Verify final states in the automaton
+            size_t finalStatesCount = 0;
+            for (const auto &state: copy.states) {
+                if (state->isMatch) {
+                    finalStatesCount++;
+                }
+            }
+            BOOST_CHECK_EQUAL(finalStatesCount, 1);
+            BOOST_CHECK(copy.states[3]->isMatch);
+
+            // Store a pointer to the final state before applying plus operation
+            auto finalState = copy.states[3];
+            auto initialState = copy.initialStates[0];
+
+            // Apply the plus operation
+            auto result = plus(std::move(copy));
+
+            // Check that the number of states remains the same
+            BOOST_CHECK_EQUAL(result.states.size(), 4);
+
+            // Check that the initial states remain the same
+            BOOST_CHECK_EQUAL(result.initialStates.size(), 1);
+
+            // Check that the final state is still final
+            BOOST_CHECK(finalState->isMatch);
+        }
+
     BOOST_AUTO_TEST_SUITE_END() // DataParametric
 
     BOOST_AUTO_TEST_SUITE(Parametric)
@@ -263,6 +331,40 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
                 }
             }
             BOOST_CHECK_GT(finalStatesCount, 0);
+        }
+
+        BOOST_FIXTURE_TEST_CASE(PlusTest, ParametricCopy) {
+            auto copy = this->automaton;
+
+            // Verify the initial state of the automaton
+            BOOST_CHECK_EQUAL(copy.states.size(), 4);
+            BOOST_CHECK_EQUAL(copy.initialStates.size(), 1);
+
+            // Verify final states in the automaton
+            size_t finalStatesCount = 0;
+            for (const auto &state: copy.states) {
+                if (state->isMatch) {
+                    finalStatesCount++;
+                }
+            }
+            BOOST_CHECK_EQUAL(finalStatesCount, 1);
+            BOOST_CHECK(copy.states[3]->isMatch);
+
+            // Store a pointer to the final state before applying plus operation
+            auto finalState = copy.states[3];
+            auto initialState = copy.initialStates[0];
+
+            // Apply the plus operation
+            auto result = plus(std::move(copy));
+
+            // Check that the number of states remains the same
+            BOOST_CHECK_EQUAL(result.states.size(), 4);
+
+            // Check that the initial states remain the same
+            BOOST_CHECK_EQUAL(result.initialStates.size(), 1);
+
+            // Check that the final state is still final
+            BOOST_CHECK(finalState->isMatch);
         }
 
     BOOST_AUTO_TEST_SUITE_END() // Parametric
