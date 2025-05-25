@@ -205,9 +205,15 @@ TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> con
                 if (it->target.lock()->isMatch) {
                     for (auto &ri: right.initialStates) {
                         // Create a new transition to the initial state of the right automaton
+                        // We need to reset all clock variables
+                        std::vector<VariableID> resetVars;
+                        resetVars.reserve(left.clockVariableSize);
+                        for (VariableID i = 0; i < left.clockVariableSize; ++i) {
+                            resetVars.push_back(i);
+                        }
                         newTransitions.push_back({
                             it->stringConstraints, it->numConstraints, it->update,
-                            it->resetVars, it->guard, ri
+                            resetVars, it->guard, ri
                         });
                     }
                     // If the target state has no successor, we remove it
@@ -261,11 +267,18 @@ TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> plu
                 if (transition.target.lock()->isMatch) {
                     // If this transition leads to a final state, duplicate it to also lead to all initial states
                     for (auto &initialState: given.initialStates) {
+                        // Create a new transition to the initial state
+                        // We need to reset all clock variables
+                        std::vector<VariableID> resetVars;
+                        resetVars.reserve(given.clockVariableSize);
+                        for (VariableID i = 0; i < given.clockVariableSize; ++i) {
+                            resetVars.push_back(i);
+                        }
                         newTransitions.push_back({
                             transition.stringConstraints,
                             transition.numConstraints,
                             transition.update,
-                            transition.resetVars,
+                            resetVars,
                             transition.guard,
                             initialState
                         });
