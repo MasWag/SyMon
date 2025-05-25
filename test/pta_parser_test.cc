@@ -10,13 +10,16 @@
 #include "../src/automaton.hh"
 #include "../src/automaton_parser.hh"
 
+#ifndef PROJECT_ROOT
+#define PROJECT_ROOT ".."
+#endif
 
 BOOST_AUTO_TEST_SUITE(ParametricTimedAutomaton)
   BOOST_AUTO_TEST_SUITE(ParseBoostTATests)
 
     BOOST_AUTO_TEST_CASE(Copy) {
       BoostPTA BoostTA;
-      std::ifstream file("../example/copy/copy_parametric.dot");
+      std::ifstream file(PROJECT_ROOT "/example/copy/copy_parametric.dot");
       parseBoostTA(file, BoostTA);
 
       BOOST_CHECK_EQUAL(boost::get_property(BoostTA, boost::graph_clock_variable_size), 1);
@@ -54,7 +57,7 @@ BOOST_AUTO_TEST_SUITE(ParametricTimedAutomaton)
     BOOST_AUTO_TEST_CASE(copy) {
       using namespace Parma_Polyhedra_Library;
       BoostPTA BoostTA;
-      std::ifstream file("../example/copy/copy_parametric.dot");
+      std::ifstream file(PROJECT_ROOT "/example/copy/copy_parametric.dot");
       parseBoostTA(file, BoostTA);
       ParametricTA TA;
       convBoostTA(BoostTA, TA);

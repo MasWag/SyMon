@@ -1,0 +1,478 @@
+#pragma once
+
+#include <automata_operation.hh>
+#include <istream>
+
+#include "tree_sitter/api.h"
+#include "tree_sitter/tree-sitter-symon.h"
+
+#include "io_operators.hh"
+#include "signature.hh"
+
+namespace boost {
+    using ::operator>>;
+    using ::operator<<;
+    using namespace Parma_Polyhedra_Library::IO_Operators;
+}
+
+namespace std {
+    using namespace Parma_Polyhedra_Library::IO_Operators;
+}
+
+#include <boost/lexical_cast.hpp>
+
+template<typename StringConstraint, typename NumberConstraint, typename TimingConstraint, typename Update>
+class SymonParser {
+public:
+    using Automaton = TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update>;
+    using State = AutomatonState<StringConstraint, NumberConstraint, TimingConstraint, Update>;
+
+    struct RawSignature {
+        std::string name;
+        std::vector<std::string> stringVariables;
+        std::vector<std::string> numberVariables;
+    };
+
+    static Signature asSignature(std::vector<RawSignature> rawSignatures) {
+        std::unordered_map<std::string, std::size_t> idMap;
+        std::unordered_map<std::string, std::size_t> stringSizeMap;
+        std::unordered_map<std::string, std::size_t> numberSizeMap;
+        std::size_t id = 0;
+        for (const auto &[name, stringVariables, numberVariables]: rawSignatures) {
+            idMap[name] = id++;
+            stringSizeMap[name] = stringVariables.size();
+            numberSizeMap[name] = numberVariables.size();
+        }
+
+        return Signature{idMap, stringSizeMap, numberSizeMap};
+    }
+
+    void parse(std::istream &istream) {
+        const std::istreambuf_iterator begin(istream);
+        constexpr std::istreambuf_iterator<char> end;
+        std::string content(begin, end);
+        this->parse(content);
+    }
+
+    void parse(const std::string &content) {
+        TSParser *inParser = ts_parser_new();
+        ts_parser_set_language(inParser, tree_sitter_symon());
+        const TSTree *tree = ts_parser_parse_string(inParser, nullptr, content.c_str(), content.length());
+        const TSNode rootNode = ts_tree_root_node(tree);
+        const uint32_t rootSize = ts_node_child_count(rootNode);
+        for (uint32_t i = 0; i < rootSize; i++) {
+            TSNode child = ts_node_child(rootNode, i);
+            if (ts_node_type(child) == std::string("variables")) {
+                this->parseVariables(content, child);
+            } else if (ts_node_type(child) == std::string("signature")) {
+                this->signatures.push_back(makeSignature(content, child));
+            } else if (ts_node_type(child) == std::string("initial_constraints")) {
+                this->parseInits(content, child);
+            } else if (ts_node_type(child) == std::string("let_in")) {
+                // TODO: Implement let-in parsing
+            } else if (ts_node_type(child) == std::string("expr")) {
+                this->expr = this->parseExpr(content, child);
+            }
+        }
+
+        // Handle initial constraints by creating a new initial state and unobservable transitions
+        if ((!this->initialStringConstraints.empty() || !this->initialNumberConstraints.empty()) && this->expr) {
+            auto newInitialState = std::make_shared<State>(false);
+            std::vector<AutomatonTransition<StringConstraint, NumberConstraint, TimingConstraint, Update> >
+                    newTransitions;
+            newTransitions.reserve(this->initialStringConstraints.size());
+            for (const auto &initialState: this->expr->initialStates) {
+                AutomatonTransition<StringConstraint, NumberConstraint, TimingConstraint, Update> newTransition;
+                newTransition.target = initialState;
+                newTransition.stringConstraints = this->initialStringConstraints;
+                newTransition.numConstraints = this->initialNumberConstraints;
+                newTransitions.push_back(std::move(newTransition));
+            }
+            this->expr->states.push_back(newInitialState);
+            this->expr->initialStates = {newInitialState};
+            // The magic number 127 is used to represent unobservable transitions
+            newInitialState->next[127] = std::move(newTransitions);
+        }
+    }
+
+    [[nodiscard]] Signature makeSignature() const {
+        if (this->signatures.empty()) {
+            throw std::runtime_error("Signature not set");
+        }
+        return asSignature(this->signatures);
+    }
+
+    Automaton getAutomaton() const {
+        if (this->expr.has_value()) {
+            return this->expr.value();
+        }
+        throw std::runtime_error("Automaton not set");
+    }
+
+    void setGlobalData(Automaton &automaton) const {
+        automaton.stringVariableSize = this->globalStringVariables.size();
+        automaton.numberVariableSize = this->globalNumberVariables.size();
+        // Set parameterSize only if automaton.parameterSize exists
+        if constexpr (std::is_same_v<TimingConstraint, ParametricTimingConstraint>) {
+            automaton.parameterSize = this->parameters.size();
+        }
+    }
+
+private:
+    static std::string parseDeclaration(const std::string &content, const TSNode &declarationNode) {
+        if (ts_node_type(declarationNode) != std::string("string_definition") && ts_node_type(declarationNode) !=
+            std::string("number_definition") && ts_node_type(declarationNode) != std::string("parameter_definition")) {
+            throw std::runtime_error("Expected declaration node");
+        }
+        const uint32_t nodeSize = ts_node_child_count(declarationNode);
+        for (uint32_t i = 0; i < nodeSize; i++) {
+            if (const TSNode child = ts_node_child(declarationNode, i);
+                ts_node_type(child) == std::string("identifier")) {
+                return std::string(content.begin() + ts_node_start_byte(child),
+                                   content.begin() + ts_node_end_byte(child));
+            }
+        }
+        throw std::runtime_error("Declaration node does not contain identifier");
+    }
+
+    void parseVariables(const std::string &content, const TSNode &declarationNode) {
+        if (ts_node_type(declarationNode) != std::string("variables")) {
+            throw std::runtime_error("Expected variable declaration block node");
+        }
+        const uint32_t nodeSize = ts_node_child_count(declarationNode);
+        for (uint32_t i = 0; i < nodeSize; i++) {
+            if (ts_node_type(ts_node_child(declarationNode, i)) == std::string("string_definition")) {
+                this->globalStringVariables.push_back(parseDeclaration(content, ts_node_child(declarationNode, i)));
+            } else if (ts_node_type(ts_node_child(declarationNode, i)) == std::string("number_definition")) {
+                this->globalNumberVariables.push_back(parseDeclaration(content, ts_node_child(declarationNode, i)));
+            } else if (ts_node_type(ts_node_child(declarationNode, i)) == std::string("parameter_definition")) {
+                this->parameters.push_back(parseDeclaration(content, ts_node_child(declarationNode, i)));
+            }
+        }
+    }
+
+    // Extract the signature from the parse tree.
+    static RawSignature makeSignature(const std::string &content, const TSNode &signatureNode) {
+        if (ts_node_type(signatureNode) != std::string("signature")) {
+            throw std::runtime_error("Expected signature node");
+        }
+        const uint32_t nodeSize = ts_node_child_count(signatureNode);
+        std::string name;
+        std::vector<std::string> stringVariables;
+        std::vector<std::string> numberVariables;
+        for (uint32_t i = 0; i < nodeSize; i++) {
+            if (const TSNode child = ts_node_child(signatureNode, i);
+                ts_node_type(child) == std::string("identifier")) {
+                name = std::string(content.begin() + ts_node_start_byte(child),
+                                   content.begin() + ts_node_end_byte(child));
+            } else if (ts_node_type(child) == std::string("string_definition")) {
+                stringVariables.push_back(parseDeclaration(content, child));
+            } else if (ts_node_type(child) == std::string("number_definition")) {
+                numberVariables.push_back(parseDeclaration(content, child));
+            }
+        }
+
+        return RawSignature{name, stringVariables, numberVariables};
+    }
+
+    static std::optional<TSNode> ts_node_child_by_type(const TSNode &initialConstraintsNode, const std::string &type) {
+        const uint32_t nodeSize = ts_node_child_count(initialConstraintsNode);
+        for (uint32_t i = 0; i < nodeSize; i++) {
+            if (const TSNode child = ts_node_child(initialConstraintsNode, i); ts_node_type(child) == type) {
+                return child;
+            }
+        }
+        return std::nullopt;
+    }
+
+    void processStringAtomic(std::string &atomic, const std::string &type) {
+        if (type == std::string("identifier")) {
+            auto it = std::find(this->globalStringVariables.begin(), globalStringVariables.end(), atomic);
+            if (it == this->globalStringVariables.end()) {
+                if (this->localStringVariables) {
+                    it = std::find(this->localStringVariables->begin(), this->localStringVariables->end(), atomic);
+                    if (it != this->localStringVariables->end()) {
+                        atomic = "x" + std::to_string(
+                                     this->globalStringVariables.size() + std::distance(
+                                         this->localStringVariables->begin(), it));
+                        return;
+                    }
+                }
+                throw std::runtime_error("Undeclared string variable: " + atomic);
+            }
+            atomic = "x" + std::to_string(std::distance(this->globalStringVariables.begin(), it));
+        } else {
+            // Replace double quotes with single quotes in the string literal
+            for (char &c: atomic) {
+                if (c == '"') {
+                    c = '\'';
+                }
+            }
+        }
+    }
+
+    void processNumericAtomic(std::string &atomic, const std::string &type) {
+        if (type == std::string("identifier")) {
+            auto it = std::find(this->globalNumberVariables.begin(), this->globalNumberVariables.end(), atomic);
+            if (it == this->globalNumberVariables.end()) {
+                if (this->localNumberVariables) {
+                    it = std::find(this->localNumberVariables->begin(), this->localNumberVariables->end(), atomic);
+                    if (it != this->localNumberVariables->end()) {
+                        atomic = "x" + std::to_string(
+                                     this->globalNumberVariables.size() + std::distance(
+                                         this->localNumberVariables->begin(), it));
+                        return;
+                    }
+                }
+                throw std::runtime_error("Undeclared number variable: " + atomic);
+            }
+            atomic = "x" + std::to_string(std::distance(this->globalNumberVariables.begin(), it));
+        }
+    }
+
+    std::string parseNumericExpr(const std::string &content, const TSNode &constraintNode) {
+        const uint32_t nodeSize = ts_node_child_count(constraintNode);
+        if (nodeSize == 0) {
+            auto atomic = std::string(content.begin() + ts_node_start_byte(constraintNode),
+                                      content.begin() + ts_node_end_byte(constraintNode));
+            this->processNumericAtomic(atomic, ts_node_type(constraintNode));
+            return atomic;
+        }
+        if (nodeSize == 3 && ts_node_type(ts_node_child(constraintNode, 0)) == std::string("(")) {
+            // The case with parentheses, e.g., "(a + b)"
+            const TSNode exprNode = ts_node_child(constraintNode, 1);
+            const std::string expr = this->parseNumericExpr(content, exprNode);
+            return "(" + expr + ")";
+        }
+        if (nodeSize == 3) {
+            const TSNode lhsNode = ts_node_child(constraintNode, 0);
+            const TSNode opNode = ts_node_child(constraintNode, 1);
+            const TSNode rhsNode = ts_node_child(constraintNode, 2);
+            const std::string lhs = this->parseNumericExpr(content, lhsNode);
+            const auto op = std::string(content.begin() + ts_node_start_byte(opNode),
+                                        content.begin() + ts_node_end_byte(opNode));
+            if (op != "+" && op != "-" && op != "*" && op != "/") {
+                throw std::runtime_error("Expected operator to be '+' or '-' but got: " + op);
+            }
+            const std::string rhs = this->parseNumericExpr(content, rhsNode);
+            return lhs + " " + op + " " + rhs;
+        }
+        throw std::runtime_error(
+            "Expected numeric expression to have 0 or 3 children, but got: " + std::to_string(nodeSize));
+    }
+
+    StringConstraint parseStringConstraint(const std::string &content, const TSNode &constraintNode) {
+        if (ts_node_type(constraintNode) != std::string("string_constraint")) {
+            throw std::runtime_error("Expected string_constraint node");
+        }
+        if (ts_node_child_count(constraintNode) != 3) {
+            throw std::runtime_error("Expected string_constraint to have exactly 3 children");
+        }
+        const TSNode lhsNode = ts_node_child(constraintNode, 0);
+        const TSNode opNode = ts_node_child(constraintNode, 1);
+        const TSNode rhsNode = ts_node_child(constraintNode, 2);
+
+        std::string lhs = std::string(content.begin() + ts_node_start_byte(lhsNode),
+                                      content.begin() + ts_node_end_byte(lhsNode));
+        this->processStringAtomic(lhs, ts_node_type(lhsNode));
+        std::string op = std::string(content.begin() + ts_node_start_byte(opNode),
+                                     content.begin() + ts_node_end_byte(opNode));
+        if (op != "==" && op != "!=") {
+            throw std::runtime_error("Expected operator to be '==' or '!=' but got: " + op);
+        }
+        std::string rhs = std::string(content.begin() + ts_node_start_byte(rhsNode),
+                                      content.begin() + ts_node_end_byte(rhsNode));
+        this->processStringAtomic(rhs, ts_node_type(rhsNode));
+        return boost::lexical_cast<StringConstraint>(lhs + " " + op + " " + rhs);
+    }
+
+    NumberConstraint parseNumericConstraint(const std::string &content, const TSNode &constraintNode) {
+        if (ts_node_type(constraintNode) != std::string("numeric_constraint")) {
+            throw std::runtime_error("Expected numeric_constraint node");
+        }
+        if (ts_node_child_count(constraintNode) != 3) {
+            throw std::runtime_error("Expected numeric_constraint to have exactly 3 children");
+        }
+        const TSNode lhsNode = ts_node_child(constraintNode, 0);
+        const TSNode opNode = ts_node_child(constraintNode, 1);
+        const TSNode rhsNode = ts_node_child(constraintNode, 2);
+
+        const std::string lhs = this->parseNumericExpr(content, lhsNode);
+        const auto op = std::string(content.begin() + ts_node_start_byte(opNode),
+                                    content.begin() + ts_node_end_byte(opNode));
+        if (op != "==" && op != "!=" && op != "<" && op != "<=" && op != ">" && op != ">=") {
+            throw std::runtime_error("Expected operator to be '==', '!=', '<', '<=', '>', or '>=' but got: " + op);
+        }
+        const std::string rhs = this->parseNumericExpr(content, rhsNode);
+        return boost::lexical_cast<NumberConstraint>(lhs + " " + op + " " + rhs);
+    }
+
+    void parseConstraintList(const std::string &content, TSNode parent,
+                             std::vector<StringConstraint> &stringConstraints,
+                             std::vector<NumberConstraint> &initialNumberConstraints) {
+        if (ts_node_type(parent) != std::string("constraint_list")) {
+            throw std::runtime_error("Expected constraint_list node");
+        }
+        uint32_t nodeSize = ts_node_child_count(parent);
+        while (true) {
+            if (nodeSize == 0) {
+                break;
+            }
+            const TSNode child = ts_node_child(parent, 0);
+            if (ts_node_type(child) != std::string("constraint")) {
+                throw std::runtime_error("Expected constraint node as first child of constraint_list");
+            }
+            if (TSNode constraint = ts_node_child(child, 0);
+                ts_node_type(constraint) == std::string("string_constraint")) {
+                this->initialStringConstraints.push_back(this->parseStringConstraint(content, constraint));
+            } else if (ts_node_type(constraint) == std::string("numeric_constraint")) {
+                this->initialNumberConstraints.push_back(this->parseNumericConstraint(content, constraint));
+            }
+
+            if (nodeSize == 3) {
+                parent = ts_node_child(parent, 2);
+                nodeSize = ts_node_child_count(parent);
+            } else {
+                break;
+            }
+        }
+    }
+
+    void parseInits(const std::string &content, const TSNode &initialConstraintsNode) {
+        if (ts_node_type(initialConstraintsNode) != std::string("initial_constraints")) {
+            throw std::runtime_error("Expected initial constraints node");
+        }
+        if constexpr (!std::is_same_v<TimingConstraint, ParametricTimingConstraint>) {
+            throw std::runtime_error("Giving initial constraints is only supported for parametric timing constraints");
+        }
+        // Find a child node with type "constraint_list"
+        std::optional<TSNode> parent = ts_node_child_by_type(initialConstraintsNode, "constraint_list");
+        if (!parent.has_value()) {
+            return;
+        }
+        this->parseConstraintList(content, parent.value(),
+                                  this->initialStringConstraints, this->initialNumberConstraints);
+    }
+
+    Automaton parseExpr(const std::string &content, const TSNode &exprNode) {
+        if (ts_node_type(exprNode) != std::string("expr")) {
+            throw std::runtime_error("Expected expr node");
+        }
+        if (const uint32_t nodeSize = ts_node_child_count(exprNode); nodeSize != 1) {
+            throw std::runtime_error(
+                "Expected expr node to have exactly one child, but got: " + std::to_string(nodeSize));
+        }
+        /*
+        *     expr: $ => choice(
+      $.identifier,
+      $.atomic,
+      $.concat,
+      $.conjunction,
+      $.disjunction,
+      $.optional,
+      $.kleene_star,
+      $.kleene_plus,
+      $.within,
+      $.time_restriction,
+      $.paren_expr
+    ),
+         */
+        if (const TSNode child = ts_node_child(exprNode, 0); ts_node_type(child) == std::string("identifier")) {
+            const auto identifier = std::string(content.begin() + ts_node_start_byte(child),
+                                                content.begin() + ts_node_end_byte(child));
+            auto it = this->automata.find(identifier);
+            if (it == this->automata.end()) {
+                throw std::runtime_error("Undeclared automaton: " + identifier);
+            }
+            return it->second;
+        } else if (ts_node_type(child) == std::string("atomic")) {
+            const TSNode identifierNode = ts_node_child(child, 0);
+            if (ts_node_type(identifierNode) != std::string("identifier")) {
+                throw std::runtime_error("Expected atomic node to have identifier child");
+            }
+            auto signatureName = std::string(content.begin() + ts_node_start_byte(identifierNode),
+                                             content.begin() + ts_node_end_byte(identifierNode));
+            RawSignature *signature = nullptr;
+            for (auto &sig: this->signatures) {
+                if (sig.name == signatureName) {
+                    signature = &sig;
+                    break;
+                }
+            }
+            if (!signature) {
+                throw std::runtime_error("Undeclared automaton signature: " + signatureName);
+            }
+            // Create a new automaton based on the signature
+            this->localStringVariables = &signature->stringVariables;
+            this->localNumberVariables = &signature->numberVariables;
+
+            Automaton result = Automaton();
+            this->setGlobalData(result);
+            result.states.reserve(2);
+            auto initialState = std::make_shared<State>(false);
+            auto finalState = std::make_shared<State>(true);
+            result.states.push_back(initialState);
+            result.states.push_back(finalState);
+            result.initialStates.push_back(initialState);
+            AutomatonTransition<StringConstraint, NumberConstraint, TimingConstraint, Update> transition;
+            std::optional<TSNode> argNode = this->ts_node_child_by_type(child, "arg_list");
+            std::optional<TSNode> constraintNode;
+            std::optional<TSNode> updateNode;
+            if (std::optional<TSNode> guardNode = ts_node_child_by_type(child, "guard_block"); guardNode.has_value()) {
+                constraintNode = ts_node_child_by_type(guardNode.value(), "constraint_list");
+                updateNode = ts_node_child_by_type(guardNode.value(), "assignment_list");
+            }
+            if (constraintNode.has_value()) {
+                this->parseConstraintList(content, constraintNode.value(),
+                                          transition.stringConstraints, transition.numConstraints);
+            }
+            if (updateNode.has_value()) {
+                // TODO: Implement update parsing
+            }
+            transition.target = finalState;
+
+            // Clean up the local environment
+            this->localStringVariables = nullptr;
+            this->localNumberVariables = nullptr;
+
+            return result;
+        } else if (ts_node_type(child) == std::string("kleene_star")) {
+            const TSNode innerNode = ts_node_child(child, 0);
+            Automaton automaton = this->parseExpr(content, innerNode);
+            return star(std::move(automaton));
+        } else if (ts_node_type(child) == std::string("kleene_plus")) {
+            const TSNode innerNode = ts_node_child(child, 0);
+            Automaton automaton = this->parseExpr(content, innerNode);
+            return plus(std::move(automaton));
+        } else if (ts_node_type(child) == std::string("paren_expr")) {
+            if (ts_node_child_count(child) != 3) {
+                throw std::runtime_error("Expected paren_expr node to have exactly three children");
+            }
+            const TSNode innerNode = ts_node_child(child, 1);
+            return this->parseExpr(content, innerNode);
+        } else if (ts_node_type(child) == std::string("concat")) {
+            if (ts_node_child_count(child) != 3) {
+                throw std::runtime_error("Expected concat node to have at least two children");
+            }
+            TSNode lhsNode = ts_node_child(child, 0);
+            TSNode rhsNode = ts_node_child(child, 2);
+            Automaton lhs = this->parseExpr(content, lhsNode);
+            Automaton rhs = this->parseExpr(content, rhsNode);
+            return concatenate(std::move(lhs), std::move(rhs));
+        } else {
+            std::cout << "Parsing automaton node: " << ts_node_type(child) << std::endl;
+            throw std::runtime_error("Expected automaton node as child of expr node");
+        }
+    }
+
+    std::vector<RawSignature> signatures;
+    std::vector<std::string> parameters;
+    std::vector<std::string> globalStringVariables;
+    std::vector<std::string> globalNumberVariables;
+    std::vector<std::string> *localStringVariables = nullptr;
+    std::vector<std::string> *localNumberVariables = nullptr;
+    std::vector<StringConstraint> initialStringConstraints;
+    std::vector<NumberConstraint> initialNumberConstraints;
+    std::unordered_map<std::string, Automaton> automata;
+    std::optional<Automaton> expr;
+};
