@@ -22,6 +22,7 @@ Usage
 **-i** *file*, **--input** *file* Read a timed word from *file*. <br />
 **-f** *file*, **--automaton** *file* Read a timed automaton from *file*. <br />
 **-s** *file*, **-signature** *pattern* Read a signature from *file*. <br />
+**-n**, **--new** Use the experimental syntax of SyMon. <br />
 **-b**, **-boolean** non-parametric and Boolean mode (default). <br />
 **-d**, **-dataparametric** data-parametric mode. <br />
 **-p**, **-parametric** fully parametric mode. <br />
@@ -33,6 +34,9 @@ Example
     ./build/symon -df ./example/copy/copy_data_parametric.dot -s ./example/copy/copy.sig < ./example/copy/copy.txt
     ./build/symon -pf ./example/copy/copy_parametric.dot -s ./example/copy/copy.sig < ./example/copy/copy.txt
     ./build/symon -pf ./example/copy/copy_tpm.dot -s ./example/copy/copy.sig < ./example/copy/copy.txt
+    ./build/symon -nf ./example/copy/copy.symon < ./example/copy/copy.txt
+    ./build/symon -dnf ./example/copy/copy.symon < ./example/copy/copy.txt
+    ./build/symon -pnf ./example/copy/copy.symon < ./example/copy/copy.txt
 
 The examples used in our CAV 2019 paper is [here](example/cav2019/README.md).
 
