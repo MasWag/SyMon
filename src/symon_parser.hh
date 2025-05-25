@@ -6,7 +6,6 @@
 #include "tree_sitter/api.h"
 #include "tree_sitter/tree-sitter-symon.h"
 
-#include "io_operators.hh"
 #include "signature.hh"
 
 namespace boost {
@@ -18,6 +17,9 @@ namespace boost {
 namespace std {
     using namespace Parma_Polyhedra_Library::IO_Operators;
 }
+
+#include "io_operators.hh"
+#include "automaton_parser.hh"
 
 #include <boost/lexical_cast.hpp>
 
@@ -69,7 +71,11 @@ public:
             } else if (ts_node_type(child) == std::string("initial_constraints")) {
                 this->parseInits(content, child);
             } else if (ts_node_type(child) == std::string("let_in")) {
-                // TODO: Implement let-in parsing
+                const TSNode idNode = ts_node_child(child, 1);
+                auto id = std::string(content.begin() + ts_node_start_byte(idNode),
+                                      content.begin() + ts_node_end_byte(idNode));
+                TSNode innerNode = ts_node_child(child, 3);
+                this->automata[id] = this->parseExpr(content, innerNode);
             } else if (ts_node_type(child) == std::string("expr")) {
                 this->expr = this->parseExpr(content, child);
             }
@@ -238,6 +244,9 @@ private:
             this->processNumericAtomic(atomic, ts_node_type(constraintNode));
             return atomic;
         }
+        if (nodeSize == 1) {
+            return this->parseNumericExpr(content, ts_node_child(constraintNode, 0));
+        }
         if (nodeSize == 3 && ts_node_type(ts_node_child(constraintNode, 0)) == std::string("(")) {
             // The case with parentheses, e.g., "(a + b)"
             const TSNode exprNode = ts_node_child(constraintNode, 1);
@@ -291,6 +300,11 @@ private:
             throw std::runtime_error("Expected numeric_constraint node");
         }
         if (ts_node_child_count(constraintNode) != 3) {
+            std::cout << ts_node_child_count(constraintNode) << std::endl;
+            std::string innerContent =
+                    std::string(content.begin() + ts_node_start_byte(constraintNode),
+                                content.begin() + ts_node_end_byte(constraintNode));
+            std::cout << "Inner content: " << innerContent << std::endl;
             throw std::runtime_error("Expected numeric_constraint to have exactly 3 children");
         }
         const TSNode lhsNode = ts_node_child(constraintNode, 0);
@@ -298,13 +312,62 @@ private:
         const TSNode rhsNode = ts_node_child(constraintNode, 2);
 
         const std::string lhs = this->parseNumericExpr(content, lhsNode);
-        const auto op = std::string(content.begin() + ts_node_start_byte(opNode),
-                                    content.begin() + ts_node_end_byte(opNode));
-        if (op != "==" && op != "!=" && op != "<" && op != "<=" && op != ">" && op != ">=") {
-            throw std::runtime_error("Expected operator to be '==', '!=', '<', '<=', '>', or '>=' but got: " + op);
+        auto op = std::string(content.begin() + ts_node_start_byte(opNode),
+                              content.begin() + ts_node_end_byte(opNode));
+        if (op != "=" && op != "<>" && op != "<" && op != "<=" && op != ">" && op != ">=") {
+            throw std::runtime_error("Expected operator to be '=', '<>', '<', '<=', '>', or '>=' but got: " + op);
+        }
+        if (op == "=") {
+            op = "==";
+        } else if (op == "<>") {
+            op = "!=";
         }
         const std::string rhs = this->parseNumericExpr(content, rhsNode);
         return boost::lexical_cast<NumberConstraint>(lhs + " " + op + " " + rhs);
+    }
+
+    void processTimeAtomic(std::string &atomic, const std::string &type) {
+        if (type == std::string("identifier")) {
+            auto it = std::find(this->parameters.begin(), this->parameters.end(), atomic);
+            if (it == this->parameters.end()) {
+                throw std::runtime_error("Undeclared number variable: " + atomic);
+            }
+            atomic = "p" + std::to_string(std::distance(this->parameters.begin(), it));
+        }
+    }
+
+    std::string parseTimeExpr(const std::string &content, const TSNode &constraintNode) {
+        const uint32_t nodeSize = ts_node_child_count(constraintNode);
+        if (nodeSize == 0) {
+            auto atomic = std::string(content.begin() + ts_node_start_byte(constraintNode),
+                                      content.begin() + ts_node_end_byte(constraintNode));
+            this->processTimeAtomic(atomic, ts_node_type(constraintNode));
+            return atomic;
+        }
+        if (nodeSize == 1) {
+            return parseTimeExpr(content, ts_node_child(constraintNode, 0));
+        }
+        if (nodeSize == 3 && ts_node_type(ts_node_child(constraintNode, 0)) == std::string("(")) {
+            // The case with parentheses, e.g., "(a + b)"
+            const TSNode exprNode = ts_node_child(constraintNode, 1);
+            const std::string expr = this->parseTimeExpr(content, exprNode);
+            return "(" + expr + ")";
+        }
+        if (nodeSize == 3) {
+            const TSNode lhsNode = ts_node_child(constraintNode, 0);
+            const TSNode opNode = ts_node_child(constraintNode, 1);
+            const TSNode rhsNode = ts_node_child(constraintNode, 2);
+            const std::string lhs = this->parseTimeExpr(content, lhsNode);
+            const auto op = std::string(content.begin() + ts_node_start_byte(opNode),
+                                        content.begin() + ts_node_end_byte(opNode));
+            if (op != "+" && op != "-") {
+                throw std::runtime_error("Expected operator to be '+' or '-' but got: " + op);
+            }
+            const std::string rhs = this->parseTimeExpr(content, rhsNode);
+            return lhs + " " + op + " " + rhs;
+        }
+        throw std::runtime_error(
+            "Expected numeric expression to have 0 or 3 children, but got: " + std::to_string(nodeSize));
     }
 
     void parseConstraintList(const std::string &content, TSNode parent,
@@ -354,6 +417,72 @@ private:
                                   this->initialStringConstraints, this->initialNumberConstraints);
     }
 
+    TimingConstraint parseTimingConstraint(const std::string &content, const TSNode &constraintNode,
+                                           const std::size_t clockIndex) {
+        if (ts_node_type(constraintNode) != std::string("timing_constraint")) {
+            throw std::runtime_error("Expected timing_constraint node");
+        }
+        TSNode parent = ts_node_child(constraintNode, 0);
+        if (ts_node_type(parent) == std::string("intervals")) {
+            std::string lowerBound = this->parseTimeExpr(content, ts_node_child(parent, 1));
+            std::string upperBound = this->parseTimeExpr(content, ts_node_child(parent, 3));
+            bool isLowerInclusive = ts_node_type(ts_node_child(parent, 0)) == std::string("[");
+            bool isUpperInclusive = ts_node_type(ts_node_child(parent, 4)) == std::string("]");
+
+            if constexpr (std::is_same_v<TimingConstraint, ParametricTimingConstraint>) {
+                auto lowerGuard = boost::lexical_cast<ParametricTimingConstraintHelper>(
+                    "x" + std::to_string(clockIndex) + " " + (isLowerInclusive ? ">=" : ">") + " " + lowerBound);
+                auto upperGuard = boost::lexical_cast<ParametricTimingConstraintHelper>(
+                    "x" + std::to_string(clockIndex) + " " + (isUpperInclusive ? "<=" : "<") + " " + upperBound);
+                Parma_Polyhedra_Library::Constraint lowerConstraint, upperConstraint;
+                lowerGuard.extract(this->parameters.size(), lowerConstraint);
+                upperGuard.extract(this->parameters.size(), upperConstraint);
+                ParametricTimingValuation result{this->parameters.size() + clockIndex + 1};
+                result.add_constraint(lowerConstraint);
+                result.add_constraint(upperConstraint);
+                return result;
+            } else {
+                return {
+                    boost::lexical_cast<::TimingConstraint>(
+                        "x" + std::to_string(clockIndex) + " " + (isLowerInclusive ? ">=" : ">") + " " + lowerBound),
+                    boost::lexical_cast<::TimingConstraint>(
+                        "x" + std::to_string(clockIndex) + " " + (isUpperInclusive ? "<=" : "<") + " " + upperBound)
+                };
+            }
+        }
+        if (ts_node_type(parent) == std::string("half_guard")) {
+            const TSNode comparatorNode = ts_node_child(parent, 1);
+            auto comparator = std::string(content.begin() + ts_node_start_byte(comparatorNode),
+                                          content.begin() + ts_node_end_byte(comparatorNode));
+            if (comparator != "<" && comparator != "<=" && comparator != ">" && comparator != ">=" && comparator != "="
+                && comparator != "<>") {
+                throw std::runtime_error(
+                    "Expected comparator to be '<', '<=', '>', '>=', '=', or '<>', but got: " + comparator);
+            }
+            if (comparator == "=") {
+                comparator = "==";
+            } else if (comparator == "<>") {
+                comparator = "!=";
+            }
+            const std::string expr = this->parseTimeExpr(content, ts_node_child(parent, 2));
+            if constexpr (std::is_same_v<TimingConstraint, ParametricTimingConstraint>) {
+                auto guard = boost::lexical_cast<ParametricTimingConstraintHelper>(
+                    "x" + std::to_string(clockIndex) + " " + comparator + " " + expr);
+                Parma_Polyhedra_Library::Constraint constraint;
+                guard.extract(this->parameters.size(), constraint);
+                ParametricTimingValuation result{this->parameters.size() + clockIndex + 1};
+                result.add_constraint(constraint);
+                return result;
+            } else {
+                return {
+                    boost::lexical_cast<::TimingConstraint>(
+                        "x" + std::to_string(clockIndex) + " " + comparator + " " + expr)
+                };
+            }
+        }
+        throw std::runtime_error("Expected half_guard node or intervals node, but got: " + std::string(ts_node_type(parent)));
+    }
+
     Automaton parseExpr(const std::string &content, const TSNode &exprNode) {
         if (ts_node_type(exprNode) != std::string("expr")) {
             throw std::runtime_error("Expected expr node");
@@ -362,21 +491,7 @@ private:
             throw std::runtime_error(
                 "Expected expr node to have exactly one child, but got: " + std::to_string(nodeSize));
         }
-        /*
-        *     expr: $ => choice(
-      $.identifier,
-      $.atomic,
-      $.concat,
-      $.conjunction,
-      $.disjunction,
-      $.optional,
-      $.kleene_star,
-      $.kleene_plus,
-      $.within,
-      $.time_restriction,
-      $.paren_expr
-    ),
-         */
+
         if (const TSNode child = ts_node_child(exprNode, 0); ts_node_type(child) == std::string("identifier")) {
             const auto identifier = std::string(content.begin() + ts_node_start_byte(child),
                                                 content.begin() + ts_node_end_byte(child));
@@ -436,20 +551,6 @@ private:
             this->localNumberVariables = nullptr;
 
             return result;
-        } else if (ts_node_type(child) == std::string("kleene_star")) {
-            const TSNode innerNode = ts_node_child(child, 0);
-            Automaton automaton = this->parseExpr(content, innerNode);
-            return star(std::move(automaton));
-        } else if (ts_node_type(child) == std::string("kleene_plus")) {
-            const TSNode innerNode = ts_node_child(child, 0);
-            Automaton automaton = this->parseExpr(content, innerNode);
-            return plus(std::move(automaton));
-        } else if (ts_node_type(child) == std::string("paren_expr")) {
-            if (ts_node_child_count(child) != 3) {
-                throw std::runtime_error("Expected paren_expr node to have exactly three children");
-            }
-            const TSNode innerNode = ts_node_child(child, 1);
-            return this->parseExpr(content, innerNode);
         } else if (ts_node_type(child) == std::string("concat")) {
             if (ts_node_child_count(child) != 3) {
                 throw std::runtime_error("Expected concat node to have at least two children");
@@ -459,6 +560,71 @@ private:
             Automaton lhs = this->parseExpr(content, lhsNode);
             Automaton rhs = this->parseExpr(content, rhsNode);
             return concatenate(std::move(lhs), std::move(rhs));
+        } else if (ts_node_type(child) == std::string("conjunction")) {
+            if (ts_node_child_count(child) != 3) {
+                throw std::runtime_error("Expected conjunction node to have exactly three children");
+            }
+            TSNode lhsNode = ts_node_child(child, 0);
+            TSNode rhsNode = ts_node_child(child, 2);
+            Automaton lhs = this->parseExpr(content, lhsNode);
+            Automaton rhs = this->parseExpr(content, rhsNode);
+            return conjunction(std::move(lhs), std::move(rhs));
+        } else if (ts_node_type(child) == std::string("disjunction")) {
+            if (ts_node_child_count(child) != 3) {
+                throw std::runtime_error("Expected disjunction node to have exactly three children");
+            }
+            TSNode lhsNode = ts_node_child(child, 0);
+            TSNode rhsNode = ts_node_child(child, 2);
+            Automaton lhs = this->parseExpr(content, lhsNode);
+            Automaton rhs = this->parseExpr(content, rhsNode);
+            return disjunction(std::move(lhs), std::move(rhs));
+        } else if (ts_node_type(child) == std::string("optional")) {
+            if (ts_node_child_count(child) != 2) {
+                throw std::runtime_error("Expected optional node to have exactly two children");
+            }
+            TSNode innerNode = ts_node_child(child, 0);
+            Automaton innerExpr = this->parseExpr(content, innerNode);
+            return emptyOr(std::move(innerExpr));
+        } else if (ts_node_type(child) == std::string("kleene_star")) {
+            const TSNode innerNode = ts_node_child(child, 0);
+            Automaton automaton = this->parseExpr(content, innerNode);
+            return star(std::move(automaton));
+        } else if (ts_node_type(child) == std::string("kleene_plus")) {
+            const TSNode innerNode = ts_node_child(child, 0);
+            Automaton automaton = this->parseExpr(content, innerNode);
+            return plus(std::move(automaton));
+        } else if (ts_node_type(child) == std::string("within")) {
+            if (ts_node_child_count(child) != 5) {
+                throw std::runtime_error("Expected within node to have exactly three children");
+            }
+            TSNode innerNode = ts_node_child(child, 3);
+            Automaton innerExpr = this->parseExpr(content, innerNode);
+            TSNode timingConstraintNode = ts_node_child(child, 1);
+            TimingConstraint guard = this->parseTimingConstraint(content, timingConstraintNode,
+                                                                 innerExpr.clockVariableSize);
+            return timeRestriction(std::move(innerExpr), guard);
+        } else if (ts_node_type(child) == std::string("time_restriction")) {
+            if (ts_node_child_count(child) != 3) {
+                throw std::runtime_error("Expected time_restriction node to have exactly three children");
+            }
+
+            // Parse the inner expression
+            const TSNode innerNode = ts_node_child(child, 0);
+            Automaton innerExpr = this->parseExpr(content, innerNode);
+
+            // Parse the timing constraint
+            TSNode timingConstraintNode = ts_node_child(child, 2);
+            TimingConstraint guard = this->parseTimingConstraint(content, timingConstraintNode,
+                                                                 innerExpr.clockVariableSize);
+
+            // Apply the time restriction operation
+            return timeRestriction(std::move(innerExpr), guard);
+        } else if (ts_node_type(child) == std::string("paren_expr")) {
+            if (ts_node_child_count(child) != 3) {
+                throw std::runtime_error("Expected paren_expr node to have exactly three children");
+            }
+            const TSNode innerNode = ts_node_child(child, 1);
+            return this->parseExpr(content, innerNode);
         } else {
             std::cout << "Parsing automaton node: " << ts_node_type(child) << std::endl;
             throw std::runtime_error("Expected automaton node as child of expr node");
