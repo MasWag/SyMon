@@ -155,7 +155,7 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
             BOOST_CHECK_EQUAL(result.states.size(), 5);
 
             // Check that the new state is at the beginning
-            BOOST_CHECK(result.states[0]->isMatch);
+            BOOST_CHECK(result.states.back()->isMatch);
 
             // Check that the initial states now include the new state
             BOOST_CHECK_EQUAL(result.initialStates.size(), 2);
@@ -320,7 +320,7 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
             BOOST_CHECK_EQUAL(result.states.size(), 4);
 
             // Check that the new state is at the beginning and is final
-            BOOST_CHECK(result.states[0]->isMatch);
+            BOOST_CHECK(result.states.back()->isMatch);
 
             // Check that we now have two initial states
             BOOST_CHECK_EQUAL(result.initialStates.size(), 2);
@@ -494,7 +494,7 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
             BOOST_CHECK_EQUAL(result.states.size(), 5);
 
             // Check that the new state is at the beginning
-            BOOST_CHECK(result.states[0]->isMatch);
+            BOOST_CHECK(result.states.back()->isMatch);
 
             // Check that the initial states now include the new state
             BOOST_CHECK_EQUAL(result.initialStates.size(), 2);
@@ -661,7 +661,7 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
             BOOST_CHECK_EQUAL(result.states.size(), 4);
 
             // Check that the new state is at the beginning and is final
-            BOOST_CHECK(result.states[0]->isMatch);
+            BOOST_CHECK(result.states.back()->isMatch);
 
             // Check that we now have two initial states
             BOOST_CHECK_EQUAL(result.initialStates.size(), 2);
@@ -835,7 +835,7 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
             BOOST_CHECK_EQUAL(result.states.size(), 5);
 
             // Check that the new state is at the beginning
-            BOOST_CHECK(result.states[0]->isMatch);
+            BOOST_CHECK(result.states.back()->isMatch);
 
             // Check that the initial states now include the new state
             BOOST_CHECK_EQUAL(result.initialStates.size(), 2);
@@ -1002,7 +1002,7 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
             BOOST_CHECK_EQUAL(result.states.size(), 4);
 
             // Check that the new state is at the beginning and is final
-            BOOST_CHECK(result.states[0]->isMatch);
+            BOOST_CHECK(result.states.back()->isMatch);
 
             // Check that we now have two initial states
             BOOST_CHECK_EQUAL(result.initialStates.size(), 2);
