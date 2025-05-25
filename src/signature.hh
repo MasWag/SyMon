@@ -10,6 +10,7 @@
  */
 class Signature {
 public:
+  Signature() = default;
   explicit Signature(std::istream& is) {
     std::string key;
     std::size_t stringSize, numberSize;
