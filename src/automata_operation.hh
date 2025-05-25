@@ -249,6 +249,23 @@ TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> con
 }
 
 /*!
+ * @brief Compute the automaton that accepts the empty string or the words accepted by the given timed automaton.
+ *
+ * @param[in] given The given timed automaton.
+ * @return A TimedAutomaton recognizing the empty string or the words accepted by the given automaton.
+ */
+template<typename StringConstraint, typename NumberConstraint, typename TimingConstraint, typename Update>
+TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> emptyOr(
+    TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> &&given) {
+    // Create a new initial state that is also a final state and has no outgoing transitions.
+    auto newInitialState = std::make_shared<AutomatonState<StringConstraint, NumberConstraint, TimingConstraint, Update> >(true);
+    given.states.push_back(newInitialState);
+    given.initialStates.push_back(std::move(newInitialState));
+
+    return given;
+}
+
+/*!
  * @brief Compute the Kleene-Plus of the given timed automaton.
  *
  * @param[in] given The given timed automaton.
@@ -304,13 +321,7 @@ TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> plu
 template<typename StringConstraint, typename NumberConstraint, typename TimingConstraint, typename Update>
 TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> star(
     TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> &&given) {
-    // Add a new initial state that is also a final state and has no outgoing transitions.
-    auto newInitialState = std::make_shared<AutomatonState<StringConstraint, NumberConstraint, TimingConstraint,
-        Update> >(true);
-    given.states.insert(given.states.begin(), newInitialState);
-    given.initialStates.push_back(newInitialState);
-
-    return plus(std::move(given));
+    return plus(emptyOr(std::move(given)));
 }
 
 /*!
