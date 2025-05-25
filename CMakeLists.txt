@@ -13,6 +13,9 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-deprecated-register")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DDEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "-flto -O3 -DRELEASE -DNDEBUG")
 
+# Define PROJECT_ROOT in C++'s preprocessor
+add_definitions(-DPROJECT_ROOT="${CMAKE_SOURCE_DIR}")
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -27,15 +30,34 @@ find_library(GMPXX_LIBRARY NAMES gmpxx libgmpxx)
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(GMP DEFAULT_MSG GMP_INCLUDE_DIRS GMP_LIBRARY)
 
-include_directories(src/ ${PROJECT_BINARY_DIR} ${PPL_INCLUDES}
-                    ${GMP_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
+# Find tree-sitter with pkg-config
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(TREE_SITTER REQUIRED tree-sitter)
+
+# Find tree-sitter-symon with pkg-config
+pkg_check_modules(TREE_SITTER_SYMON REQUIRED tree-sitter-symon)
+
+include_directories(
+  src/
+  ${PROJECT_BINARY_DIR}
+  ${PPL_INCLUDES}
+  ${GMP_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIRS}
+  ${TREE_SITTER_INCLUDE_DIRS}
+  ${TREE_SITTER_SYMON_INCLUDE_DIRS})
 
 # Config for Main
 add_executable(symon src/main.cc)
 
 target_link_libraries(
-  symon ${Boost_GRAPH_LIBRARY} ${PPL_PPL_LIBRARY} ${GMP_LIBRARY}
-  ${GMPXX_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY})
+  symon
+  ${Boost_GRAPH_LIBRARY}
+  ${PPL_PPL_LIBRARY}
+  ${GMP_LIBRARY}
+  ${GMPXX_LIBRARY}
+  ${Boost_PROGRAM_OPTIONS_LIBRARY}
+  ${TREE_SITTER_LINK_LIBRARIES}
+  ${TREE_SITTER_SYMON_LINK_LIBRARIES})
 
 # Config for Test
 enable_testing()
@@ -57,11 +79,18 @@ add_executable(
   test/ppl_rational_test.cc
   test/automaton_operation_test.cc
   test/timing_constraint_test.cc
-  test/parametric_timing_constraint_test.cc)
+  test/parametric_timing_constraint_test.cc
+  test/symon_parser_test.cc)
 
 target_link_libraries(
-  unit_test ${GMP_LIBRARY} ${Boost_GRAPH_LIBRARY} ${PPL_PPL_LIBRARY}
-  ${GMPXX_LIBRARY} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
+  unit_test
+  ${GMP_LIBRARY}
+  ${Boost_GRAPH_LIBRARY}
+  ${PPL_PPL_LIBRARY}
+  ${GMPXX_LIBRARY}
+  ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+  ${TREE_SITTER_LINK_LIBRARIES}
+  ${TREE_SITTER_SYMON_LINK_LIBRARIES})
 
 add_test(
   NAME unit_test
