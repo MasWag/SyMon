@@ -330,7 +330,7 @@ private:
         if (type == std::string("identifier")) {
             auto it = std::find(this->parameters.begin(), this->parameters.end(), atomic);
             if (it == this->parameters.end()) {
-                throw std::runtime_error("Undeclared number variable: " + atomic);
+                throw std::runtime_error("Undeclared timing parameter: " + atomic);
             }
             atomic = "p" + std::to_string(std::distance(this->parameters.begin(), it));
         }
