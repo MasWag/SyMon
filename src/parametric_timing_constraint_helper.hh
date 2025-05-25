@@ -85,43 +85,46 @@ public:
 };
 
 
-static inline
-std::istream &skipBlank(std::istream &is) {
+static std::istream &skipBlank(std::istream &is) {
   while (true) {
-    switch (is.get()) {
+    switch (is.peek()) {
       case ' ':
       case '\t':
       case '\n':
+        is.get(); // Consume a whitespace
         continue;
       default:
-        is.unget();
         return is;
     }
   }
 }
 
-static inline
-std::istream &readAtom(std::istream &is, ParametricTimingConstraintHelper::atom_t &atom) {
+static std::istream &readAtom(std::istream &is, ParametricTimingConstraintHelper::atom_t &atom) {
   skipBlank(is);
+  // Here, we terminate if the stream is not good, including EOF or fail state.
   if (!is.good()) {
     return is;
   }
-  switch (is.get()) {
+
+  switch (is.peek()) {
     case 'x': {
+      is.get(); // consume 'x'
       atom.second = ParametricTimingConstraintHelper::kind_t::VARIABLE;
       std::size_t id;
       is >> id;
-      if (!is.good()) {
+      // Here and below, we check if the input stream is not in a fail state, excluding EOF.
+      if (is.fail()) {
         return is;
       }
       atom.first = id;
       break;
     }
     case 'p': {
+      is.get(); // consume 'p'
       atom.second = ParametricTimingConstraintHelper::kind_t::PARAMETER;
       std::size_t id;
       is >> id;
-      if (!is.good()) {
+      if (is.fail()) {
         return is;
       }
       atom.first = id;
@@ -129,10 +132,9 @@ std::istream &readAtom(std::istream &is, ParametricTimingConstraintHelper::atom_
     }
     default : {
       atom.second = ParametricTimingConstraintHelper::kind_t::CONSTANT;
-      is.unget();
       Parma_Polyhedra_Library::Coefficient constant;
       is >> constant;
-      if (!is.good()) {
+      if (is.fail()) {
         return is;
       }
       atom.first = constant;
