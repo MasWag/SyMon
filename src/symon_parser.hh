@@ -508,11 +508,13 @@ private:
             auto signatureName = std::string(content.begin() + ts_node_start_byte(identifierNode),
                                              content.begin() + ts_node_end_byte(identifierNode));
             RawSignature *signature = nullptr;
+            std::size_t signatureId = 0;
             for (auto &sig: this->signatures) {
                 if (sig.name == signatureName) {
                     signature = &sig;
                     break;
                 }
+                signatureId++;
             }
             if (!signature) {
                 throw std::runtime_error("Undeclared automaton signature: " + signatureName);
@@ -545,6 +547,7 @@ private:
                 // TODO: Implement update parsing
             }
             transition.target = finalState;
+            initialState->next[signatureId] = {std::move(transition)};
 
             // Clean up the local environment
             this->localStringVariables = nullptr;
