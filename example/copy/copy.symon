@@ -1,0 +1,36 @@
+var {
+    savedValue: number;
+}
+
+signature update {
+    id: string;
+    value: number;
+}
+
+let initialIrrelevant = (update(id, value))* in
+let saveY = update( id, value | id == "y" | savedValue := value) in
+let notX = update(id, value | id != "x" ) in
+let consistent = update(id, value | id == "x" && savedValue - value = 0) in
+let inConsistent = update(id, value | id == "x" && savedValue - value > 0 && savedValue - value < 0) in
+
+let getConsistent =
+    within (< 3) {
+        saveY;
+        (update(id, value))*;
+        consistent
+    }
+in
+let keepConsistent =
+    within (< 5) {
+        getConsistent;
+        (notX || consistent)*
+    }
+in
+
+let main =
+    keepConsistent;
+    update(id, value)
+in
+
+initialIrrelevant; (main)%(> 5)
+

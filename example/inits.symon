@@ -1,0 +1,16 @@
+var {
+    notId: string;
+    lowerBound: number;
+}
+
+init {
+    notId != "Bob" && lowerBound > 0
+}
+
+signature update {
+    id: string;
+    value: number;
+}
+
+# Due to the limitation of the parse, the right hand side must be a constant
+(update( id, value | id != notId && value - lowerBound > 0))+
