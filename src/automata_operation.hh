@@ -197,7 +197,7 @@ TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> con
     }
 
     // For any transition to the left final state, we make a transition with the same meta data to the right initial state
-    for (const auto &source: right.states) {
+    for (const auto &source: left.states) {
         for (auto &[label, transitions]: source->next) {
             std::vector<AutomatonTransition<StringConstraint, NumberConstraint, TimingConstraint, Update> >
                     newTransitions;
