@@ -1,11 +1,11 @@
 #pragma once
 
-#include <automata_operation.hh>
 #include <istream>
 
 #include "tree_sitter/api.h"
 #include "tree_sitter/tree-sitter-symon.h"
 
+#include "automata_operation.hh"
 #include "signature.hh"
 
 namespace boost {
