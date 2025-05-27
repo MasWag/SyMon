@@ -165,5 +165,33 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             BOOST_CHECK_EQUAL(automaton.numberVariableSize, 1);
         }
 
+        BOOST_AUTO_TEST_CASE(updates) {
+            SymonParser<StringConstraint, NumberConstraint, ParametricTimingConstraint, Update> parser;
+            const std::string content = "var {count: number; count2: number;} init {count == 0 && count2 && 0} signature update {id: string;value: number;} update(id, value | | count := count + 1; count2 := count2 + 2 ; count := count + count 2)";
+            parser.parse(content);
+
+            const auto automaton = parser.getAutomaton();
+            BOOST_CHECK_EQUAL(automaton.numberVariableSize, 2);
+            BOOST_CHECK_EQUAL(automaton.stringVariableSize, 0);
+            // The automaton should have two states: initial and final.
+            BOOST_CHECK_EQUAL(automaton.states.size(), 2);
+            // The initial state is not a match state, and the final state is a match state.
+            BOOST_CHECK_EQUAL(automaton.states.front()->isMatch, 0);
+            BOOST_CHECK_EQUAL(automaton.states.back()->isMatch, 1);
+            BOOST_CHECK_EQUAL(automaton.initialStates.size(), 1);
+            BOOST_CHECK_EQUAL(automaton.initialStates.front(), automaton.states.front());
+            // The initial state should have one transition to the final state labeled with the signature.
+            BOOST_CHECK_EQUAL(automaton.states[0]->next.size(), 1);
+            BOOST_TEST((automaton.states[0]->next.find(0) != automaton.states[0]->next.end()));
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].size(), 1);
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().target.lock().get(), automaton.states.back().get());
+            // The transition should have no string constraints, no number constraint, no guard, and no updates.
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().stringConstraints.size(), 0);
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().numConstraints.size(), 0);
+            BOOST_TEST(automaton.states[0]->next[0].front().guard.is_universe());
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().update.stringUpdate.size(), 0);
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().update.numberUpdate.size(), 3);
+        }
+
     BOOST_AUTO_TEST_SUITE_END() // Parametric
 BOOST_AUTO_TEST_SUITE_END() // SymonParserTests
