@@ -1,6 +1,7 @@
 #pragma once
 
 #include <istream>
+#include <type_traits>
 
 #include "tree_sitter/api.h"
 #include "tree_sitter/tree-sitter-symon.h"
@@ -538,13 +539,46 @@ private:
             if (std::optional<TSNode> guardNode = ts_node_child_by_type(child, "guard_block"); guardNode.has_value()) {
                 constraintNode = ts_node_child_by_type(guardNode.value(), "constraint_list");
                 updateNode = ts_node_child_by_type(guardNode.value(), "assignment_list");
-            }
-            if (constraintNode.has_value()) {
-                this->parseConstraintList(content, constraintNode.value(),
-                                          transition.stringConstraints, transition.numConstraints);
-            }
-            if (updateNode.has_value()) {
-                // TODO: Implement update parsing
+                if (constraintNode.has_value()) {
+                    this->parseConstraintList(content, constraintNode.value(),
+                                              transition.stringConstraints, transition.numConstraints);
+                }
+                if (updateNode.has_value()) {
+                    const std::size_t updateSize = ts_node_child_count(*updateNode);
+                    for (int i = 0; i < updateSize; ++i ) {
+                        TSNode update = ts_node_child(*updateNode, i);
+                        if (ts_node_type(update) != std::string("assignment")) {
+                            continue;
+                        }
+                        // Obtain the identifier as string
+                        TSNode identifierNode = ts_node_child(update, 0);
+                        if (ts_node_type(identifierNode) != std::string("identifier")) {
+                            throw std::runtime_error("Expected assignment node to have identifier child");
+                        }
+                        auto identifier = std::string(content.begin() + ts_node_start_byte(identifierNode),
+                                                      content.begin() + ts_node_end_byte(identifierNode));
+                        // Check if the identifier is a string or number variable. Here, the assigned value must be global.
+                        if (auto it = std::find(this->globalStringVariables.begin(), this->globalStringVariables.end(), identifier); it != this->globalStringVariables.end()) {
+                            // String variable assignment
+                            auto id = std::distance(this->globalStringVariables.begin(), it);
+                            TSNode valueNode = ts_node_child(update, 2);
+                            auto value = std::string(content.begin() + ts_node_start_byte(valueNode),
+                                                     content.begin() + ts_node_end_byte(valueNode));
+                            this->processStringAtomic(value, ts_node_type(valueNode));
+                            std::string asString = "x" + std::to_string(id) + " := " + value;
+                            transition.update.stringUpdate.push_back(boost::lexical_cast<std::remove_reference_t<decltype(transition.update.stringUpdate.front())> >(asString));
+                        } else if (auto it = std::find(this->globalNumberVariables.begin(), this->globalNumberVariables.end(), identifier); it != this->globalNumberVariables.end()) {
+                            // Number variable assignment
+                            auto id = std::distance(this->globalNumberVariables.begin(), it);
+                            TSNode valueNode = ts_node_child(update, 2);
+                            auto value = this->parseNumericExpr(content, valueNode);
+                            std::string asString = "x" + std::to_string(id) + " := " + value;
+                            transition.update.numberUpdate.push_back(boost::lexical_cast<std::remove_reference_t<decltype(transition.update.numberUpdate.front())> >(asString));
+                        } else {
+                            throw std::runtime_error("Undeclared variable in assignment: " + identifier);
+                        }
+                    }
+                }
             }
             transition.target = finalState;
             initialState->next[signatureId] = {std::move(transition)};
