@@ -19,8 +19,7 @@ add_definitions(-DPROJECT_ROOT="${CMAKE_SOURCE_DIR}")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Boost 1.67.0 REQUIRED COMPONENTS program_options
-                                              unit_test_framework graph)
+find_package(Boost 1.67.0 REQUIRED COMPONENTS program_options unit_test_framework graph)
 
 find_package(PPL REQUIRED)
 
