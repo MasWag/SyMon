@@ -1,8 +1,8 @@
+cmake_minimum_required(VERSION 3.10)
 project(SyMon CXX)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
-cmake_minimum_required(VERSION 3.5)
 include(CheckCXXCompilerFlag)
 
 check_cxx_compiler_flag("-march=native" COMPILER_SUPPORTS_MARCH_NATIVE)
@@ -16,8 +16,8 @@ set(CMAKE_CXX_FLAGS_RELEASE "-flto -O3 -DRELEASE -DNDEBUG")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Boost 1.67.0 REQUIRED COMPONENTS
-  program_options unit_test_framework graph)
+find_package(Boost CONFIG 1.67.0 REQUIRED COMPONENTS program_options
+                                                     unit_test_framework graph)
 find_package(PPL REQUIRED)
 
 find_path(GMP_INCLUDE_DIRS NAMES gmp.h gmpxx.h)
