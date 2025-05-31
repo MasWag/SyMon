@@ -192,7 +192,7 @@ private:
         return std::nullopt;
     }
 
-    void processStringAtomic(std::string &atomic, const std::string &type) {
+    void processStringAtomic(std::string &atomic, const std::string &type) const {
         if (type == std::string("identifier")) {
             auto it = std::find(this->globalStringVariables.begin(), globalStringVariables.end(), atomic);
             if (it == this->globalStringVariables.end()) {
@@ -201,13 +201,13 @@ private:
                     if (it != this->localStringVariables->end()) {
                         atomic = "x" + std::to_string(
                                      this->globalStringVariables.size() + std::distance(
-                                         this->localStringVariables->begin(), it));
+                                         this->localStringVariables->cbegin(), it));
                         return;
                     }
                 }
                 throw std::runtime_error("Undeclared string variable: " + atomic);
             }
-            atomic = "x" + std::to_string(std::distance(this->globalStringVariables.begin(), it));
+            atomic = "x" + std::to_string(std::distance(this->globalStringVariables.cbegin(), it));
         } else {
             // Replace double quotes with single quotes in the string literal
             for (char &c: atomic) {
@@ -218,7 +218,7 @@ private:
         }
     }
 
-    void processNumericAtomic(std::string &atomic, const std::string &type) {
+    void processNumericAtomic(std::string &atomic, const std::string &type) const {
         if (type == std::string("identifier")) {
             auto it = std::find(this->globalNumberVariables.begin(), this->globalNumberVariables.end(), atomic);
             if (it == this->globalNumberVariables.end()) {
@@ -227,17 +227,17 @@ private:
                     if (it != this->localNumberVariables->end()) {
                         atomic = "x" + std::to_string(
                                      this->globalNumberVariables.size() + std::distance(
-                                         this->localNumberVariables->begin(), it));
+                                         this->localNumberVariables->cbegin(), it));
                         return;
                     }
                 }
                 throw std::runtime_error("Undeclared number variable: " + atomic);
             }
-            atomic = "x" + std::to_string(std::distance(this->globalNumberVariables.begin(), it));
+            atomic = "x" + std::to_string(std::distance(this->globalNumberVariables.cbegin(), it));
         }
     }
 
-    std::string parseNumericExpr(const std::string &content, const TSNode &constraintNode) {
+    std::string parseNumericExpr(const std::string &content, const TSNode &constraintNode) const {
         const uint32_t nodeSize = ts_node_child_count(constraintNode);
         if (nodeSize == 0) {
             auto atomic = std::string(content.begin() + ts_node_start_byte(constraintNode),
@@ -271,7 +271,7 @@ private:
             "Expected numeric expression to have 0 or 3 children, but got: " + std::to_string(nodeSize));
     }
 
-    StringConstraint parseStringConstraint(const std::string &content, const TSNode &constraintNode) {
+    StringConstraint parseStringConstraint(const std::string &content, const TSNode &constraintNode) const {
         if (ts_node_type(constraintNode) != std::string("string_constraint")) {
             throw std::runtime_error("Expected string_constraint node");
         }
@@ -296,7 +296,7 @@ private:
         return boost::lexical_cast<StringConstraint>(lhs + " " + op + " " + rhs);
     }
 
-    NumberConstraint parseNumericConstraint(const std::string &content, const TSNode &constraintNode) {
+    NumberConstraint parseNumericConstraint(const std::string &content, const TSNode &constraintNode) const {
         if (ts_node_type(constraintNode) != std::string("numeric_constraint")) {
             throw std::runtime_error("Expected numeric_constraint node");
         }
@@ -327,7 +327,7 @@ private:
         return boost::lexical_cast<NumberConstraint>(lhs + " " + op + " " + rhs);
     }
 
-    void processTimeAtomic(std::string &atomic, const std::string &type) {
+    void processTimeAtomic(std::string &atomic, const std::string &type) const {
         if (type == std::string("identifier")) {
             auto it = std::find(this->parameters.begin(), this->parameters.end(), atomic);
             if (it == this->parameters.end()) {
@@ -337,7 +337,7 @@ private:
         }
     }
 
-    std::string parseTimeExpr(const std::string &content, const TSNode &constraintNode) {
+    std::string parseTimeExpr(const std::string &content, const TSNode &constraintNode) const {
         const uint32_t nodeSize = ts_node_child_count(constraintNode);
         if (nodeSize == 0) {
             auto atomic = std::string(content.begin() + ts_node_start_byte(constraintNode),
@@ -373,7 +373,7 @@ private:
 
     void parseConstraintList(const std::string &content, TSNode parent,
                              std::vector<StringConstraint> &stringConstraints,
-                             std::vector<NumberConstraint> &initialNumberConstraints) {
+                             std::vector<NumberConstraint> &numberConstraints) const {
         if (ts_node_type(parent) != std::string("constraint_list")) {
             throw std::runtime_error("Expected constraint_list node");
         }
@@ -388,9 +388,9 @@ private:
             }
             if (TSNode constraint = ts_node_child(child, 0);
                 ts_node_type(constraint) == std::string("string_constraint")) {
-                this->initialStringConstraints.push_back(this->parseStringConstraint(content, constraint));
+                stringConstraints.push_back(this->parseStringConstraint(content, constraint));
             } else if (ts_node_type(constraint) == std::string("numeric_constraint")) {
-                this->initialNumberConstraints.push_back(this->parseNumericConstraint(content, constraint));
+                numberConstraints.push_back(this->parseNumericConstraint(content, constraint));
             }
 
             if (nodeSize == 3) {
@@ -419,7 +419,7 @@ private:
     }
 
     TimingConstraint parseTimingConstraint(const std::string &content, const TSNode &constraintNode,
-                                           const std::size_t clockIndex) {
+                                           const std::size_t clockIndex) const {
         if (ts_node_type(constraintNode) != std::string("timing_constraint")) {
             throw std::runtime_error("Expected timing_constraint node");
         }

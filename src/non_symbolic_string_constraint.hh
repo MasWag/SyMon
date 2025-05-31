@@ -22,6 +22,10 @@ namespace NonSymbolic {
         result = *env.at(std::get<std::size_t>(result));
       }
     }
+
+      bool operator==(const StringAtom &other) const {
+        return value == other.value;
+      }
   };
 
   /*!
