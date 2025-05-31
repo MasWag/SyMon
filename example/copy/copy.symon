@@ -7,7 +7,7 @@ signature update {
     value: number;
 }
 
-let initialIrrelevant = (update(id, value))* in
+let ignoreIrrelevant = (update(id, value))* in
 let saveY = update( id, value | id == "y" | savedValue := value) in
 let notX = update(id, value | id != "x" ) in
 let consistent = update(id, value | id == "x" && savedValue - value = 0) in
@@ -15,8 +15,7 @@ let inConsistent = update(id, value | id == "x" && savedValue - value > 0 && sav
 
 let getConsistent =
     within (< 3) {
-        saveY;
-        (update(id, value))*;
+        ignoreIrrelevant;
         consistent
     }
 in
@@ -32,5 +31,4 @@ let main =
     update(id, value)
 in
 
-initialIrrelevant; (main)%(> 5)
-
+ignoreIrrelevant; saveY ; (main)%(> 5)
