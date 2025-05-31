@@ -78,6 +78,7 @@ add_executable(
   test/parametric_monitor_test.cc
   test/ppl_rational_test.cc
   test/automaton_operation_test.cc
+  test/automaton_deep_copy_test.cc
   test/timing_constraint_test.cc
   test/parametric_timing_constraint_test.cc
   test/symon_parser_test.cc)
