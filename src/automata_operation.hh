@@ -321,7 +321,7 @@ TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> plu
 template<typename StringConstraint, typename NumberConstraint, typename TimingConstraint, typename Update>
 TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> star(
     TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> &&given) {
-    return plus(emptyOr(std::move(given)));
+    return emptyOr(plus(std::move(given)));
 }
 
 /*!
