@@ -1,6 +1,8 @@
 #pragma once
 
 #include "automaton.hh"
+#include "parametric_timing_constraint.hh"
+#include <ppl.hh>
 
 /*!
  * @brief Compute the disjunction of two timed automata.
@@ -224,8 +226,8 @@ TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> con
                         // Create a new transition to the initial state of the right automaton
                         // We need to reset all clock variables
                         std::vector<VariableID> resetVars;
-                        resetVars.reserve(left.clockVariableSize);
-                        for (VariableID i = 0; i < left.clockVariableSize; ++i) {
+                        resetVars.reserve(right.clockVariableSize);
+                        for (VariableID i = 0; i < right.clockVariableSize; ++i) {
                             resetVars.push_back(i);
                         }
                         newTransitions.push_back({
@@ -370,6 +372,20 @@ TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> tim
     TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> &&given, TimingConstraint guard){
     given.clockVariableSize += 1; // Add a new clock variable for the time restriction
 
+    bool acceptEmpty = acceptsEmptyWord(given);
+
+    if constexpr (std::is_same_v<TimingConstraint, std::vector<::TimingConstraint> >) {
+        TimingValuation clockValuation(given.clockVariableSize, 0);
+        acceptEmpty = acceptEmpty && eval(clockValuation, guard);
+    }
+    if constexpr (std::is_same_v<TimingConstraint, ParametricTimingConstraint>) {
+        Parma_Polyhedra_Library::Variable var{given.clockVariableSize - 1};
+        Parma_Polyhedra_Library::NNC_Polyhedron clockValuation{given.clockVariableSize};
+        clockValuation.add_constraint(var == 0);
+        clockValuation.intersection_assign(guard);
+        acceptEmpty = acceptEmpty && !clockValuation.is_empty();
+    }
+
     // Add a new final state that has no outgoing transitions and add transitions to this state from all transitions to the original final states.
     auto newFinalState = std::make_shared<AutomatonState<StringConstraint, NumberConstraint, TimingConstraint, Update> >(true);
     given.states.push_back(newFinalState);
@@ -413,6 +429,7 @@ TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> tim
     for (auto it = given.states.begin(); it != given.states.end();) {
         if ((*it)->isMatch && (*it)->next.empty() && *it != newFinalState) {
             it = given.states.erase(it);
+            given.initialStates.erase(std::remove(given.initialStates.begin(), given.initialStates.end(), *it), given.initialStates.end());
         } else {
             ++it;
         }
@@ -425,5 +442,5 @@ TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> tim
         }
     }
 
-    return given;
+    return acceptEmpty ? emptyOr(std::move(given)) : given;
 }

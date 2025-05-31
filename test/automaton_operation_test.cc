@@ -937,8 +937,8 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
             // Create a timing constraint for the time restriction
             using namespace Parma_Polyhedra_Library;
             using namespace Symbolic;
-            ParametricTimingConstraint timeGuard = ParametricTimingConstraint(1);
-            timeGuard.add_constraint(Variable(0) <= 10);
+            ParametricTimingConstraint timeGuard = ParametricTimingConstraint(2);
+            timeGuard.add_constraint(Variable(1) <= 10);
             
             // Apply the time restriction operation
             const auto result = timeRestriction(std::move(automaton_copy), timeGuard);
