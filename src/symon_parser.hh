@@ -126,6 +126,24 @@ public:
     }
 
 private:
+    // template<typename StringConstraint, typename NumberConstraint, typename TimingConstraint, typename Update>
+    /*!
+     * @brief Returns if the last clock variable is reset at any transition.
+     */
+    static bool noResetLastClock(const Automaton& automaton) {
+        const VariableID lastClockId = automaton.clockVariableSize - 1;
+        for (const auto &state: automaton.states) {
+            for (const auto &[_, transitions]: state->next) {
+                for (const auto &transition: transitions) {
+                    if (std::find(transition.resetVars.begin(), transition.resetVars.end(), lastClockId) != transition.resetVars.end()) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
     static std::string parseDeclaration(const std::string &content, const TSNode &declarationNode) {
         if (ts_node_type(declarationNode) != std::string("string_definition") && ts_node_type(declarationNode) !=
             std::string("number_definition") && ts_node_type(declarationNode) != std::string("parameter_definition")) {
@@ -634,11 +652,21 @@ private:
             if (ts_node_child_count(child) != 5) {
                 throw std::runtime_error("Expected within node to have exactly three children");
             }
-            TSNode innerNode = ts_node_child(child, 3);
+
+            // Parse the inner expression
+            const TSNode innerNode = ts_node_child(child, 3);
             Automaton innerExpr = this->parseExpr(content, innerNode);
+            // Optimization: if the last clock variable is not reset, we reuse the last clock variable
+            if (innerExpr.clockVariableSize > 0 && noResetLastClock(innerExpr)) {
+                innerExpr.clockVariableSize--;
+            }
+
+            // Parse the timing constraint
             TSNode timingConstraintNode = ts_node_child(child, 1);
             TimingConstraint guard = this->parseTimingConstraint(content, timingConstraintNode,
                                                                  innerExpr.clockVariableSize);
+
+            // Apply the time restriction operation
             return timeRestriction(std::move(innerExpr), guard);
         } else if (ts_node_type(child) == std::string("time_restriction")) {
             if (ts_node_child_count(child) != 3) {
@@ -648,6 +676,10 @@ private:
             // Parse the inner expression
             const TSNode innerNode = ts_node_child(child, 0);
             Automaton innerExpr = this->parseExpr(content, innerNode);
+            // Optimization: if the last clock variable is not reset, we reuse the last clock variable
+            if (innerExpr.clockVariableSize > 0 && noResetLastClock(innerExpr)) {
+                innerExpr.clockVariableSize--;
+            }
 
             // Parse the timing constraint
             TSNode timingConstraintNode = ts_node_child(child, 2);
