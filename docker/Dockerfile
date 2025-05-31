@@ -1,19 +1,27 @@
 FROM debian:trixie-slim
 LABEL maintainer="Masaki Waga <masakiwaga@gmail.com>"
 
-# Install required build dependencies
+# Install required build dependencies including tree-sitter
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         ca-certificates \
         build-essential \
         libppl-dev \
         libboost-all-dev \
-        cmake \
         libgmp-dev \
-        git && \
+        cmake \
+        git \
+        libtree-sitter-dev && \
     rm -rf /var/lib/apt/lists/*
 
-# Clone and build SyMon in one layer
+# Install tree-sitter-symon
+RUN git clone --depth 1 https://github.com/MasWag/tree-sitter-symon.git /tmp/tree-sitter-symon && \
+    cmake -S /tmp/tree-sitter-symon -B /tmp/tree-sitter-symon/build -DCMAKE_BUILD_TYPE=Release && \
+    cmake --build /tmp/tree-sitter-symon/build && \
+    cmake --install /tmp/tree-sitter-symon/build && \
+    rm -rf /tmp/tree-sitter-symon
+
+# Clone and build SyMon
 RUN git clone --depth 1 https://github.com/MasWag/symon.git /tmp/symon && \
     cmake -S /tmp/symon -B /tmp/symon/build -DCMAKE_BUILD_TYPE=Release && \
     cmake --build /tmp/symon/build && \
