@@ -69,6 +69,37 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().update.numberUpdate.size(), 0);
         }
 
+        BOOST_AUTO_TEST_CASE(stringConstraint) {
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint>, Update> parser;
+            const std::string content = "signature update {id: string;value: number;} update(id, value | id == \"y\")";
+            parser.parse(content);
+
+            const NonParametricTA<int> automaton = parser.getAutomaton();
+            BOOST_CHECK_EQUAL(automaton.numberVariableSize, 0);
+            BOOST_CHECK_EQUAL(automaton.stringVariableSize, 0);
+            // The automaton should have two states: initial and final.
+            BOOST_CHECK_EQUAL(automaton.states.size(), 2);
+            // The initial state is not a match state, and the final state is a match state.
+            BOOST_CHECK_EQUAL(automaton.states.front()->isMatch, false);
+            BOOST_CHECK_EQUAL(automaton.states.back()->isMatch, true);
+            BOOST_CHECK_EQUAL(automaton.initialStates.size(), 1);
+            BOOST_CHECK_EQUAL(automaton.initialStates.front(), automaton.states.front());
+            // The initial state should have one transition to the final state labeled with the signature.
+            BOOST_CHECK_EQUAL(automaton.states[0]->next.size(), 1);
+            BOOST_TEST((automaton.states[0]->next.find(0) != automaton.states[0]->next.end()));
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].size(), 1);
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().target.lock().get(), automaton.states.back().get());
+            // The transition should have no string constraints, no number constraint, no guard, and no updates.
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().stringConstraints.size(), 1);
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().stringConstraints.front().kind, StringConstraint::kind_t::EQ);
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().stringConstraints.front().children[0], StringAtom{VariableID{0}});
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().stringConstraints.front().children[1], StringAtom{"y"});
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().numConstraints.size(), 0);
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.size(), 0);
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().update.stringUpdate.size(), 0);
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().update.numberUpdate.size(), 0);
+        }
+
         BOOST_AUTO_TEST_CASE(concat) {
             SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint>, Update> parser;
             const std::string content = "signature update {id: string;value: number;} update(id, value); update(id, value)";
@@ -112,6 +143,41 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().update.numberUpdate.size(), 0);
             // The final state should have no transitions.
             BOOST_CHECK_EQUAL(automaton.states[2]->next.size(), 0);
+        }
+
+        BOOST_AUTO_TEST_CASE(star) {
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint>, Update> parser;
+            const std::string content = "signature update {id: string;value: number;} (update(id, value))*";
+            parser.parse(content);
+
+            const NonParametricTA<int> automaton = parser.getAutomaton();
+            BOOST_CHECK_EQUAL(automaton.numberVariableSize, 0);
+            BOOST_CHECK_EQUAL(automaton.stringVariableSize, 0);
+            // The automaton should have two states: initial and final.
+            BOOST_CHECK_EQUAL(automaton.states.size(), 3);
+            // The initial state is not a match state, and the final state is a match state.
+            BOOST_TEST(!automaton.states.at(0)->isMatch);
+            BOOST_TEST(automaton.states.at(1)->isMatch);
+            BOOST_TEST(automaton.states.at(2)->isMatch);
+            BOOST_CHECK_EQUAL(automaton.initialStates.size(), 2);
+            BOOST_CHECK_EQUAL(automaton.initialStates.at(0), automaton.states.at(0));
+            BOOST_CHECK_EQUAL(automaton.initialStates.at(1), automaton.states.at(2));
+
+            // The initial state should have one transition to the original final state labeled with the signature.
+            BOOST_CHECK_EQUAL(automaton.states[0]->next.size(), 1);
+            BOOST_TEST((automaton.states[0]->next.find(0) != automaton.states[0]->next.end()));
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].size(), 1);
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().target.lock().get(), automaton.states.at(1).get());
+            // The transition should have no string constraints, no number constraint, no guard, and no updates.
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().stringConstraints.size(), 0);
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().numConstraints.size(), 0);
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.size(), 0);
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().update.stringUpdate.size(), 0);
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().update.numberUpdate.size(), 0);
+
+            // The other states should have no transitions
+            BOOST_TEST(automaton.states[1]->next.empty());
+            BOOST_TEST(automaton.states[2]->next.empty());
         }
 
         BOOST_AUTO_TEST_CASE(inits) {
