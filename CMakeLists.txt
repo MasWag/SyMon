@@ -76,6 +76,7 @@ add_executable(
   test/pta_parser_test.cc
   test/parametric_monitor_test.cc
   test/automaton_operation_test.cc
+  test/automaton_deep_copy_test.cc
   test/timing_constraint_test.cc
   test/parametric_timing_constraint_test.cc
   test/symon_parser_test.cc)

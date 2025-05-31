@@ -165,6 +165,23 @@ TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> con
 }
 
 /*!
+ * @brief Check if the given automaton accepts the empty word.
+ *
+ * @param[in] automaton The timed automaton to check.
+ * @return True if the automaton accepts the empty word, false otherwise.
+ */
+template <typename StringConstraint, typename NumberConstraint, typename TimingConstraint, typename Update>
+bool acceptsEmptyWord(const TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> &automaton) {
+    // Check if there is an initial state that is also a final state
+    for (const auto &state: automaton.initialStates) {
+        if (state->isMatch) {
+            return true; // The automaton accepts the empty word
+        }
+    }
+    return false; // No initial state is a final state
+}
+
+/*!
  * @brief Compute the concatenation of two timed automata.
  *
  * @param[in] left   The first (left-hand) timed automaton.
@@ -232,6 +249,12 @@ TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> con
         }
     }
 
+    // If the left automaton accepts the empty word, we need to add the right initial states as the initial states
+    if (acceptsEmptyWord(left)) {
+        left.initialStates.reserve(left.initialStates.size() + right.initialStates.size());
+        std::move(right.initialStates.begin(), right.initialStates.end(), std::back_inserter(left.initialStates));
+    }
+
     // Make the left final states non-final
     for (const auto &state: leftFinalStates) {
         state->isMatch = false;
@@ -239,11 +262,22 @@ TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> con
     // Remove the unnecessary states
     for (const auto &state: removedStates) {
         left.states.erase(std::remove(left.states.begin(), left.states.end(), state), left.states.end());
+        left.initialStates.erase(std::remove(left.initialStates.begin(), left.initialStates.end(), state), left.initialStates.end());
     }
 
     // Move the right states to left
     left.states.reserve(left.states.size() + right.states.size());
     std::move(right.states.begin(), right.states.end(), std::back_inserter(left.states));
+
+    // For each transition, we update the dimensions of the guard
+    for (const auto &sourceState: left.states) {
+        for (auto &[label, transitions]: sourceState->next) {
+            for (auto &transition: transitions) {
+                // Update the guard to include the new clock variable
+                transition.guard = adjustDimension(transition.guard, left.clockVariableSize);
+            }
+        }
+    }
 
     return left;
 }

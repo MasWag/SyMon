@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <cstdint>
 #include <memory>
+#include <unordered_map>
 #include <vector>
 
 using Action = std::size_t;
@@ -25,6 +26,59 @@ struct Automaton {
   inline bool operator == (const Automaton<State> &A) const {
     return initialStates == A.initialStates &&
       states == A.states;
+  }
+
+  /*!
+   * @brief Creates a deep copy of this automaton
+   * @return A new Automaton instance that is a deep copy of this automaton
+   */
+  Automaton<State> deepCopy() const {
+    Automaton<State> result;
+
+    // Create a mapping from original states to their copies
+    std::unordered_map<std::shared_ptr<State>, std::shared_ptr<State>> stateMap;
+
+    // First, create copies of all states (without transitions)
+    result.states.reserve(states.size());
+    for (const auto& state : states) {
+      auto stateCopy = std::make_shared<State>(state->isMatch);
+      result.states.push_back(stateCopy);
+      stateMap[state] = stateCopy;
+    }
+
+    // Set up initial states
+    result.initialStates.reserve(initialStates.size());
+    for (const auto& initialState : initialStates) {
+      result.initialStates.push_back(stateMap[initialState]);
+    }
+
+    // Now copy all transitions, updating the target pointers
+    for (size_t i = 0; i < states.size(); ++i) {
+      const auto& originalState = states[i];
+      auto& copiedState = result.states[i];
+
+      // Copy the transitions map
+      for (const auto& [action, transitions] : originalState->next) {
+        auto& copiedTransitions = copiedState->next[action];
+        copiedTransitions.reserve(transitions.size());
+
+        for (const auto& transition : transitions) {
+          // Create a copy of the transition
+          auto transitionCopy = transition;
+
+          // Update the target pointer to point to the corresponding copied state
+          auto targetState = transition.target.lock();
+          if (targetState && stateMap.find(targetState) != stateMap.end()) {
+            transitionCopy.target = stateMap[targetState];
+          }
+
+          // Add the copied transition to the copied state
+          copiedTransitions.push_back(std::move(transitionCopy));
+        }
+      }
+    }
+
+    return result;
   }
 };
 

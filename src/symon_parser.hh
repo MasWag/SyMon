@@ -500,7 +500,7 @@ private:
             if (it == this->automata.end()) {
                 throw std::runtime_error("Undeclared automaton: " + identifier);
             }
-            return it->second;
+            return it->second.deepCopy();
         } else if (ts_node_type(child) == std::string("atomic")) {
             const TSNode identifierNode = ts_node_child(child, 0);
             if (ts_node_type(identifierNode) != std::string("identifier")) {
