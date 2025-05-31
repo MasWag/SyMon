@@ -40,6 +40,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             const NonParametricTA<int> automaton = parser.getAutomaton();
             BOOST_CHECK_EQUAL(automaton.numberVariableSize, 1);
             BOOST_CHECK_EQUAL(automaton.stringVariableSize, 0);
+            BOOST_CHECK_EQUAL(automaton.clockVariableSize, 1);
         }
 
         BOOST_AUTO_TEST_CASE(atomic) {
@@ -50,6 +51,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             const NonParametricTA<int> automaton = parser.getAutomaton();
             BOOST_CHECK_EQUAL(automaton.numberVariableSize, 0);
             BOOST_CHECK_EQUAL(automaton.stringVariableSize, 0);
+            BOOST_CHECK_EQUAL(automaton.clockVariableSize, 0);
             // The automaton should have two states: initial and final.
             BOOST_CHECK_EQUAL(automaton.states.size(), 2);
             // The initial state is not a match state, and the final state is a match state.
@@ -66,6 +68,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().stringConstraints.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().numConstraints.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.size(), 0);
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().resetVars.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().update.stringUpdate.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().update.numberUpdate.size(), 0);
         }
@@ -78,6 +81,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             const NonParametricTA<int> automaton = parser.getAutomaton();
             BOOST_CHECK_EQUAL(automaton.numberVariableSize, 0);
             BOOST_CHECK_EQUAL(automaton.stringVariableSize, 0);
+            BOOST_CHECK_EQUAL(automaton.clockVariableSize, 0);
             // The automaton should have two states: initial and final.
             BOOST_CHECK_EQUAL(automaton.states.size(), 2);
             // The initial state is not a match state, and the final state is a match state.
@@ -97,6 +101,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().stringConstraints.front().children[1], StringAtom{"y"});
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().numConstraints.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.size(), 0);
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().resetVars.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().update.stringUpdate.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().update.numberUpdate.size(), 0);
         }
@@ -141,6 +146,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             const NonParametricTA<int> automaton = parser.getAutomaton();
             BOOST_CHECK_EQUAL(automaton.numberVariableSize, 0);
             BOOST_CHECK_EQUAL(automaton.stringVariableSize, 0);
+            BOOST_CHECK_EQUAL(automaton.clockVariableSize, 0);
             // The automaton should have three states: initial, intermediate and final.
             BOOST_CHECK_EQUAL(automaton.states.size(), 3);
             BOOST_CHECK_NE(automaton.states.at(0).get(), automaton.states.at(1).get());
@@ -161,6 +167,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().stringConstraints.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().numConstraints.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.size(), 0);
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().resetVars.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().update.stringUpdate.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().update.numberUpdate.size(), 0);
             // The intermediate state should have one transition to the final state labeled with the signature.
@@ -172,6 +179,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().stringConstraints.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().numConstraints.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().guard.size(), 0);
+            BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().resetVars.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().update.stringUpdate.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().update.numberUpdate.size(), 0);
             // The final state should have no transitions.
@@ -186,6 +194,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             const NonParametricTA<int> automaton = parser.getAutomaton();
             BOOST_CHECK_EQUAL(automaton.numberVariableSize, 0);
             BOOST_CHECK_EQUAL(automaton.stringVariableSize, 0);
+            BOOST_CHECK_EQUAL(automaton.clockVariableSize, 0);
             // The automaton should have two states: initial and final.
             BOOST_CHECK_EQUAL(automaton.states.size(), 3);
             // The initial state is not a match state, and the final state is a match state.
@@ -205,6 +214,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().stringConstraints.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().numConstraints.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.size(), 0);
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().resetVars.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().update.stringUpdate.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().update.numberUpdate.size(), 0);
 
@@ -224,6 +234,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             const NonParametricTA<int> automaton = parser.getAutomaton();
             BOOST_CHECK_EQUAL(automaton.numberVariableSize, 0);
             BOOST_CHECK_EQUAL(automaton.stringVariableSize, 0);
+            BOOST_CHECK_EQUAL(automaton.clockVariableSize, 0);
             // The automaton should have two states: initial and final.
             BOOST_CHECK_EQUAL(automaton.states.size(), 2);
             // The initial state is not a match state, and the final state is a match state.
@@ -244,12 +255,14 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().stringConstraints.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().numConstraints.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.size(), 0);
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().resetVars.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().update.stringUpdate.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().update.numberUpdate.size(), 0);
             // The self-loop
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].back().stringConstraints.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].back().numConstraints.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].back().guard.size(), 0);
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].back().resetVars.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].back().update.stringUpdate.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].back().update.numberUpdate.size(), 0);
 
@@ -265,6 +278,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             const NonParametricTA<int> automaton = parser.getAutomaton();
             BOOST_CHECK_EQUAL(automaton.numberVariableSize, 0);
             BOOST_CHECK_EQUAL(automaton.stringVariableSize, 0);
+            BOOST_CHECK_EQUAL(automaton.clockVariableSize, 0);
             // The automaton should have two states: initial and final.
             BOOST_CHECK_EQUAL(automaton.states.size(), 3);
             // The initial state is not a match state, and the final state is a match state.
@@ -287,12 +301,14 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().stringConstraints.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().numConstraints.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.size(), 0);
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().resetVars.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().update.stringUpdate.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().update.numberUpdate.size(), 0);
             // The self-loop
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].back().stringConstraints.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].back().numConstraints.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].back().guard.size(), 0);
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].back().resetVars.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].back().update.stringUpdate.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].back().update.numberUpdate.size(), 0);
 
@@ -312,6 +328,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             const NonParametricTA<int> automaton = parser.getAutomaton();
             BOOST_CHECK_EQUAL(automaton.numberVariableSize, 0);
             BOOST_CHECK_EQUAL(automaton.stringVariableSize, 0);
+            BOOST_CHECK_EQUAL(automaton.clockVariableSize, 0);
             // The automaton should have three states: initial, intermediate and final.
             BOOST_CHECK_EQUAL(automaton.states.size(), 3);
             BOOST_CHECK_NE(automaton.states.at(0).get(), automaton.states.at(1).get());
@@ -334,6 +351,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().stringConstraints.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().numConstraints.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.size(), 0);
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().resetVars.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().update.stringUpdate.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().update.numberUpdate.size(), 0);
             // The intermediate state should have one transition to the final state labeled with the signature.
@@ -345,6 +363,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().stringConstraints.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().numConstraints.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().guard.size(), 0);
+            BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().resetVars.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().update.stringUpdate.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().update.numberUpdate.size(), 0);
             // The final state should have no transitions.
@@ -435,6 +454,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             const ParametricTA automaton = parser.getAutomaton();
             BOOST_CHECK_EQUAL(automaton.numberVariableSize, 1);
             BOOST_CHECK_EQUAL(automaton.stringVariableSize, 0);
+            BOOST_CHECK_EQUAL(automaton.clockVariableSize, 1);
         }
 
         BOOST_AUTO_TEST_CASE(inits) {
@@ -450,6 +470,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             BOOST_CHECK_EQUAL(automaton.states.size(), 3);
             BOOST_CHECK_EQUAL(automaton.stringVariableSize, 1);
             BOOST_CHECK_EQUAL(automaton.numberVariableSize, 1);
+            BOOST_CHECK_EQUAL(automaton.clockVariableSize, 0);
         }
 
         BOOST_AUTO_TEST_CASE(updates) {
@@ -460,6 +481,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             const auto automaton = parser.getAutomaton();
             BOOST_CHECK_EQUAL(automaton.numberVariableSize, 2);
             BOOST_CHECK_EQUAL(automaton.stringVariableSize, 0);
+            BOOST_CHECK_EQUAL(automaton.clockVariableSize, 0);
             // The automaton should have two states: initial and final.
             BOOST_CHECK_EQUAL(automaton.states.size(), 2);
             // The initial state is not a match state, and the final state is a match state.
@@ -476,6 +498,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().stringConstraints.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().numConstraints.size(), 0);
             BOOST_TEST(automaton.states[0]->next[0].front().guard.is_universe());
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().resetVars.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().update.stringUpdate.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().update.numberUpdate.size(), 3);
         }
