@@ -71,7 +71,7 @@ public:
                 this->signatures.push_back(makeSignature(content, child));
             } else if (ts_node_type(child) == std::string("initial_constraints")) {
                 this->parseInits(content, child);
-            } else if (ts_node_type(child) == std::string("let_in")) {
+            } else if (ts_node_type(child) == std::string("def_expr")) {
                 const TSNode idNode = ts_node_child(child, 1);
                 auto id = std::string(content.begin() + ts_node_start_byte(idNode),
                                       content.begin() + ts_node_end_byte(idNode));

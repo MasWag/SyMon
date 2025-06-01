@@ -622,7 +622,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
 
         BOOST_AUTO_TEST_CASE(updates) {
             SymonParser<StringConstraint, NumberConstraint, ParametricTimingConstraint, Update> parser;
-            const std::string content = "var {count: number; count2: number;} init {count == 0 && count2 && 0} signature update {id: string;value: number;} update(id, value | | count := count + 1; count2 := count2 + 2 ; count := count + count 2)";
+            const std::string content = "var {count: number; count2: number;} signature update {id: string;value: number;} update(id, value | | count := count + 1; count2 := count2 + 2 ; count := count + count 2)";
             parser.parse(content);
 
             const auto automaton = parser.getAutomaton();
