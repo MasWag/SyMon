@@ -7,28 +7,28 @@ signature update {
     value: number;
 }
 
-let ignoreIrrelevant = (update(id, value))* in
-let saveY = update( id, value | id == "y" | savedValue := value) in
-let notX = update(id, value | id != "x" ) in
-let consistent = update(id, value | id == "x" && savedValue - value = 0) in
-let inConsistent = update(id, value | id == "x" && savedValue - value > 0 && savedValue - value < 0) in
+expr ignoreIrrelevant { (update(id, value))* }
+expr saveY { update( id, value | id == "y" | savedValue := value) }
+expr notX { update(id, value | id != "x" ) }
+expr consistent { update(id, value | id == "x" && savedValue - value = 0) }
+expr inConsistent { update(id, value | id == "x" && savedValue - value > 0 && savedValue - value < 0) }
 
-let getConsistent =
+expr getConsistent {
     within (< 3) {
         ignoreIrrelevant;
         consistent
     }
-in
-let keepConsistent =
+}
+expr keepConsistent {
     within (< 5) {
         getConsistent;
         (notX || consistent)*
     }
-in
+}
 
-let main =
+expr main {
     keepConsistent;
     update(id, value)
-in
+}
 
 ignoreIrrelevant; saveY ; (main)%(> 5)
