@@ -640,12 +640,33 @@ private:
             TSNode innerNode = ts_node_child(child, 0);
             Automaton innerExpr = this->parseExpr(content, innerNode);
             return emptyOr(std::move(innerExpr));
+        } else if (ts_node_type(child) == std::string("optional_block")) {
+            if (ts_node_child_count(child) != 4) {
+                throw std::runtime_error("Expected optional node to have exactly four children");
+            }
+            TSNode innerNode = ts_node_child(child, 2);
+            Automaton innerExpr = this->parseExpr(content, innerNode);
+            return emptyOr(std::move(innerExpr));
         } else if (ts_node_type(child) == std::string("kleene_star")) {
             const TSNode innerNode = ts_node_child(child, 0);
             Automaton automaton = this->parseExpr(content, innerNode);
             return star(std::move(automaton));
         } else if (ts_node_type(child) == std::string("kleene_plus")) {
             const TSNode innerNode = ts_node_child(child, 0);
+            Automaton automaton = this->parseExpr(content, innerNode);
+            return plus(std::move(automaton));
+        } else if (ts_node_type(child) == std::string("zero_or_more")) {
+            if (ts_node_child_count(child) != 4) {
+                throw std::runtime_error("Expected zero_or_more node to have exactly four children");
+            }
+            const TSNode innerNode = ts_node_child(child, 2);
+            Automaton automaton = this->parseExpr(content, innerNode);
+            return star(std::move(automaton));
+        } else if (ts_node_type(child) == std::string("one_or_more")) {
+            if (ts_node_child_count(child) != 4) {
+                throw std::runtime_error("Expected one_or_more node to have exactly four children");
+            }
+            const TSNode innerNode = ts_node_child(child, 2);
             Automaton automaton = this->parseExpr(content, innerNode);
             return plus(std::move(automaton));
         } else if (ts_node_type(child) == std::string("within")) {
