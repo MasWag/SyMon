@@ -624,6 +624,15 @@ private:
             Automaton lhs = this->parseExpr(content, lhsNode);
             Automaton rhs = this->parseExpr(content, rhsNode);
             return conjunction(std::move(lhs), std::move(rhs));
+        } else if (ts_node_type(child) == std::string("all_of")) {
+            TSNode lhsNode = ts_node_child(child, 2);
+            Automaton lhs = this->parseExpr(content, lhsNode);
+            for (int i = 6; i < ts_node_child_count(child); i += 4) {
+                TSNode rhsNode = ts_node_child(child, i);
+                Automaton rhs = this->parseExpr(content, rhsNode);
+                lhs = conjunction(std::move(lhs), std::move(rhs));
+            }
+            return lhs;
         } else if (ts_node_type(child) == std::string("disjunction")) {
             if (ts_node_child_count(child) != 3) {
                 throw std::runtime_error("Expected disjunction node to have exactly three children");
@@ -633,6 +642,15 @@ private:
             Automaton lhs = this->parseExpr(content, lhsNode);
             Automaton rhs = this->parseExpr(content, rhsNode);
             return disjunction(std::move(lhs), std::move(rhs));
+        } else if (ts_node_type(child) == std::string("one_of")) {
+            TSNode lhsNode = ts_node_child(child, 2);
+            Automaton lhs = this->parseExpr(content, lhsNode);
+            for (int i = 6; i < ts_node_child_count(child); i += 4) {
+                TSNode rhsNode = ts_node_child(child, i);
+                Automaton rhs = this->parseExpr(content, rhsNode);
+                lhs = disjunction(std::move(lhs), std::move(rhs));
+            }
+            return lhs;
         } else if (ts_node_type(child) == std::string("optional")) {
             if (ts_node_child_count(child) != 2) {
                 throw std::runtime_error("Expected optional node to have exactly two children");
