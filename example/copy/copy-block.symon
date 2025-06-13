@@ -1,0 +1,40 @@
+var {
+    savedValue: number;
+}
+
+signature update {
+    id: string;
+    value: number;
+}
+
+expr ignoreIrrelevant { (update(id, value))* }
+expr saveY { update( id, value | id == "y" | savedValue := value) }
+expr notX { update(id, value | id != "x" ) }
+expr consistent { update(id, value | id == "x" && savedValue - value = 0) }
+expr inConsistent { update(id, value | id == "x" && savedValue - value > 0 && savedValue - value < 0) }
+
+expr getConsistent {
+    within (< 3) {
+        ignoreIrrelevant;
+        consistent
+    }
+}
+expr keepConsistent {
+    within (< 5) {
+        getConsistent;
+        zero_or_more {
+            one_of {
+                notX
+            } or {
+                consistent
+            }
+        }
+    }
+}
+
+expr main {
+    keepConsistent;
+    update(id, value)
+}
+
+ignoreIrrelevant; saveY ; (main)%(> 5)
