@@ -1,6 +1,7 @@
 #pragma once
 
 #include "automaton.hh"
+#include "common_types.hh"
 #include "parametric_timing_constraint.hh"
 #include <ppl.hh>
 
@@ -443,4 +444,30 @@ TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> tim
     }
 
     return acceptEmpty ? emptyOr(std::move(given)) : given;
+}
+
+/*!
+ * @brief Skip certain sets of actions.
+ *
+ * This function adds a self-loop transition for each action in the ignored set,
+ *
+ * @param[in] given The given timed automaton.
+ * @param[in] ignored The set of actions to ignore.
+ * @return A TimedAutomaton with the specified actions ignored.
+ */
+template <typename StringConstraint, typename NumberConstraint,
+          typename TimingConstraint, typename Update>
+TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update>
+    ignoreActions(TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> &&given, const std::vector<Action> &ignored) {
+    // Add a self-loop transition for each ignored action
+    for (const auto &state : given.states) {
+        for (const auto &action : ignored) {
+            // Self-loop with no constraints or updates
+            AutomatonTransition<StringConstraint, NumberConstraint, TimingConstraint, Update> transition;
+            transition.target = state;
+            state->next[action].push_back(transition);
+        }
+    }
+
+    return given;
 }

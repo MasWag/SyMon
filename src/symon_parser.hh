@@ -2,7 +2,9 @@
 
 #include <istream>
 #include <type_traits>
+#include <utility>
 
+#include "common_types.hh"
 #include "tree_sitter/api.h"
 #include "tree_sitter/tree-sitter-symon.h"
 
@@ -502,6 +504,29 @@ private:
         throw std::runtime_error("Expected half_guard node or intervals node, but got: " + std::string(ts_node_type(parent)));
     }
 
+    std::vector<Action> parseActionList(const std::string &content, const TSNode &identifierListNode) const {
+        const auto size = (ts_node_child_count(identifierListNode) + 1) / 2;
+        std::vector<Action> actions;
+        actions.reserve(size);
+        for (int i = 0; i < size; ++i) {
+            TSNode identityNode = ts_node_child(identifierListNode, i * 2);
+            auto identifier =
+                std::string(content.begin() + ts_node_start_byte(identityNode),
+                            content.begin() + ts_node_end_byte(identityNode));
+            auto it =
+                std::find_if(this->signatures.begin(), this->signatures.end(),
+                             [&identifier](const RawSignature &sig) {
+                               return sig.name == identifier;
+                             });
+            if (it == this->signatures.end()) {
+                throw std::runtime_error("Undeclared action: " + identifier);
+            }
+            actions.emplace_back(std::distance(this->signatures.begin(), it));
+        }
+
+        return actions;
+    }
+
     Automaton parseExpr(const std::string &content, const TSNode &exprNode) {
         if (ts_node_type(exprNode) != std::string("expr")) {
             throw std::runtime_error("Expected expr node");
@@ -733,6 +758,14 @@ private:
             }
             const TSNode innerNode = ts_node_child(child, 1);
             return this->parseExpr(content, innerNode);
+        } else if (ts_node_type(child) == std::string("ignore")) {
+            if (ts_node_child_count(child) != 5) {
+                throw std::runtime_error("Expected ignore node to have exactly five children");
+            }
+            const TSNode innerNode = ts_node_child(child, 3);
+            const std::vector<Action> ignored = this->parseActionList(content, ts_node_child(child, 1));
+            Automaton innerExpr = this->parseExpr(content, innerNode);
+            return ignoreActions(std::move(innerExpr), ignored);
         } else {
             std::cout << "Parsing automaton node: " << ts_node_type(child) << std::endl;
             throw std::runtime_error("Expected automaton node as child of expr node");
