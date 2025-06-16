@@ -3,6 +3,7 @@
 #include <istream>
 #include <type_traits>
 #include <utility>
+#include <sstream>
 
 #include "common_types.hh"
 #include "tree_sitter/api.h"
@@ -25,6 +26,26 @@ namespace std {
 #include "automaton_parser.hh"
 
 #include <boost/lexical_cast.hpp>
+
+inline std::string makeErrorMessage(const char message[], const std::string &content, const TSNode& node) {
+    std::stringstream ss;
+    ss << message;
+    // Compute the line and position
+    const uint32_t startByte = ts_node_start_byte(node);
+    const uint32_t endByte = ts_node_end_byte(node);
+    const uint32_t startLine = ts_node_start_point(node).row + 1; // Tree-sitter uses 0-based indexing
+    const uint32_t startColumn = ts_node_start_point(node).column + 1; // Tree-sitter uses 0-based indexing
+    const uint32_t endLine = ts_node_end_point(node).row + 1; // Tree-sitter uses 0-based indexing
+    const uint32_t endColumn = ts_node_end_point(node).column + 1; // Tree-sitter uses 0-based indexing
+    ss << " at line " << startLine << ", column " << startColumn;
+    if (startLine != endLine || startColumn != endColumn) {
+        ss << " to line " << endLine << ", column " << endColumn;
+    }
+
+    ss << " (bytes " << startByte << ", " << endByte << ")";
+
+    return ss.str();
+}
 
 template<typename StringConstraint, typename NumberConstraint, typename TimingConstraint, typename Update>
 class SymonParser {
@@ -658,7 +679,7 @@ private:
             return result;
         } else if (ts_node_type(child) == std::string("concat")) {
             if (ts_node_child_count(child) != 3) {
-                throw std::runtime_error("Expected concat node to have at least two children");
+                throw std::runtime_error(makeErrorMessage("Expected concat node to have at least two children", content, child));
             }
             TSNode lhsNode = ts_node_child(child, 0);
             TSNode rhsNode = ts_node_child(child, 2);

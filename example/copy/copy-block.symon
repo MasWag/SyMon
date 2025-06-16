@@ -7,7 +7,11 @@ signature update {
     value: number;
 }
 
-expr ignoreIrrelevant { (update(id, value))* }
+expr ignoreIrrelevant { 
+    ignore update {
+        unobservable()
+    }
+}
 expr saveY { update( id, value | id == "y" | savedValue := value) }
 expr notX { update(id, value | id != "x" ) }
 expr consistent { update(id, value | id == "x" && savedValue - value = 0) }
