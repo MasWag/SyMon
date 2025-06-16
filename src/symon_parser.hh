@@ -551,21 +551,46 @@ private:
             }
             auto signatureName = std::string(content.begin() + ts_node_start_byte(identifierNode),
                                              content.begin() + ts_node_end_byte(identifierNode));
+
+            bool isUnobservable = (signatureName == "unobservable");
+            auto guardNodeOpt = this->ts_node_child_by_type(child, "guard_block");
+            bool hasGuardContent = false;
+            if (guardNodeOpt.has_value()) {
+                hasGuardContent = this->ts_node_child_by_type(*guardNodeOpt, "constraint_list").has_value() ||
+                                   this->ts_node_child_by_type(*guardNodeOpt, "assignment_list").has_value();
+            }
+            if (isUnobservable && !hasGuardContent) {
+                Automaton result;
+                this->setGlobalData(result);
+                result.states.reserve(1);
+                auto state = std::make_shared<State>(true);
+                result.states.push_back(state);
+                result.initialStates.push_back(state);
+                return result;
+            }
+
             RawSignature *signature = nullptr;
             std::size_t signatureId = 0;
-            for (auto &sig: this->signatures) {
-                if (sig.name == signatureName) {
-                    signature = &sig;
-                    break;
+            if (!isUnobservable) {
+                for (auto &sig: this->signatures) {
+                    if (sig.name == signatureName) {
+                        signature = &sig;
+                        break;
+                    }
+                    signatureId++;
                 }
-                signatureId++;
+                if (!signature) {
+                    throw std::runtime_error("Undeclared automaton signature: " + signatureName);
+                }
+                this->localStringVariables = &signature->stringVariables;
+                this->localNumberVariables = &signature->numberVariables;
+            } else {
+                signatureId = 127;
+                static std::vector<std::string> emptyStringVars;
+                static std::vector<std::string> emptyNumberVars;
+                this->localStringVariables = &emptyStringVars;
+                this->localNumberVariables = &emptyNumberVars;
             }
-            if (!signature) {
-                throw std::runtime_error("Undeclared automaton signature: " + signatureName);
-            }
-            // Create a new automaton based on the signature
-            this->localStringVariables = &signature->stringVariables;
-            this->localNumberVariables = &signature->numberVariables;
 
             Automaton result = Automaton();
             this->setGlobalData(result);
