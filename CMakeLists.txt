@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.30)
 project(SyMon CXX)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
@@ -19,8 +19,8 @@ add_definitions(-DPROJECT_ROOT="${CMAKE_SOURCE_DIR}")
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Boost CONFIG 1.67.0 REQUIRED COMPONENTS program_options
-                                                     unit_test_framework graph)
+set(BOOST_COMPONENTS program_options unit_test_framework graph)
+find_package(Boost 1.67.0 REQUIRED COMPONENTS ${BOOST_COMPONENTS})
 find_package(PPL REQUIRED)
 
 find_path(GMP_INCLUDE_DIRS NAMES gmp.h gmpxx.h)
