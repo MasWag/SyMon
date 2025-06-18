@@ -234,12 +234,12 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
 
         BOOST_FIXTURE_TEST_CASE(TimeRestrictionTest, NonParametric::TimeRestrictionFixture) {
             auto automaton_copy = this->automaton;
-            
+
             // Verify the initial state of the automaton
             BOOST_CHECK_EQUAL(automaton_copy.states.size(), 2);
             BOOST_CHECK_EQUAL(automaton_copy.initialStates.size(), 1);
             BOOST_CHECK_EQUAL(automaton_copy.clockVariableSize, 1);
-            
+
             // Verify there's only one final state initially
             size_t finalStatesCount = 0;
             for (const auto &state: automaton_copy.states) {
@@ -250,26 +250,26 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
             BOOST_CHECK_EQUAL(finalStatesCount, 1);
             BOOST_CHECK(automaton_copy.states[1]->isMatch);
             BOOST_CHECK(!automaton_copy.states[0]->isMatch);
-            
+
             // Store a pointer to the original final state
             auto originalFinalState = automaton_copy.states[1];
-            
+
             // Create a timing constraint for the time restriction
             std::vector<TimingConstraint> timeGuard;
             timeGuard.push_back(ConstraintMaker(0) <= 10);
-            
+
             // Apply the time restriction operation
             auto result = timeRestriction(std::move(automaton_copy), timeGuard);
-            
+
             // Check that the clock variable size is increased by 1
             BOOST_CHECK_EQUAL(result.clockVariableSize, 2);
-            
+
             // Check that a new state has been added (the new final state), but the original final state is removed
             BOOST_CHECK_EQUAL(result.states.size(), 2);
-            
+
             // Check that the new final state is final
             BOOST_CHECK(result.states.back()->isMatch);
-            
+
             // Check that there's exactly one final state
             finalStatesCount = 0;
             for (const auto &state: result.states) {
@@ -278,7 +278,7 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
                 }
             }
             BOOST_CHECK_EQUAL(finalStatesCount, 1);
-            
+
             // Check that the transition to the new final state has the time guard applied
             bool hasTransitionToNewFinal = false;
             for (const auto &state: result.states) {
@@ -344,6 +344,50 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
                 }
             }
             BOOST_CHECK(originalFinalStateStillFinal);
+        }
+
+        BOOST_FIXTURE_TEST_CASE(AddConstraintToAllTransitionsTest, CopyFixture) {
+            auto automaton_copy = this->automaton;
+
+            // Verify the initial state of the automaton
+            BOOST_CHECK_EQUAL(automaton_copy.states.size(), 4);
+
+            // Create a timing constraint to add to all transitions
+            std::vector<TimingConstraint> constraint;
+            constraint.push_back(ConstraintMaker(0) <= 5);
+
+            // Count the number of transitions before adding the constraint
+            size_t transitionCount = 0;
+            for (const auto &state : automaton_copy.states) {
+                for (const auto &[label, transitions] : state->next) {
+                    transitionCount += transitions.size();
+                }
+            }
+
+            // Apply the constraint to all transitions
+            addConstraintToAllTransitions(automaton_copy, constraint);
+
+            // Verify that all transitions have the constraint applied
+            size_t constrainedTransitionCount = 0;
+            for (const auto &state : automaton_copy.states) {
+                for (const auto &[label, transitions] : state->next) {
+                    for (const auto &transition : transitions) {
+                        // Check that the constraint is applied to the transition
+                        bool hasConstraint = false;
+                        for (const auto &guard : transition.guard) {
+                            if (guard.x == 0 && guard.odr == TimingConstraint::Order::le && guard.c == 5) {
+                                hasConstraint = true;
+                                break;
+                            }
+                        }
+                        BOOST_CHECK(hasConstraint);
+                        constrainedTransitionCount++;
+                    }
+                }
+            }
+
+            // Verify that the number of transitions remains the same
+            BOOST_CHECK_EQUAL(constrainedTransitionCount, transitionCount);
         }
 
     BOOST_AUTO_TEST_SUITE_END() // NonParametric
@@ -573,12 +617,12 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
 
         BOOST_FIXTURE_TEST_CASE(TimeRestrictionTest, NonParametric::NonParametric::DataParametricTimeRestrictionFixture) {
             auto automaton_copy = this->automaton;
-            
+
             // Verify the initial state of the automaton
             BOOST_CHECK_EQUAL(automaton_copy.states.size(), 2);
             BOOST_CHECK_EQUAL(automaton_copy.initialStates.size(), 1);
             BOOST_CHECK_EQUAL(automaton_copy.clockVariableSize, 1);
-            
+
             // Verify there's only one final state initially
             size_t finalStatesCount = 0;
             for (const auto &state: automaton_copy.states) {
@@ -589,28 +633,28 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
             BOOST_CHECK_EQUAL(finalStatesCount, 1);
             BOOST_CHECK(automaton_copy.states[1]->isMatch);
             BOOST_CHECK(!automaton_copy.states[0]->isMatch);
-            
+
             // Store a pointer to the original final state
             auto originalFinalState = automaton_copy.states[1];
-            
+
             // Create a timing constraint for the time restriction
             using namespace Parma_Polyhedra_Library;
             using namespace Symbolic;
             std::vector<TimingConstraint> timeGuard;
             timeGuard.push_back(ConstraintMaker(0) <= 10);
-            
+
             // Apply the time restriction operation
             auto result = timeRestriction(std::move(automaton_copy), timeGuard);
-            
+
             // Check that the clock variable size is increased by 1
             BOOST_CHECK_EQUAL(result.clockVariableSize, 2);
-            
+
             // Check that a new state has been added (the new final state), but the finial state is removed
             BOOST_CHECK_EQUAL(result.states.size(), 2);
-            
+
             // Check that the new final state is final
             BOOST_CHECK(result.states.back()->isMatch);
-            
+
             // Check that there's exactly one final state
             finalStatesCount = 0;
             for (const auto &state: result.states) {
@@ -619,7 +663,7 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
                 }
             }
             BOOST_CHECK_EQUAL(finalStatesCount, 1);
-            
+
             // Check that the transition to the new final state exists and has the time guard applied
             bool hasTransitionToNewFinal = false;
             for (const auto &state: result.states) {
@@ -635,7 +679,7 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
             }
             BOOST_CHECK(hasTransitionToNewFinal);
         }
-        
+
         BOOST_FIXTURE_TEST_CASE(StarAutomatonTest, NonParametric::NonParametric::DataParametricStarAutomaton) {
             auto automaton_copy = this->automaton;
 
@@ -685,6 +729,50 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
                 }
             }
             BOOST_CHECK(originalFinalStateStillFinal);
+        }
+
+        BOOST_FIXTURE_TEST_CASE(AddConstraintToAllTransitionsTest, DataParametricCopy) {
+            auto automaton_copy = this->automaton;
+
+            // Verify the initial state of the automaton
+            BOOST_CHECK_EQUAL(automaton_copy.states.size(), 4);
+
+            // Create a timing constraint to add to all transitions
+            std::vector<TimingConstraint> constraint;
+            constraint.push_back(ConstraintMaker(0) <= 5);
+
+            // Count the number of transitions before adding the constraint
+            size_t transitionCount = 0;
+            for (const auto &state : automaton_copy.states) {
+                for (const auto &[label, transitions] : state->next) {
+                    transitionCount += transitions.size();
+                }
+            }
+
+            // Apply the constraint to all transitions
+            addConstraintToAllTransitions(automaton_copy, constraint);
+
+            // Verify that all transitions have the constraint applied
+            size_t constrainedTransitionCount = 0;
+            for (const auto &state : automaton_copy.states) {
+                for (const auto &[label, transitions] : state->next) {
+                    for (const auto &transition : transitions) {
+                        // Check that the constraint is applied to the transition
+                        bool hasConstraint = false;
+                        for (const auto &guard : transition.guard) {
+                            if (guard.x == 0 && guard.odr == TimingConstraint::Order::le && guard.c == 5) {
+                                hasConstraint = true;
+                                break;
+                            }
+                        }
+                        BOOST_CHECK(hasConstraint);
+                        constrainedTransitionCount++;
+                    }
+                }
+            }
+
+            // Verify that the number of transitions remains the same
+            BOOST_CHECK_EQUAL(constrainedTransitionCount, transitionCount);
         }
 
     BOOST_AUTO_TEST_SUITE_END() // DataParametric
@@ -914,12 +1002,12 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
 
         BOOST_FIXTURE_TEST_CASE(TimeRestrictionTest, NonParametric::NonParametric::ParametricTimeRestrictionFixture) {
             auto automaton_copy = this->automaton;
-            
+
             // Verify the initial state of the automaton
             BOOST_CHECK_EQUAL(automaton_copy.states.size(), 2);
             BOOST_CHECK_EQUAL(automaton_copy.initialStates.size(), 1);
             BOOST_CHECK_EQUAL(automaton_copy.clockVariableSize, 1);
-            
+
             // Verify there's only one final state initially
             size_t finalStatesCount = 0;
             for (const auto &state: automaton_copy.states) {
@@ -930,28 +1018,28 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
             BOOST_CHECK_EQUAL(finalStatesCount, 1);
             BOOST_CHECK(automaton_copy.states[1]->isMatch);
             BOOST_CHECK(!automaton_copy.states[0]->isMatch);
-            
+
             // Store a pointer to the original final state
             const auto originalFinalState = automaton_copy.states[1];
-            
+
             // Create a timing constraint for the time restriction
             using namespace Parma_Polyhedra_Library;
             using namespace Symbolic;
             ParametricTimingConstraint timeGuard = ParametricTimingConstraint(2);
             timeGuard.add_constraint(Variable(1) <= 10);
-            
+
             // Apply the time restriction operation
             const auto result = timeRestriction(std::move(automaton_copy), timeGuard);
-            
+
             // Check that the clock variable size is increased by 1
             BOOST_CHECK_EQUAL(result.clockVariableSize, 2);
-            
+
             // Check that a new state has been added (the new final state), but the original final state is removed
             BOOST_CHECK_EQUAL(result.states.size(), 2);
-            
+
             // Check that the new final state is final
             BOOST_CHECK(result.states.back()->isMatch);
-            
+
             // Check that there's exactly one final state
             finalStatesCount = 0;
             for (const auto &state: result.states) {
@@ -960,7 +1048,7 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
                 }
             }
             BOOST_CHECK_EQUAL(finalStatesCount, 1);
-            
+
             // Check that the transition to the new final state exists and has the time guard applied
             bool hasTransitionToNewFinal = false;
             for (const auto &state: result.states) {
@@ -976,7 +1064,7 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
             }
             BOOST_CHECK(hasTransitionToNewFinal);
         }
-        
+
         BOOST_FIXTURE_TEST_CASE(StarAutomatonTest, NonParametric::NonParametric::ParametricStarAutomaton) {
             auto automaton_copy = this->automaton;
 
@@ -1026,6 +1114,44 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
                 }
             }
             BOOST_CHECK(originalFinalStateStillFinal);
+        }
+
+        BOOST_FIXTURE_TEST_CASE(AddConstraintToAllTransitionsTest, ParametricCopy) {
+            auto automaton_copy = this->automaton;
+
+            // Verify the initial state of the automaton
+            BOOST_CHECK_EQUAL(automaton_copy.states.size(), 4);
+
+            // Create a parametric timing constraint to add to all transitions
+            using namespace Parma_Polyhedra_Library;
+            ParametricTimingConstraint constraint(automaton_copy.clockVariableSize);
+            constraint.add_constraint(Variable(0) <= 5);
+
+            // Count the number of transitions before adding the constraint
+            size_t transitionCount = 0;
+            for (const auto &state : automaton_copy.states) {
+                for (const auto &[label, transitions] : state->next) {
+                    transitionCount += transitions.size();
+                }
+            }
+
+            // Apply the constraint to all transitions
+            addConstraintToAllTransitions(automaton_copy, constraint);
+
+            // Verify that all transitions have the constraint applied
+            size_t constrainedTransitionCount = 0;
+            for (const auto &state : automaton_copy.states) {
+                for (const auto &[label, transitions] : state->next) {
+                    for (const auto &transition : transitions) {
+                        // Check that the constraint is applied to the transition
+                        BOOST_CHECK(!transition.guard.is_universe());
+                        constrainedTransitionCount++;
+                    }
+                }
+            }
+
+            // Verify that the number of transitions remains the same
+            BOOST_CHECK_EQUAL(constrainedTransitionCount, transitionCount);
         }
 
     BOOST_AUTO_TEST_SUITE_END() // Parametric
