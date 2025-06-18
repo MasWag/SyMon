@@ -471,3 +471,36 @@ TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update>
 
     return given;
 }
+
+/*!
+ * @brief Add a timing constraint to all transitions in the given automaton.
+ *
+ * This function adds the specified timing constraint to all transitions in the automaton.
+ * The constraint is combined with the existing guard using logical AND.
+ *
+ * @param[in,out] automaton The timed automaton to modify.
+ * @param[in] constraint The timing constraint to add to all transitions.
+ * @return A reference to the modified automaton.
+ */
+template<typename StringConstraint, typename NumberConstraint, typename TimingConstraint, typename Update>
+TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update>& addConstraintToAllTransitions(
+    TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> &automaton,
+    const TimingConstraint &constraint) {
+
+    // Ensure the constraint has the correct dimension for the automaton
+    TimingConstraint adjustedConstraint = adjustDimension(constraint, automaton.clockVariableSize);
+
+    // Iterate through all states in the automaton
+    for (const auto &state : automaton.states) {
+        // Iterate through all transitions for each action
+        for (auto &[action, transitions] : state->next) {
+            // Add the constraint to each transition
+            for (auto &transition : transitions) {
+                // Combine the existing guard with the new constraint using logical AND
+                transition.guard = transition.guard && adjustedConstraint;
+            }
+        }
+    }
+
+    return automaton;
+}
