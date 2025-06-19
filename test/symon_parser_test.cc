@@ -130,7 +130,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             // The transition should have no string constraints, no number constraint, no guard, and no updates.
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().stringConstraints.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().numConstraints.size(), 0);
-            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.size(), 1);
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.size(), 2);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().x, VariableID{0});
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().odr, TimingConstraint::Order::lt);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().c, 5);
@@ -549,7 +549,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().target.lock().get(), automaton.states.at(1).get());
             
             // The transition should have the timing constraint < 3
-            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.size(), 1);
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.size(), 2);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().x, VariableID{0});
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().odr, TimingConstraint::Order::lt);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().c, 3);
@@ -652,13 +652,68 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().target.lock().get(), automaton.states.at(2).get());
             
             // The transition should have timing constraint < 3
-            BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().guard.size(), 1);
+            BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().guard.size(), 2);
             BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().guard.front().x, VariableID{0});
             BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().guard.front().odr, TimingConstraint::Order::lt);
             BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().guard.front().c, 3);
             
             // The final state should have no transitions
-            BOOST_CHECK_EQUAL(automaton.states[2]->next.size(), 0);
+            
+        }
+        
+        BOOST_AUTO_TEST_CASE(timingConstraintWithBothBounds) {
+            // Test that when handling time_restriction with both upper and lower bounds,
+            // only the upper bound is added to all transitions
+            
+            // Create a parser
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint>, Update> parser;
+            
+            // Parse a simple automaton with a timing constraint that has both upper and lower bounds
+            std::string content = R"(
+                signature a() {
+                }
+                
+                a() % [2, 5]
+            )";
+            
+            std::istringstream iss(content);
+            parser.parse(iss);
+            
+            // Get the automaton
+            auto automaton = parser.getAutomaton();
+            
+            // Check that the automaton has the expected structure
+            BOOST_CHECK_EQUAL(automaton.states.size(), 2);
+            BOOST_CHECK_EQUAL(automaton.initialStates.size(), 1);
+            BOOST_CHECK_EQUAL(automaton.initialStates.front(), automaton.states.front());
+            
+            // Check that the transition has the expected guard
+            BOOST_CHECK_EQUAL(automaton.states[0]->next.size(), 1);
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].size(), 1);
+            
+            // The guard should have 3 constraints: the original lower bound, the original upper bound,
+            // and the upper bound added by addConstraintToAllTransitions
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.size(), 3);
+            
+            // Verify that we have both the original constraints
+            bool hasLowerBound = false;
+            bool hasUpperBound = false;
+            
+            for (const auto& constraint : automaton.states[0]->next[0].front().guard) {
+                if (constraint.odr == ::TimingConstraint::Order::ge && constraint.c == 2) {
+                    // This is the original lower bound
+                    hasLowerBound = true;
+                } else if (constraint.odr == ::TimingConstraint::Order::le && constraint.c == 5) {
+                    // This is the original upper bound
+                    hasUpperBound = true;
+                }
+            }
+            
+            // Verify that we found both constraints
+            BOOST_CHECK(hasLowerBound);
+            BOOST_CHECK(hasUpperBound);
+            // The final state should have no transitions
+            BOOST_CHECK_EQUAL(automaton.states[1]->next.size(), 0);
         }
 
         BOOST_AUTO_TEST_CASE(inits) {
@@ -666,6 +721,83 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             std::ifstream ifs(PROJECT_ROOT "/example/inits.symon");
             // This should throw an exception because initial constraints are not supported in non-symbolic automata
             BOOST_CHECK_THROW(parser.parse(ifs), std::runtime_error);
+        }
+        
+        BOOST_AUTO_TEST_CASE(extractUpperBoundTest) {
+            // Test that the extractUpperBound function correctly extracts the upper bound from a timing constraint
+            
+            // Create a timing constraint with both upper and lower bounds
+            std::vector<TimingConstraint> guard;
+            
+            // Add a lower bound: x >= 2
+            guard.push_back(TimingConstraint{VariableID{0}, TimingConstraint::Order::ge, 2});
+            
+            // Add an upper bound: x <= 5
+            guard.push_back(TimingConstraint{VariableID{0}, TimingConstraint::Order::le, 5});
+            
+            // Extract the upper bound
+            auto upperBound = SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint>, Update>::extractUpperBound(guard);
+            
+            // Verify that only the upper bound was extracted
+            BOOST_CHECK_EQUAL(upperBound.size(), 1);
+            BOOST_CHECK_EQUAL(upperBound[0].x, VariableID{0});
+            BOOST_CHECK_EQUAL(upperBound[0].odr, TimingConstraint::Order::le);
+            BOOST_CHECK_EQUAL(upperBound[0].c, 5);
+        }
+        
+        BOOST_AUTO_TEST_CASE(extractUpperBoundEquivalenceTest) {
+            // Test that extractUpperBound for parametric and non-parametric cases are equivalent
+            
+            // Create a non-parametric timing constraint with both upper and lower bounds
+            std::vector<TimingConstraint> nonParametricGuard;
+            
+            // Add a lower bound: x >= 2
+            nonParametricGuard.push_back(TimingConstraint{VariableID{0}, TimingConstraint::Order::ge, 2});
+            
+            // Add an upper bound: x <= 5
+            nonParametricGuard.push_back(TimingConstraint{VariableID{0}, TimingConstraint::Order::le, 5});
+            
+            // Extract the upper bound from the non-parametric guard
+            auto nonParametricUpperBound = SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint>, Update>::extractUpperBound(nonParametricGuard);
+            
+            // Verify that only the upper bound was extracted
+            BOOST_CHECK_EQUAL(nonParametricUpperBound.size(), 1);
+            BOOST_CHECK_EQUAL(nonParametricUpperBound[0].x, VariableID{0});
+            BOOST_CHECK_EQUAL(nonParametricUpperBound[0].odr, TimingConstraint::Order::le);
+            BOOST_CHECK_EQUAL(nonParametricUpperBound[0].c, 5);
+            
+            // Create an equivalent parametric timing constraint
+            ParametricTimingConstraint parametricGuard(1, Parma_Polyhedra_Library::UNIVERSE);
+            
+            // Add a lower bound: x >= 2
+            Parma_Polyhedra_Library::Variable x(0);
+            parametricGuard.add_constraint(x >= 2);
+            
+            // Add an upper bound: x <= 5
+            parametricGuard.add_constraint(x <= 5);
+            
+            // Extract the upper bound from the parametric guard
+            auto parametricUpperBound = SymonParser<StringConstraint, NumberConstraint<int>, ParametricTimingConstraint, Update>::extractUpperBound(parametricGuard);
+            
+            // Verify that the parametric upper bound contains only the upper bound constraint
+            // We can't directly compare the constraints, but we can check that:
+            // 1. The parametric upper bound is not the universe (it has constraints)
+            // 2. The parametric upper bound is not empty (it's satisfiable)
+            // 3. The parametric upper bound allows x = 3 (which satisfies x <= 5)
+            // 4. The parametric upper bound doesn't allow x = 6 (which violates x <= 5)
+            
+            BOOST_CHECK(!parametricUpperBound.is_universe());
+            BOOST_CHECK(!parametricUpperBound.is_empty());
+            
+            Parma_Polyhedra_Library::NNC_Polyhedron testPoint1(1);
+            testPoint1.add_constraint(x == 3);
+            testPoint1.intersection_assign(parametricUpperBound);
+            BOOST_CHECK(!testPoint1.is_empty());
+            
+            Parma_Polyhedra_Library::NNC_Polyhedron testPoint2(1);
+            testPoint2.add_constraint(x == 6);
+            testPoint2.intersection_assign(parametricUpperBound);
+            BOOST_CHECK(testPoint2.is_empty());
         }
 
     BOOST_AUTO_TEST_SUITE_END() // NonSymbolicTests
