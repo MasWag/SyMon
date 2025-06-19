@@ -148,6 +148,53 @@ public:
         }
     }
 
+public:
+    // Helper function to extract the upper bound from a non-parametric timing constraint
+    static std::vector<::TimingConstraint> extractUpperBound(const std::vector<::TimingConstraint>& guard) {
+        std::vector<::TimingConstraint> upperBound;
+        
+        // Check each constraint in the guard
+        for (const auto& constraint : guard) {
+            // If the constraint is an upper bound (lt or le), add it to the result
+            if (constraint.odr == ::TimingConstraint::Order::lt ||
+                constraint.odr == ::TimingConstraint::Order::le) {
+                upperBound.push_back(constraint);
+            }
+        }
+        
+        return upperBound;
+    }
+    
+    // Helper function to extract the upper bound from a parametric timing constraint
+    static ParametricTimingConstraint extractUpperBound(const ParametricTimingConstraint& guard, const VariableID clockIndex = 0) {
+        // Check if the clock index is within the bounds of the constraint's space dimension
+        if (clockIndex >= guard.space_dimension()) {
+            // If the clock index is out of bounds, return the UNIVERSE Polyhedron
+            return ParametricTimingConstraint(guard.space_dimension(), Parma_Polyhedra_Library::UNIVERSE);
+        }
+        
+        // Create a new polyhedron for the upper bounds
+        ParametricTimingConstraint upperBound(guard.space_dimension(), Parma_Polyhedra_Library::UNIVERSE);
+        
+        // Get the constraint system from the guard
+        Parma_Polyhedra_Library::Constraint_System cs = guard.constraints();
+        
+        // Iterate through the constraints
+        for (Parma_Polyhedra_Library::Constraint_System::const_iterator it = cs.begin(); it != cs.end(); ++it) {
+            const Parma_Polyhedra_Library::Constraint& c = *it;
+            
+            // Check if it's a less-than-or-equal constraint (upper bound)
+            // The clock variable index is determined by the innerExpr.clockVariableSize
+            if (c.is_inequality() && c.coefficient(Parma_Polyhedra_Library::Variable(clockIndex)) < 0) {
+                // This is an upper bound constraint (standard form: ax + by + ... <= c)
+                // where the coefficient of x is negative (which means x <= ...)
+                upperBound.add_constraint(c);
+            }
+        }
+        
+        return upperBound;
+    }
+    
 private:
     // template<typename StringConstraint, typename NumberConstraint, typename TimingConstraint, typename Update>
     /*!
@@ -777,7 +824,23 @@ private:
                                                                  innerExpr.clockVariableSize);
 
             // Apply the time restriction operation
-            return timeRestriction(std::move(innerExpr), guard);
+            Automaton result = timeRestriction(std::move(innerExpr), guard);
+            
+            // Extract the upper bound from the timing constraint and add it to all transitions
+            if constexpr (std::is_same_v<TimingConstraint, std::vector<::TimingConstraint>>) {
+                // For non-parametric timing constraints
+                auto upperBound = extractUpperBound(guard);
+                if (!upperBound.empty()) {
+                    // It has an upper bound, add it to all transitions
+                    addConstraintToAllTransitions(result, upperBound);
+                }
+            } else if constexpr (std::is_same_v<TimingConstraint, ParametricTimingConstraint>) {
+                // For parametric timing constraints
+                auto upperBound = extractUpperBound(guard, innerExpr.clockVariableSize);
+                addConstraintToAllTransitions(result, upperBound);
+            }
+            
+            return result;
         } else if (ts_node_type(child) == std::string("time_restriction")) {
             if (ts_node_child_count(child) != 3) {
                 throw std::runtime_error("Expected time_restriction node to have exactly three children");
@@ -797,7 +860,23 @@ private:
                                                                  innerExpr.clockVariableSize);
 
             // Apply the time restriction operation
-            return timeRestriction(std::move(innerExpr), guard);
+            Automaton result = timeRestriction(std::move(innerExpr), guard);
+            
+            // Extract the upper bound from the timing constraint and add it to all transitions
+            if constexpr (std::is_same_v<TimingConstraint, std::vector<::TimingConstraint>>) {
+                // For non-parametric timing constraints
+                auto upperBound = extractUpperBound(guard);
+                if (!upperBound.empty()) {
+                    // It has an upper bound, add it to all transitions
+                    addConstraintToAllTransitions(result, upperBound);
+                }
+            } else if constexpr (std::is_same_v<TimingConstraint, ParametricTimingConstraint>) {
+                // For parametric timing constraints
+                auto upperBound = extractUpperBound(guard, innerExpr.clockVariableSize);
+                addConstraintToAllTransitions(result, upperBound);
+            }
+            
+            return result;
         } else if (ts_node_type(child) == std::string("paren_expr")) {
             if (ts_node_child_count(child) != 3) {
                 throw std::runtime_error("Expected paren_expr node to have exactly three children");
