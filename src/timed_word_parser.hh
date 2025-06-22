@@ -26,6 +26,8 @@ public:
     @retval false If the parse failed
    */
   bool parse(TimedWordEvent<Number, TimeStamp> &event) {
+    // Continuously parse events from the input stream until an event is successfully parsed
+    // or the end of the stream is reached. The loop terminates on EOF, empty action, or successful parsing.
     while (true) {
       if (is.eof()) {
         return false;
