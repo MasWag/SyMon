@@ -15,18 +15,19 @@ RUN apt-get update && \
         libgmp-dev \
         cmake \
         git \
+        pkg-config \
         libtree-sitter-dev && \
     rm -rf /var/lib/apt/lists/*
 
 # Install tree-sitter-symon
-RUN git clone --depth 1 https://github.com/MasWag/tree-sitter-symon.git /tmp/tree-sitter-symon && \
+RUN git clone --depth 1 https://github.com/maswag/tree-sitter-symon.git /tmp/tree-sitter-symon && \
     cmake -S /tmp/tree-sitter-symon -B /tmp/tree-sitter-symon/build -DCMAKE_BUILD_TYPE=Release && \
     cmake --build /tmp/tree-sitter-symon/build && \
     cmake --install /tmp/tree-sitter-symon/build && \
     rm -rf /tmp/tree-sitter-symon
 
 # Clone and build SyMon
-RUN git clone --depth 1 --branch ${SYMON_BRANCH} https://github.com/MasWag/symon.git /tmp/symon && \
+RUN git clone --depth 1 --branch ${SYMON_BRANCH} https://github.com/maswag/symon.git /tmp/symon && \
     cmake -S /tmp/symon -B /tmp/symon/build -DCMAKE_BUILD_TYPE=Release && \
     cmake --build /tmp/symon/build && \
     cmake --install /tmp/symon/build && \
