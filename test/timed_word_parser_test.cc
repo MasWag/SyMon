@@ -62,4 +62,24 @@ BOOST_FIXTURE_TEST_CASE(withdrawWithoutLF, WithdrawWordFixture)
   execute();
 }
 
+BOOST_AUTO_TEST_CASE(skipUndefinedAction)
+{
+  std::stringstream sigStream;
+  std::stringstream wordStream;
+  sigStream << "withdraw\t1\t1" << "\n";
+  wordStream << "deposit\tAlice\t1000\t10" << "\n"
+             << "withdraw\tBob\t300\t20";
+
+  Signature sig(sigStream);
+  TimedWordParser<int> parser {wordStream, sig};
+
+  TimedWordEvent<int> event;
+
+  BOOST_TEST(parser.parse(event));
+  BOOST_CHECK_EQUAL(event.strings.front(), "Bob");
+  BOOST_CHECK_EQUAL(event.numbers.front(), 300);
+  BOOST_CHECK_EQUAL(event.timestamp, 20);
+  BOOST_TEST(!parser.parse(event));
+}
+
 BOOST_AUTO_TEST_SUITE_END()

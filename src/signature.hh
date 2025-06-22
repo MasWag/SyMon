@@ -37,6 +37,9 @@ public:
   std::size_t getId(const std::string &key) const {
     return idMap.at(key);
   }
+  bool isDefined(const std::string &key) const {
+    return idMap.find(key) != idMap.end();
+  }
 private:
   std::unordered_map<std::string, std::size_t> idMap;
   std::unordered_map<std::string, std::size_t> stringSizeMap;

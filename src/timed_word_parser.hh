@@ -26,31 +26,41 @@ public:
     @retval false If the parse failed
    */
   bool parse(TimedWordEvent<Number, TimeStamp> &event) {
-    if (is.eof()) {
-      return false;
+    // Continuously parse events from the input stream until an event is successfully parsed
+    // or the end of the stream is reached. The loop terminates on EOF, empty action, or successful parsing.
+    while (true) {
+      if (is.eof()) {
+        return false;
+      }
+      std::string action;
+      is >> action;
+      if (action.empty()) {
+        return false;
+      }
+      if (!sig.isDefined(action)) {
+        std::string skipped;
+        std::getline(is, skipped);
+        std::cerr << "Undefined action: " << action << std::endl;
+        continue;
+      }
+      const std::size_t stringSize = sig.getStringSize(action);
+      const std::size_t numberSize = sig.getNumberSize(action);
+      event.actionId = sig.getId(action);
+      event.strings.resize(stringSize);
+      for (std::size_t i = 0; i < stringSize; i++) {
+        std::string str;
+        is >> str;
+        event.strings[i] = std::move(str);
+      }
+      event.numbers.resize(numberSize);
+      for (std::size_t i = 0; i < numberSize; i++) {
+        Number num;
+        is >> num;
+        event.numbers[i] = std::move(num);
+      }
+      is >> event.timestamp;
+      return true;
     }
-    std::string action;
-    is >> action;
-    if (action.empty()) {
-      return false;
-    }
-    const std::size_t stringSize = sig.getStringSize(action);
-    const std::size_t numberSize = sig.getNumberSize(action);
-    event.actionId = sig.getId(action);
-    event.strings.resize(stringSize);
-    for (std::size_t i = 0; i < stringSize; i++) {
-      std::string str;
-      is >> str;
-      event.strings[i] = std::move(str);
-    }
-    event.numbers.resize(numberSize);
-    for (std::size_t i = 0; i < numberSize; i++) {
-      Number num;
-      is >> num;
-      event.numbers[i] = std::move(num);
-    }
-    is >> event.timestamp;
-    return true;
   }
 private:
   std::istream &is;
