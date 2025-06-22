@@ -22,7 +22,7 @@ jobs:
             libtree-sitter-dev \
             git
       - run: |
-          git clone https://github.com/MasWag/tree-sitter-symon.git /tmp/tree-sitter-symon
+          git clone https://github.com/maswag/tree-sitter-symon.git /tmp/tree-sitter-symon
           cmake -B /tmp/tree-sitter-symon/build -S /tmp/tree-sitter-symon
           cmake --build /tmp/tree-sitter-symon/build
           sudo cmake --install /tmp/tree-sitter-symon/build
@@ -48,7 +48,7 @@ jobs:
             libtree-sitter-dev \
             git
       - run: |
-          git clone https://github.com/MasWag/tree-sitter-symon.git /tmp/tree-sitter-symon
+          git clone https://github.com/maswag/tree-sitter-symon.git /tmp/tree-sitter-symon
           cmake -B /tmp/tree-sitter-symon/build -S /tmp/tree-sitter-symon
           cmake --build /tmp/tree-sitter-symon/build
           sudo cmake --install /tmp/tree-sitter-symon/build
@@ -74,7 +74,7 @@ jobs:
             libtree-sitter-dev \
             git
       - run: |
-          git clone https://github.com/MasWag/tree-sitter-symon.git /tmp/tree-sitter-symon
+          git clone https://github.com/maswag/tree-sitter-symon.git /tmp/tree-sitter-symon
           cmake -B /tmp/tree-sitter-symon/build -S /tmp/tree-sitter-symon
           cmake --build /tmp/tree-sitter-symon/build
           sudo cmake --install /tmp/tree-sitter-symon/build
@@ -100,7 +100,7 @@ jobs:
             libtree-sitter-dev \
             git
       - run: |
-          git clone https://github.com/MasWag/tree-sitter-symon.git /tmp/tree-sitter-symon
+          git clone https://github.com/maswag/tree-sitter-symon.git /tmp/tree-sitter-symon
           cmake -B /tmp/tree-sitter-symon/build -S /tmp/tree-sitter-symon
           cmake --build /tmp/tree-sitter-symon/build
           sudo cmake --install /tmp/tree-sitter-symon/build
