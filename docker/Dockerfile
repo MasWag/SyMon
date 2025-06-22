@@ -1,6 +1,10 @@
 FROM debian:trixie-slim
 LABEL maintainer="Masaki Waga <masakiwaga@gmail.com>"
 
+# The branch of SyMon to build. This can be overridden at build time
+# using `--build-arg SYMON_BRANCH=<branch>`.
+ARG SYMON_BRANCH=master
+
 # Install required build dependencies including tree-sitter
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -22,7 +26,7 @@ RUN git clone --depth 1 https://github.com/MasWag/tree-sitter-symon.git /tmp/tre
     rm -rf /tmp/tree-sitter-symon
 
 # Clone and build SyMon
-RUN git clone --depth 1 https://github.com/MasWag/symon.git /tmp/symon && \
+RUN git clone --depth 1 --branch ${SYMON_BRANCH} https://github.com/MasWag/symon.git /tmp/symon && \
     cmake -S /tmp/symon -B /tmp/symon/build -DCMAKE_BUILD_TYPE=Release && \
     cmake --build /tmp/symon/build && \
     cmake --install /tmp/symon/build && \
