@@ -1,6 +1,7 @@
 #pragma once
 
 #include <istream>
+#include <stdexcept>
 #include <type_traits>
 #include <utility>
 #include <sstream>
@@ -45,6 +46,20 @@ inline std::string makeErrorMessage(const char message[], const std::string &con
     ss << " (bytes " << startByte << ", " << endByte << ")";
 
     return ss.str();
+}
+
+// Helper to skip over comments when iterating child nodes
+static inline TSNode nextNonCommentChild(const TSNode &parent, uint32_t &idx) {
+    uint32_t count = ts_node_child_count(parent);
+    while (idx < count) {
+        TSNode c = ts_node_child(parent, idx);
+        std::string t = ts_node_type(c);
+        if (t != "comment" && t != "line_comment") {
+            return c;
+        }
+        ++idx;
+    }
+    throw std::runtime_error("Expected a non-comment child but reached end");
 }
 
 template<typename StringConstraint, typename NumberConstraint, typename TimingConstraint, typename Update>
@@ -597,14 +612,16 @@ private:
 
     Automaton parseExpr(const std::string &content, const TSNode &exprNode) {
         if (ts_node_type(exprNode) != std::string("expr")) {
-            throw std::runtime_error("Expected expr node");
+            throw std::runtime_error(makeErrorMessage((std::string("Expected expr node but found ") + ts_node_type(exprNode)).c_str(), content, exprNode));
         }
         if (const uint32_t nodeSize = ts_node_child_count(exprNode); nodeSize != 1) {
             throw std::runtime_error(
                 "Expected expr node to have exactly one child, but got: " + std::to_string(nodeSize));
         }
 
-        if (const TSNode child = ts_node_child(exprNode, 0); ts_node_type(child) == std::string("identifier")) {
+        const TSNode child = ts_node_child(exprNode, 0);
+        std::string kind = ts_node_type(child);
+        if (kind == "identifier") {
             const auto identifier = std::string(content.begin() + ts_node_start_byte(child),
                                                 content.begin() + ts_node_end_byte(child));
             auto it = this->automata.find(identifier);
@@ -612,7 +629,7 @@ private:
                 throw std::runtime_error("Undeclared automaton: " + identifier);
             }
             return it->second.deepCopy();
-        } else if (ts_node_type(child) == std::string("atomic")) {
+        } else if (kind == "atomic") {
             const TSNode identifierNode = ts_node_child(child, 0);
             if (ts_node_type(identifierNode) != std::string("identifier")) {
                 throw std::runtime_error("Expected atomic node to have identifier child");
@@ -724,108 +741,174 @@ private:
             this->localNumberVariables = nullptr;
 
             return result;
-        } else if (ts_node_type(child) == std::string("concat")) {
-            if (ts_node_child_count(child) != 3) {
-                throw std::runtime_error(makeErrorMessage("Expected concat node to have at least two children", content, child));
+        } else if (kind == "concat") {
+            uint32_t p = 0;
+            TSNode lhsNode = nextNonCommentChild(child, p);
+            ++p;
+            TSNode opNode = nextNonCommentChild(child, p);
+            if (std::string(ts_node_type(opNode)) != ";") {
+                throw std::runtime_error(makeErrorMessage("Expected ';' after left-hand side of concat", content, child));
             }
-            TSNode lhsNode = ts_node_child(child, 0);
-            TSNode rhsNode = ts_node_child(child, 2);
+            ++p;
+            TSNode rhsNode = nextNonCommentChild(child, p);
             Automaton lhs = this->parseExpr(content, lhsNode);
             Automaton rhs = this->parseExpr(content, rhsNode);
             return concatenate(std::move(lhs), std::move(rhs));
-        } else if (ts_node_type(child) == std::string("conjunction")) {
-            if (ts_node_child_count(child) != 3) {
-                throw std::runtime_error("Expected conjunction node to have exactly three children");
+        } else if (kind == "conjunction") {
+            uint32_t p = 0;
+            TSNode lhsNode = nextNonCommentChild(child, p);
+            ++p;
+            TSNode opNode = nextNonCommentChild(child, p);
+            if (std::string(ts_node_type(opNode)) != "&&") {
+                throw std::runtime_error(makeErrorMessage("Expected '&&' after left-hand side of conjunction", content, child));
             }
-            TSNode lhsNode = ts_node_child(child, 0);
-            TSNode rhsNode = ts_node_child(child, 2);
+            ++p;
+            TSNode rhsNode = nextNonCommentChild(child, p);
             Automaton lhs = this->parseExpr(content, lhsNode);
             Automaton rhs = this->parseExpr(content, rhsNode);
             return conjunction(std::move(lhs), std::move(rhs));
-        } else if (ts_node_type(child) == std::string("all_of")) {
-            TSNode lhsNode = ts_node_child(child, 2);
-            Automaton lhs = this->parseExpr(content, lhsNode);
-            for (int i = 6; i < ts_node_child_count(child); i += 4) {
-                TSNode rhsNode = ts_node_child(child, i);
-                Automaton rhs = this->parseExpr(content, rhsNode);
-                lhs = conjunction(std::move(lhs), std::move(rhs));
+        } else if (kind == "all_of") {
+            uint32_t p = 0;
+            // Expect "all_of"
+            nextNonCommentChild(child, p);
+            if (std::string(ts_node_type(ts_node_child(child, p))) != "all_of") {
+                throw std::runtime_error(makeErrorMessage("Expected 'all_of' keyword", content, child));
             }
-            return lhs;
-        } else if (ts_node_type(child) == std::string("disjunction")) {
-            if (ts_node_child_count(child) != 3) {
-                throw std::runtime_error("Expected disjunction node to have exactly three children");
+            ++p;
+            // Expect "{"
+            nextNonCommentChild(child, p);
+            if (std::string(ts_node_type(ts_node_child(child, p))) != "{") {
+                throw std::runtime_error(makeErrorMessage("Expected '{' after 'all_of'", content, child));
             }
-            TSNode lhsNode = ts_node_child(child, 0);
-            TSNode rhsNode = ts_node_child(child, 2);
+            ++p;
+            // parse exprs
+            Automaton acc;
+            bool first = true;
+            while (p < ts_node_child_count(child)) {
+                TSNode n = nextNonCommentChild(child, p);
+                std::string nType = ts_node_type(n);
+                if (nType == "}" || nType == "and" || nType == "{") {
+                    ++p;
+                    continue;
+                } else if (nType != "expr") {
+                    throw std::runtime_error(makeErrorMessage(
+                        (std::string("Expected expr in all_of but got ") + nType).c_str(), content, child));
+                }
+                Automaton e = this->parseExpr(content, n);
+                if (first) {
+                  acc = std::move(e);
+                  first = false;
+                } else {
+                  acc = conjunction(std::move(acc), std::move(e));
+                }
+                ++p;
+            }
+            return acc;
+        } else if (kind == "disjunction") {
+            uint32_t p = 0;
+            TSNode lhsNode = nextNonCommentChild(child, p);
+            ++p;
+            TSNode opNode = nextNonCommentChild(child, p);
+            if (std::string(ts_node_type(opNode)) != "||") {
+                throw std::runtime_error(makeErrorMessage("Expected '||' after left-hand side of disjunction", content, child));
+            }
+            ++p;
+            TSNode rhsNode = nextNonCommentChild(child, p);
             Automaton lhs = this->parseExpr(content, lhsNode);
             Automaton rhs = this->parseExpr(content, rhsNode);
             return disjunction(std::move(lhs), std::move(rhs));
-        } else if (ts_node_type(child) == std::string("one_of")) {
-            TSNode lhsNode = ts_node_child(child, 2);
-            Automaton lhs = this->parseExpr(content, lhsNode);
-            for (int i = 6; i < ts_node_child_count(child); i += 4) {
-                TSNode rhsNode = ts_node_child(child, i);
-                Automaton rhs = this->parseExpr(content, rhsNode);
-                lhs = disjunction(std::move(lhs), std::move(rhs));
+        } else if (kind == "one_of") {
+            uint32_t p = 0;
+            // Expect "one_of"
+            nextNonCommentChild(child, p);
+            if (std::string(ts_node_type(ts_node_child(child, p))) != "one_of") {
+                throw std::runtime_error(makeErrorMessage("Expected 'one_of' keyword", content, child));
             }
-            return lhs;
-        } else if (ts_node_type(child) == std::string("optional")) {
-            if (ts_node_child_count(child) != 2) {
-                throw std::runtime_error("Expected optional node to have exactly two children");
+            ++p;
+            // Expect "{"
+            nextNonCommentChild(child, p);
+            if (std::string(ts_node_type(ts_node_child(child, p))) != "{") {
+                throw std::runtime_error(makeErrorMessage("Expected '{' after 'one_of'", content, child));
             }
-            TSNode innerNode = ts_node_child(child, 0);
-            Automaton innerExpr = this->parseExpr(content, innerNode);
-            return emptyOr(std::move(innerExpr));
-        } else if (ts_node_type(child) == std::string("optional_block")) {
-            if (ts_node_child_count(child) != 4) {
-                throw std::runtime_error("Expected optional node to have exactly four children");
+            ++p;
+            // parse exprs
+            Automaton acc;
+            bool first = true;
+            while (p < ts_node_child_count(child)) {
+                TSNode n = nextNonCommentChild(child, p);
+                std::string nType = ts_node_type(n);
+                if (nType == "}" || nType == "or" || nType == "{") {
+                    ++p;
+                    continue;
+                } else if (nType != "expr") {
+                    throw std::runtime_error(makeErrorMessage(
+                        (std::string("Expected expr in one_of but got ") + nType).c_str(), content, child));
+                }
+                Automaton e = this->parseExpr(content, n);
+                if (first) {
+                    acc = std::move(e);
+                    first = false;
+                } else {
+                    acc = disjunction(std::move(acc), std::move(e));
+                }
+                ++p;
             }
-            TSNode innerNode = ts_node_child(child, 2);
-            Automaton innerExpr = this->parseExpr(content, innerNode);
-            return emptyOr(std::move(innerExpr));
-        } else if (ts_node_type(child) == std::string("kleene_star")) {
-            const TSNode innerNode = ts_node_child(child, 0);
-            Automaton automaton = this->parseExpr(content, innerNode);
-            return star(std::move(automaton));
-        } else if (ts_node_type(child) == std::string("kleene_plus")) {
-            const TSNode innerNode = ts_node_child(child, 0);
-            Automaton automaton = this->parseExpr(content, innerNode);
-            return plus(std::move(automaton));
-        } else if (ts_node_type(child) == std::string("zero_or_more")) {
-            if (ts_node_child_count(child) != 4) {
-                throw std::runtime_error("Expected zero_or_more node to have exactly four children");
+            return acc;
+        } else if (kind == "optional" || kind == "optional_block") {
+            uint32_t p = 0;
+            TSNode n = nextNonCommentChild(child, p);
+            while (std::string(ts_node_type(n)) != "expr") {
+                ++p;
+                n = nextNonCommentChild(child, p);
             }
-            const TSNode innerNode = ts_node_child(child, 2);
-            Automaton automaton = this->parseExpr(content, innerNode);
-            return star(std::move(automaton));
-        } else if (ts_node_type(child) == std::string("one_or_more")) {
-            if (ts_node_child_count(child) != 4) {
-                throw std::runtime_error("Expected one_or_more node to have exactly four children");
+            Automaton e = this->parseExpr(content, n);
+            return emptyOr(std::move(e));
+        } else if (kind == "kleene_star" || kind == "zero_or_more") {
+            uint32_t p = 0;
+            TSNode n = nextNonCommentChild(child, p);
+            while (std::string(ts_node_type(n)) != "expr") {
+                ++p;
+                n = nextNonCommentChild(child, p);
             }
-            const TSNode innerNode = ts_node_child(child, 2);
-            Automaton automaton = this->parseExpr(content, innerNode);
-            return plus(std::move(automaton));
-        } else if (ts_node_type(child) == std::string("within")) {
-            if (ts_node_child_count(child) != 5) {
-                throw std::runtime_error("Expected within node to have exactly three children");
+            Automaton e = this->parseExpr(content, n);
+            return star(std::move(e));
+        } else if (kind == "kleene_plus" || kind == "one_or_more") {
+            uint32_t p = 0;
+            TSNode n = nextNonCommentChild(child, p);
+            while (std::string(ts_node_type(n)) != "expr") {
+                ++p;
+                n = nextNonCommentChild(child, p);
             }
-
-            // Parse the inner expression
-            const TSNode innerNode = ts_node_child(child, 3);
+            Automaton e = this->parseExpr(content, n);
+            return plus(std::move(e));
+        } else if (kind == "within" || kind == "time_restriction") {
+            uint32_t p = 0;
+            TSNode innerNode;
+            TSNode intervalNode;
+            while (p < ts_node_child_count(child)) {
+                TSNode n = nextNonCommentChild(child, p);
+                if (std::string(ts_node_type(n)) == "expr") {
+                    innerNode = n;
+                } else if (std::string(ts_node_type(n)) == "timing_constraint") {
+                    intervalNode = n;
+                }
+                ++p;
+            }
+            if (ts_node_is_null(innerNode) || ts_node_is_null(intervalNode)) {
+                throw std::runtime_error(makeErrorMessage("Expected 'expr' and 'timing_constraint' in within or time_restriction", content, child));
+            }
             Automaton innerExpr = this->parseExpr(content, innerNode);
             // Optimization: if the last clock variable is not reset, we reuse the last clock variable
             if (innerExpr.clockVariableSize > 0 && noResetLastClock(innerExpr)) {
                 innerExpr.clockVariableSize--;
             }
 
-            // Parse the timing constraint
-            TSNode timingConstraintNode = ts_node_child(child, 1);
-            TimingConstraint guard = this->parseTimingConstraint(content, timingConstraintNode,
+            TimingConstraint guard = this->parseTimingConstraint(content, intervalNode,
                                                                  innerExpr.clockVariableSize);
 
             // Apply the time restriction operation
             Automaton result = timeRestriction(std::move(innerExpr), guard);
-            
+
             // Extract the upper bound from the timing constraint and add it to all transitions
             if constexpr (std::is_same_v<TimingConstraint, std::vector<::TimingConstraint>>) {
                 // For non-parametric timing constraints
@@ -839,58 +922,41 @@ private:
                 auto upperBound = extractUpperBound(guard, innerExpr.clockVariableSize);
                 addConstraintToAllTransitions(result, upperBound);
             }
-            
+
             return result;
-        } else if (ts_node_type(child) == std::string("time_restriction")) {
-            if (ts_node_child_count(child) != 3) {
-                throw std::runtime_error("Expected time_restriction node to have exactly three children");
+        } else if (kind == "paren_expr") {
+            uint32_t p = 0;
+            // Expect '('
+            nextNonCommentChild(child, p);
+            if (std::string(ts_node_type(ts_node_child(child, p))) != "(") {
+                throw std::runtime_error(makeErrorMessage("Expected '(' at the beginning of paren_expr", content, child));
             }
-
-            // Parse the inner expression
-            const TSNode innerNode = ts_node_child(child, 0);
-            Automaton innerExpr = this->parseExpr(content, innerNode);
-            // Optimization: if the last clock variable is not reset, we reuse the last clock variable
-            if (innerExpr.clockVariableSize > 0 && noResetLastClock(innerExpr)) {
-                innerExpr.clockVariableSize--;
+            ++p;
+            TSNode n = nextNonCommentChild(child, p);
+            return this->parseExpr(content, n);
+        } else if (kind == "ignore") {
+            uint32_t p = 0;
+            // Expect 'ignore'
+            nextNonCommentChild(child, p);
+            if (std::string(ts_node_type(ts_node_child(child, p))) != "ignore") {
+                throw std::runtime_error(makeErrorMessage("Expected 'ignore' keyword", content, child));
             }
-
-            // Parse the timing constraint
-            TSNode timingConstraintNode = ts_node_child(child, 2);
-            TimingConstraint guard = this->parseTimingConstraint(content, timingConstraintNode,
-                                                                 innerExpr.clockVariableSize);
-
-            // Apply the time restriction operation
-            Automaton result = timeRestriction(std::move(innerExpr), guard);
-            
-            // Extract the upper bound from the timing constraint and add it to all transitions
-            if constexpr (std::is_same_v<TimingConstraint, std::vector<::TimingConstraint>>) {
-                // For non-parametric timing constraints
-                auto upperBound = extractUpperBound(guard);
-                if (!upperBound.empty()) {
-                    // It has an upper bound, add it to all transitions
-                    addConstraintToAllTransitions(result, upperBound);
-                }
-            } else if constexpr (std::is_same_v<TimingConstraint, ParametricTimingConstraint>) {
-                // For parametric timing constraints
-                auto upperBound = extractUpperBound(guard, innerExpr.clockVariableSize);
-                addConstraintToAllTransitions(result, upperBound);
+            ++p;
+            // Expect identifier_list
+            TSNode idList = nextNonCommentChild(child, p);
+            if (ts_node_type(idList) != std::string("identifier_list")) {
+                throw std::runtime_error(makeErrorMessage("Expected identifier_list after 'ignore'", content, child));
             }
-            
-            return result;
-        } else if (ts_node_type(child) == std::string("paren_expr")) {
-            if (ts_node_child_count(child) != 3) {
-                throw std::runtime_error("Expected paren_expr node to have exactly three children");
+            ++p;
+            // Expect '{'
+            nextNonCommentChild(child, p);
+            if (std::string(ts_node_type(ts_node_child(child, p))) != "{") {
+                throw std::runtime_error(makeErrorMessage("Expected '{' after 'ignore'", content, child));
             }
-            const TSNode innerNode = ts_node_child(child, 1);
-            return this->parseExpr(content, innerNode);
-        } else if (ts_node_type(child) == std::string("ignore")) {
-            if (ts_node_child_count(child) != 5) {
-                throw std::runtime_error("Expected ignore node to have exactly five children");
-            }
-            const TSNode innerNode = ts_node_child(child, 3);
-            const std::vector<Action> ignored = this->parseActionList(content, ts_node_child(child, 1));
-            Automaton innerExpr = this->parseExpr(content, innerNode);
-            return ignoreActions(std::move(innerExpr), ignored);
+            ++p;
+            Automaton inner = this->parseExpr(content, nextNonCommentChild(child, p));
+            auto actions = this->parseActionList(content, idList);
+            return ignoreActions(std::move(inner), actions);
         } else {
             std::cout << "Parsing automaton node: " << ts_node_type(child) << std::endl;
             throw std::runtime_error("Expected automaton node as child of expr node");
