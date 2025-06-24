@@ -110,10 +110,22 @@ public:
             } else if (ts_node_type(child) == std::string("initial_constraints")) {
                 this->parseInits(content, child);
             } else if (ts_node_type(child) == std::string("def_expr")) {
-                const TSNode idNode = ts_node_child(child, 1);
+                uint32_t p = 0;
+                TSNode node = nextNonCommentChild(child, p);
+                if (std::string(ts_node_type(node)) != "expr") {
+                    throw std::runtime_error(makeErrorMessage("Expected 'expr'", content, node));
+                }
+                p++;
+                const TSNode idNode = nextNonCommentChild(child, p);
                 auto id = std::string(content.begin() + ts_node_start_byte(idNode),
                                       content.begin() + ts_node_end_byte(idNode));
-                TSNode innerNode = ts_node_child(child, 3);
+                p++;
+                node = nextNonCommentChild(child, p);
+                if (std::string(ts_node_type(node)) != "{") {
+                    throw std::runtime_error(makeErrorMessage("Expected '{'", content, node));
+                }
+                p++;
+                TSNode innerNode = nextNonCommentChild(child, p);
                 this->automata[id] = this->parseExpr(content, innerNode);
             } else if (ts_node_type(child) == std::string("expr")) {
                 this->expr = this->parseExpr(content, child);
@@ -303,7 +315,7 @@ private:
     }
 
     void processStringAtomic(std::string &atomic, const std::string &type) const {
-        if (type == std::string("identifier")) {
+        if (type == "identifier") {
             auto it = std::find(this->globalStringVariables.begin(), globalStringVariables.end(), atomic);
             if (it == this->globalStringVariables.end()) {
                 if (this->localStringVariables) {
@@ -410,11 +422,9 @@ private:
             throw std::runtime_error(makeErrorMessage("Expected numeric_constraint node", content, constraintNode));
         }
         if (ts_node_child_count(constraintNode) != 3) {
-            std::cout << ts_node_child_count(constraintNode) << std::endl;
             std::string innerContent =
                     std::string(content.begin() + ts_node_start_byte(constraintNode),
                                 content.begin() + ts_node_end_byte(constraintNode));
-            std::cout << "Inner content: " << innerContent << std::endl;
             throw std::runtime_error(makeErrorMessage("Expected numeric_constraint to have exactly 3 children", content, constraintNode));
         }
         const TSNode lhsNode = ts_node_child(constraintNode, 0);
@@ -690,6 +700,24 @@ private:
             result.initialStates.push_back(initialState);
             AutomatonTransition<StringConstraint, NumberConstraint, TimingConstraint, Update> transition;
             std::optional<TSNode> argNode = this->ts_node_child_by_type(child, "arg_list");
+            if (argNode) {
+                int count = 0;
+                for (int i = 0; i < ts_node_child_count(*argNode); ++i) {
+                    TSNode cur = ts_node_child(*argNode, i);
+                    if (ts_node_type(cur) == std::string("identifier")) {
+                        auto identifier = std::string(content.begin() + ts_node_start_byte(cur),
+                                                      content.begin() + ts_node_end_byte(cur));
+                        if (count < this->localStringVariables->size()) {
+                            this->localStringVariables->at(count) = identifier;
+                        } else if (count < this->localStringVariables->size() + this->localNumberVariables->size()) {
+                            this->localNumberVariables->at(count - this->localStringVariables->size()) = identifier;
+                        } else {
+                            throw std::runtime_error(makeErrorMessage("Too many arguments are given", content, *argNode));
+                        }
+                        count++;
+                    }
+                }
+            }
             std::optional<TSNode> constraintNode;
             std::optional<TSNode> updateNode;
             if (std::optional<TSNode> guardNode = ts_node_child_by_type(child, "guard_block"); guardNode.has_value()) {
@@ -720,6 +748,9 @@ private:
                             TSNode valueNode = ts_node_child(update, 2);
                             auto value = std::string(content.begin() + ts_node_start_byte(valueNode),
                                                      content.begin() + ts_node_end_byte(valueNode));
+                            if (std::string("numeric_expr") == ts_node_type(valueNode)) {
+                                valueNode = ts_node_child(valueNode, 0);
+                            }
                             this->processStringAtomic(value, ts_node_type(valueNode));
                             std::string asString = "x" + std::to_string(id) + " := " + value;
                             transition.update.stringUpdate.push_back(boost::lexical_cast<std::remove_reference_t<decltype(transition.update.stringUpdate.front())> >(asString));
@@ -961,7 +992,7 @@ private:
             auto actions = this->parseActionList(content, idList);
             return ignoreActions(std::move(inner), actions);
         } else {
-            std::cout << "Parsing automaton node: " << ts_node_type(child) << std::endl;
+            // std::cout << "Parsing automaton node: " << ts_node_type(child) << std::endl;
             throw std::runtime_error("Expected automaton node as child of expr node");
         }
     }
