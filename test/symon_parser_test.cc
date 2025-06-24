@@ -670,7 +670,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             
             // Parse a simple automaton with a timing constraint that has both upper and lower bounds
             std::string content = R"(
-                signature a() {
+                signature a {
                 }
                 
                 a() % [2, 5]
