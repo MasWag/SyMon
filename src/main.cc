@@ -52,7 +52,12 @@ int execute(const std::string &timedAutomatonFileName,
     if (useNewSyntax) {
         // Use the new syntax parser
         SymonParser<StringConstraint, NumberConstraint, TimingConstraintType, UpdateType> parser;
-        parser.parse(taStream);
+        try {
+            parser.parse(taStream);
+        } catch (const std::runtime_error &e) {
+            std::cerr << "Error during parsing " << timedAutomatonFileName.c_str() << "\n" << e.what() << std::endl;
+            return 1;
+        }
 
         TA = parser.getAutomaton();
         parser.setGlobalData(TA);

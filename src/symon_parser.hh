@@ -232,7 +232,7 @@ private:
     static std::string parseDeclaration(const std::string &content, const TSNode &declarationNode) {
         if (ts_node_type(declarationNode) != std::string("string_definition") && ts_node_type(declarationNode) !=
             std::string("number_definition") && ts_node_type(declarationNode) != std::string("parameter_definition")) {
-            throw std::runtime_error("Expected declaration node");
+            throw std::runtime_error(makeErrorMessage("Expected declaration node", content, declarationNode));
         }
         const uint32_t nodeSize = ts_node_child_count(declarationNode);
         for (uint32_t i = 0; i < nodeSize; i++) {
@@ -242,12 +242,12 @@ private:
                                    content.begin() + ts_node_end_byte(child));
             }
         }
-        throw std::runtime_error("Declaration node does not contain identifier");
+        throw std::runtime_error(makeErrorMessage("Declaration node does not contain identifier", content, declarationNode));
     }
 
     void parseVariables(const std::string &content, const TSNode &declarationNode) {
         if (ts_node_type(declarationNode) != std::string("variables")) {
-            throw std::runtime_error("Expected variable declaration block node");
+            throw std::runtime_error(makeErrorMessage("Expected variable declaration block node", content, declarationNode));
         }
         const uint32_t nodeSize = ts_node_child_count(declarationNode);
         for (uint32_t i = 0; i < nodeSize; i++) {
@@ -372,21 +372,20 @@ private:
             const auto op = std::string(content.begin() + ts_node_start_byte(opNode),
                                         content.begin() + ts_node_end_byte(opNode));
             if (op != "+" && op != "-" && op != "*" && op != "/") {
-                throw std::runtime_error("Expected operator to be '+' or '-' but got: " + op);
+                throw std::runtime_error(makeErrorMessage(("Expected operator to be '+' or '-' but got: " + op).c_str(), content, opNode));
             }
             const std::string rhs = this->parseNumericExpr(content, rhsNode);
             return lhs + " " + op + " " + rhs;
         }
-        throw std::runtime_error(
-            "Expected numeric expression to have 0 or 3 children, but got: " + std::to_string(nodeSize));
+        throw std::runtime_error(makeErrorMessage(("Expected numeric expression to have 0 or 3 children, but got: " + std::to_string(nodeSize)).c_str(), content, constraintNode));
     }
 
     StringConstraint parseStringConstraint(const std::string &content, const TSNode &constraintNode) const {
         if (ts_node_type(constraintNode) != std::string("string_constraint")) {
-            throw std::runtime_error("Expected string_constraint node");
+            throw std::runtime_error(makeErrorMessage("Expected string_constraint node", content, constraintNode));
         }
         if (ts_node_child_count(constraintNode) != 3) {
-            throw std::runtime_error("Expected string_constraint to have exactly 3 children");
+            throw std::runtime_error(makeErrorMessage("Expected string_constraint to have exactly 3 children", content, constraintNode));
         }
         const TSNode lhsNode = ts_node_child(constraintNode, 0);
         const TSNode opNode = ts_node_child(constraintNode, 1);
@@ -398,7 +397,7 @@ private:
         std::string op = std::string(content.begin() + ts_node_start_byte(opNode),
                                      content.begin() + ts_node_end_byte(opNode));
         if (op != "==" && op != "!=") {
-            throw std::runtime_error("Expected operator to be '==' or '!=' but got: " + op);
+            throw std::runtime_error(makeErrorMessage(("Expected operator to be '==' or '!=' but got: " + op).c_str(), content, opNode));
         }
         std::string rhs = std::string(content.begin() + ts_node_start_byte(rhsNode),
                                       content.begin() + ts_node_end_byte(rhsNode));
@@ -408,7 +407,7 @@ private:
 
     NumberConstraint parseNumericConstraint(const std::string &content, const TSNode &constraintNode) const {
         if (ts_node_type(constraintNode) != std::string("numeric_constraint")) {
-            throw std::runtime_error("Expected numeric_constraint node");
+            throw std::runtime_error(makeErrorMessage("Expected numeric_constraint node", content, constraintNode));
         }
         if (ts_node_child_count(constraintNode) != 3) {
             std::cout << ts_node_child_count(constraintNode) << std::endl;
@@ -416,7 +415,7 @@ private:
                     std::string(content.begin() + ts_node_start_byte(constraintNode),
                                 content.begin() + ts_node_end_byte(constraintNode));
             std::cout << "Inner content: " << innerContent << std::endl;
-            throw std::runtime_error("Expected numeric_constraint to have exactly 3 children");
+            throw std::runtime_error(makeErrorMessage("Expected numeric_constraint to have exactly 3 children", content, constraintNode));
         }
         const TSNode lhsNode = ts_node_child(constraintNode, 0);
         const TSNode opNode = ts_node_child(constraintNode, 1);
@@ -426,7 +425,7 @@ private:
         auto op = std::string(content.begin() + ts_node_start_byte(opNode),
                               content.begin() + ts_node_end_byte(opNode));
         if (op != "=" && op != "<>" && op != "<" && op != "<=" && op != ">" && op != ">=") {
-            throw std::runtime_error("Expected operator to be '=', '<>', '<', '<=', '>', or '>=' but got: " + op);
+            throw std::runtime_error(makeErrorMessage(("Expected operator to be '=', '<>', '<', '<=', '>', or '>=' but got: " + op).c_str(), content, opNode));
         }
         if (op == "=") {
             op = "==";
@@ -472,20 +471,19 @@ private:
             const auto op = std::string(content.begin() + ts_node_start_byte(opNode),
                                         content.begin() + ts_node_end_byte(opNode));
             if (op != "+" && op != "-") {
-                throw std::runtime_error("Expected operator to be '+' or '-' but got: " + op);
+                throw std::runtime_error(makeErrorMessage(("Expected operator to be '+' or '-' but got: " + op).c_str(), content, opNode));
             }
             const std::string rhs = this->parseTimeExpr(content, rhsNode);
             return lhs + " " + op + " " + rhs;
         }
-        throw std::runtime_error(
-            "Expected numeric expression to have 0 or 3 children, but got: " + std::to_string(nodeSize));
+        throw std::runtime_error(makeErrorMessage(("Expected numeric expression to have 0 or 3 children, but got: " + std::to_string(nodeSize)).c_str(), content, constraintNode));
     }
 
     void parseConstraintList(const std::string &content, TSNode parent,
                              std::vector<StringConstraint> &stringConstraints,
                              std::vector<NumberConstraint> &numberConstraints) const {
         if (ts_node_type(parent) != std::string("constraint_list")) {
-            throw std::runtime_error("Expected constraint_list node");
+            throw std::runtime_error(makeErrorMessage("Expected constraint_list node", content, parent));
         }
         uint32_t nodeSize = ts_node_child_count(parent);
         while (true) {
@@ -494,7 +492,7 @@ private:
             }
             const TSNode child = ts_node_child(parent, 0);
             if (ts_node_type(child) != std::string("constraint")) {
-                throw std::runtime_error("Expected constraint node as first child of constraint_list");
+                throw std::runtime_error(makeErrorMessage("Expected constraint node as first child of constraint_list", content, child));
             }
             if (TSNode constraint = ts_node_child(child, 0);
                 ts_node_type(constraint) == std::string("string_constraint")) {
@@ -514,10 +512,10 @@ private:
 
     void parseInits(const std::string &content, const TSNode &initialConstraintsNode) {
         if (ts_node_type(initialConstraintsNode) != std::string("initial_constraints")) {
-            throw std::runtime_error("Expected initial constraints node");
+            throw std::runtime_error(makeErrorMessage("Expected initial constraints node", content, initialConstraintsNode));
         }
         if constexpr (!std::is_same_v<TimingConstraint, ParametricTimingConstraint>) {
-            throw std::runtime_error("Giving initial constraints is only supported for parametric timing constraints");
+            throw std::runtime_error(makeErrorMessage("Giving initial constraints is only supported for parametric timing constraints", content, initialConstraintsNode));
         }
         // Find a child node with type "constraint_list"
         std::optional<TSNode> parent = ts_node_child_by_type(initialConstraintsNode, "constraint_list");
@@ -531,7 +529,7 @@ private:
     TimingConstraint parseTimingConstraint(const std::string &content, const TSNode &constraintNode,
                                            const std::size_t clockIndex) const {
         if (ts_node_type(constraintNode) != std::string("timing_constraint")) {
-            throw std::runtime_error("Expected timing_constraint node");
+            throw std::runtime_error(makeErrorMessage("Expected timing_constraint node", content, constraintNode));
         }
         TSNode parent = ts_node_child(constraintNode, 0);
         if (ts_node_type(parent) == std::string("intervals")) {
@@ -567,8 +565,7 @@ private:
                                           content.begin() + ts_node_end_byte(comparatorNode));
             if (comparator != "<" && comparator != "<=" && comparator != ">" && comparator != ">=" && comparator != "="
                 && comparator != "<>") {
-                throw std::runtime_error(
-                    "Expected comparator to be '<', '<=', '>', '>=', '=', or '<>', but got: " + comparator);
+                throw std::runtime_error(makeErrorMessage(("Expected comparator to be '<', '<=', '>', '>=', '=', or '<>', but got: " + comparator).c_str(), content, comparatorNode));
             }
             if (comparator == "=") {
                 comparator = "==";
@@ -591,7 +588,7 @@ private:
                 };
             }
         }
-        throw std::runtime_error("Expected half_guard node or intervals node, but got: " + std::string(ts_node_type(parent)));
+        throw std::runtime_error(makeErrorMessage(("Expected half_guard node or intervals node, but got: " + std::string(ts_node_type(parent))).c_str(), content, parent));
     }
 
     std::vector<Action> parseActionList(const std::string &content, const TSNode &identifierListNode) const {
@@ -609,7 +606,7 @@ private:
                                return sig.name == identifier;
                              });
             if (it == this->signatures.end()) {
-                throw std::runtime_error("Undeclared action: " + identifier);
+                throw std::runtime_error(makeErrorMessage(("Undeclared action: " + identifier).c_str(), content, identifierListNode));
             }
             actions.emplace_back(std::distance(this->signatures.begin(), it));
         }
@@ -622,8 +619,7 @@ private:
             throw std::runtime_error(makeErrorMessage((std::string("Expected expr node but found ") + ts_node_type(exprNode)).c_str(), content, exprNode));
         }
         if (const uint32_t nodeSize = ts_node_child_count(exprNode); nodeSize != 1) {
-            throw std::runtime_error(
-                "Expected expr node to have exactly one child, but got: " + std::to_string(nodeSize));
+            throw std::runtime_error(makeErrorMessage(("Expected expr node to have exactly one child, but got: " + std::to_string(nodeSize)).c_str(), content, exprNode));
         }
 
         const TSNode child = ts_node_child(exprNode, 0);
@@ -633,7 +629,7 @@ private:
                                                 content.begin() + ts_node_end_byte(child));
             auto it = this->automata.find(identifier);
             if (it == this->automata.end()) {
-                throw std::runtime_error("Undeclared expression: " + identifier);
+                throw std::runtime_error(makeErrorMessage(("Undeclared expression: " + identifier).c_str(), content, child));
             }
             return it->second.deepCopy();
         } else if (kind == "atomic") {
@@ -672,7 +668,7 @@ private:
                     signatureId++;
                 }
                 if (!signature) {
-                    throw std::runtime_error("Undeclared signature: " + signatureName);
+                    throw std::runtime_error(makeErrorMessage(("Undeclared signature: " + signatureName).c_str(), content, identifierNode));
                 }
                 this->localStringVariables = &signature->stringVariables;
                 this->localNumberVariables = &signature->numberVariables;
@@ -713,7 +709,7 @@ private:
                         // Obtain the identifier as string
                         TSNode identifierNode = ts_node_child(update, 0);
                         if (ts_node_type(identifierNode) != std::string("identifier")) {
-                            throw std::runtime_error("Expected assignment node to have identifier child");
+                            throw std::runtime_error(makeErrorMessage("Expected assignment node to have identifier child", content, identifierNode));
                         }
                         auto identifier = std::string(content.begin() + ts_node_start_byte(identifierNode),
                                                       content.begin() + ts_node_end_byte(identifierNode));
@@ -735,7 +731,7 @@ private:
                             std::string asString = "x" + std::to_string(id) + " := " + value;
                             transition.update.numberUpdate.push_back(boost::lexical_cast<std::remove_reference_t<decltype(transition.update.numberUpdate.front())> >(asString));
                         } else {
-                            throw std::runtime_error("Undeclared variable in assignment: " + identifier);
+                            throw std::runtime_error(makeErrorMessage(("Undeclared variable in assignment: " + identifier).c_str(), content, identifierNode));
                         }
                     }
                 }
