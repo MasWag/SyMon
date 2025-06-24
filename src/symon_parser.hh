@@ -633,13 +633,13 @@ private:
                                                 content.begin() + ts_node_end_byte(child));
             auto it = this->automata.find(identifier);
             if (it == this->automata.end()) {
-                throw std::runtime_error("Undeclared automaton: " + identifier);
+                throw std::runtime_error("Undeclared expression: " + identifier);
             }
             return it->second.deepCopy();
         } else if (kind == "atomic") {
             const TSNode identifierNode = ts_node_child(child, 0);
             if (ts_node_type(identifierNode) != std::string("identifier")) {
-                throw std::runtime_error("Expected atomic node to have identifier child");
+                throw std::runtime_error(makeErrorMessage("Expected atomic node to have identifier child", content, identifierNode));
             }
             auto signatureName = std::string(content.begin() + ts_node_start_byte(identifierNode),
                                              content.begin() + ts_node_end_byte(identifierNode));
@@ -672,7 +672,7 @@ private:
                     signatureId++;
                 }
                 if (!signature) {
-                    throw std::runtime_error("Undeclared automaton signature: " + signatureName);
+                    throw std::runtime_error("Undeclared signature: " + signatureName);
                 }
                 this->localStringVariables = &signature->stringVariables;
                 this->localNumberVariables = &signature->numberVariables;
