@@ -264,21 +264,28 @@ private:
     // Extract the signature from the parse tree.
     static RawSignature makeSignature(const std::string &content, const TSNode &signatureNode) {
         if (ts_node_type(signatureNode) != std::string("signature")) {
-            throw std::runtime_error("Expected signature node");
+            throw std::runtime_error(makeErrorMessage("Expected signature node", content, signatureNode));
         }
         const uint32_t nodeSize = ts_node_child_count(signatureNode);
         std::string name;
         std::vector<std::string> stringVariables;
         std::vector<std::string> numberVariables;
         for (uint32_t i = 0; i < nodeSize; i++) {
-            if (const TSNode child = ts_node_child(signatureNode, i);
-                ts_node_type(child) == std::string("identifier")) {
+            const TSNode child = ts_node_child(signatureNode, i);
+            std::string childType = ts_node_type(child);
+            if (childType == "identifier") {
                 name = std::string(content.begin() + ts_node_start_byte(child),
                                    content.begin() + ts_node_end_byte(child));
-            } else if (ts_node_type(child) == std::string("string_definition")) {
+            } else if (childType == "string_definition") {
                 stringVariables.push_back(parseDeclaration(content, child));
-            } else if (ts_node_type(child) == std::string("number_definition")) {
+            } else if (childType == "number_definition") {
                 numberVariables.push_back(parseDeclaration(content, child));
+            } else if (childType == "signature" || childType == "{" || childType == "}") {
+                continue;
+            } else if (childType == "ERROR") {
+                throw std::runtime_error(makeErrorMessage("Syntax error", content, child));
+            } else {
+                throw std::runtime_error(makeErrorMessage(("Expected identifier, string_definition, or number_definition node in signature but got: " + childType).c_str(), content, child));
             }
         }
 
