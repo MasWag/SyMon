@@ -130,7 +130,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             // The transition should have no string constraints, no number constraint, no guard, and no updates.
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().stringConstraints.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().numConstraints.size(), 0);
-            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.size(), 2);
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.size(), 1);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().x, VariableID{0});
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().odr, TimingConstraint::Order::lt);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().c, 5);
@@ -549,7 +549,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().target.lock().get(), automaton.states.at(1).get());
             
             // The transition should have the timing constraint < 3
-            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.size(), 2);
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.size(), 1);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().x, VariableID{0});
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().odr, TimingConstraint::Order::lt);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().c, 3);
@@ -652,7 +652,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().target.lock().get(), automaton.states.at(2).get());
             
             // The transition should have timing constraint < 3
-            BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().guard.size(), 2);
+            BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().guard.size(), 1);
             BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().guard.front().x, VariableID{0});
             BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().guard.front().odr, TimingConstraint::Order::lt);
             BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().guard.front().c, 3);
@@ -691,9 +691,8 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             BOOST_CHECK_EQUAL(automaton.states[0]->next.size(), 1);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].size(), 1);
             
-            // The guard should have 3 constraints: the original lower bound, the original upper bound,
-            // and the upper bound added by addConstraintToAllTransitions
-            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.size(), 3);
+            // The guard should have 2 constraints
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.size(), 2);
             
             // Verify that we have both the original constraints
             bool hasLowerBound = false;
@@ -798,6 +797,71 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             testPoint2.add_constraint(x == 6);
             testPoint2.intersection_assign(parametricUpperBound);
             BOOST_CHECK(testPoint2.is_empty());
+        }
+
+        BOOST_AUTO_TEST_CASE(case20250703_1) {
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint>, Update> parser;
+            const std::string content = "signature A {id: string;} signature B {id: string;} ((A( id | id != \"Bob\" ) || B( id | id != \"Bob\" ))%(<= 5);B (id | id == \"Bob\"))%(> 5)";
+            parser.parse(content);
+
+            const NonParametricTA<int> automaton = parser.getAutomaton();
+            BOOST_CHECK_EQUAL(automaton.numberVariableSize, 0);
+            BOOST_CHECK_EQUAL(automaton.stringVariableSize, 0);
+            BOOST_CHECK_EQUAL(automaton.clockVariableSize, 1);
+            
+            // The resulting automaton must not accept the empty word
+            BOOST_TEST(!acceptsEmptyWord(automaton));
+
+            // The automaton should have three states: initial, intermediate, and final
+            BOOST_CHECK_EQUAL(automaton.states.size(), 4);
+            
+            // Check states' match status
+            BOOST_TEST(!automaton.states.at(0)->isMatch);
+            BOOST_TEST(!automaton.states.at(1)->isMatch);
+            BOOST_TEST(!automaton.states.at(2)->isMatch);
+            BOOST_TEST(automaton.states.at(3)->isMatch);
+            
+            BOOST_CHECK_EQUAL(automaton.initialStates.size(), 2);
+            BOOST_CHECK_EQUAL(automaton.initialStates.front(), automaton.states.front());
+            
+            // Transition for the first A
+            BOOST_CHECK_EQUAL(automaton.states[0]->next.size(), 1);
+            BOOST_TEST((automaton.states[0]->next.find(0) != automaton.states[0]->next.end()));
+            BOOST_CHECK_EQUAL(automaton.states[0]->next.at(0).size(), 1);
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().target.lock().get(), automaton.states.at(2).get());
+            // This transition should not reset the clock
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().resetVars.size(), 0);
+            // The transition should have timing constraint <= 5
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.size(), 1);
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().x, VariableID{0});
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().odr, TimingConstraint::Order::le);
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().c, 5);
+            
+            // Transition for the first B
+            BOOST_CHECK_EQUAL(automaton.states[1]->next.size(), 1);
+            BOOST_TEST((automaton.states[1]->next.find(1) != automaton.states[1]->next.end()));
+            BOOST_CHECK_EQUAL(automaton.states[1]->next.at(1).size(), 1);
+            BOOST_CHECK_EQUAL(automaton.states[1]->next[1].front().target.lock().get(), automaton.states.at(2).get());
+            // This transition should not reset the clock
+            BOOST_CHECK_EQUAL(automaton.states[1]->next[1].front().resetVars.size(), 0);
+            // The transition should have timing constraint <= 5
+            BOOST_CHECK_EQUAL(automaton.states[1]->next[1].front().guard.size(), 1);
+            BOOST_CHECK_EQUAL(automaton.states[1]->next[1].front().guard.front().x, VariableID{0});
+            BOOST_CHECK_EQUAL(automaton.states[1]->next[1].front().guard.front().odr, TimingConstraint::Order::le);
+            BOOST_CHECK_EQUAL(automaton.states[1]->next[1].front().guard.front().c, 5);
+
+            // Transition for the second B
+            BOOST_CHECK_EQUAL(automaton.states[2]->next.size(), 1);
+            BOOST_TEST((automaton.states[2]->next.find(1) != automaton.states[2]->next.end()));
+            BOOST_CHECK_EQUAL(automaton.states[2]->next.at(1).size(), 1);
+            BOOST_CHECK_EQUAL(automaton.states[2]->next[1].front().target.lock().get(), automaton.states.at(3).get());
+            // This transition should not reset the clock
+            BOOST_CHECK_EQUAL(automaton.states[2]->next[1].front().resetVars.size(), 0);
+            // The transition should have timing constraint > 5
+            BOOST_CHECK_EQUAL(automaton.states[2]->next[1].front().guard.size(), 1);
+            BOOST_CHECK_EQUAL(automaton.states[2]->next[1].front().guard.front().x, VariableID{0});
+            BOOST_CHECK_EQUAL(automaton.states[2]->next[1].front().guard.front().odr, TimingConstraint::Order::gt);
+            BOOST_CHECK_EQUAL(automaton.states[2]->next[1].front().guard.front().c, 5);
         }
 
     BOOST_AUTO_TEST_SUITE_END() // NonSymbolicTests

@@ -60,6 +60,10 @@ struct TimingConstraint {
     [[nodiscard]] TimingConstraint shift(ClockVariables width) const {
         return TimingConstraint{x + width, odr, c};
     }
+
+    [[nodiscard]] bool operator==(const TimingConstraint &other) const {
+        return x == other.x && odr == other.odr && c == other.c;
+    }
 };
 
 // An interface to write an inequality constrait easily
@@ -134,7 +138,9 @@ static std::vector<TimingConstraint> operator&&(const std::vector<TimingConstrai
                                                 const std::vector<TimingConstraint> &right) {
     std::vector<TimingConstraint> result = left;
     result.reserve(left.size() + right.size());
-    std::copy(right.begin(), right.end(), std::back_inserter(result));
+    std::copy_if(right.begin(), right.end(), std::back_inserter(result), [&left](const auto &guard) {
+        return std::find(left.begin(), left.end(), guard) == left.end();
+    });
     return result;
 }
 
