@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <vector>
 #include <boost/unordered_map.hpp>
 #include <memory>
@@ -67,7 +68,9 @@ struct AutomatonState {
  */
 template<typename StringConstraint, typename NumberConstraint, typename TimingConstraint, typename Update>
 struct TimedAutomaton : public Automaton<AutomatonState<StringConstraint, NumberConstraint, TimingConstraint, Update>> {
-  std::size_t stringVariableSize, numberVariableSize, clockVariableSize;
+  std::size_t stringVariableSize = 0;
+  std::size_t numberVariableSize = 0;
+  std::size_t clockVariableSize = 0;
 
   /*!
    * @brief Creates a deep copy of this timed automaton

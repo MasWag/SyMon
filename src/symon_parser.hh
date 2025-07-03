@@ -660,6 +660,7 @@ private:
             if (isUnobservable && !hasGuardContent) {
                 Automaton result;
                 this->setGlobalData(result);
+                result.clockVariableSize = 0;
                 result.states.reserve(1);
                 auto state = std::make_shared<State>(true);
                 result.states.push_back(state);
@@ -692,6 +693,7 @@ private:
 
             Automaton result = Automaton();
             this->setGlobalData(result);
+            result.clockVariableSize = 0;
             result.states.reserve(2);
             auto initialState = std::make_shared<State>(false);
             auto finalState = std::make_shared<State>(true);
