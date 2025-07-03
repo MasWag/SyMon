@@ -3,6 +3,7 @@
 #include "automaton.hh"
 #include "common_types.hh"
 #include "parametric_timing_constraint.hh"
+#include <ostream>
 #include <ppl.hh>
 
 /*!
