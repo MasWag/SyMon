@@ -429,8 +429,8 @@ TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> tim
     // Remove the original final states with no outgoing transitions
     for (auto it = given.states.begin(); it != given.states.end();) {
         if ((*it)->isMatch && (*it)->next.empty() && *it != newFinalState) {
-            it = given.states.erase(it);
             given.initialStates.erase(std::remove(given.initialStates.begin(), given.initialStates.end(), *it), given.initialStates.end());
+            it = given.states.erase(it);
         } else {
             ++it;
         }
