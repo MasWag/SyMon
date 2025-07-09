@@ -128,7 +128,7 @@ public:
                 TSNode innerNode = nextNonCommentChild(child, p);
                 this->automata[id] = this->parseExpr(content, innerNode);
             } else if (ts_node_type(child) == std::string("expr")) {
-                this->expr = this->parseExpr(content, child);
+                this->expr = adjustAllDimensions(this->parseExpr(content, child));
             }
         }
 
@@ -945,6 +945,18 @@ private:
             // Apply the time restriction operation
             Automaton result = timeRestriction(std::move(innerExpr), guard);
 
+            if constexpr (std::is_same_v<TimingConstraint, ParametricTimingConstraint>) {
+                assert(std::all_of(result.states.begin(), result.states.end(), [&](const auto &state) {
+                    return std::all_of(state->next.begin(), state->next.end(), [&](const auto &transitionsPair) {
+                        const auto &transitions = transitionsPair.second;
+                        return std::all_of(transitions.begin(), transitions.end(), [&](const auto &transition) {
+                            return transition.guard.space_dimension() ==
+                                   this->parameters.size() + result.clockVariableSize;
+                        });
+                    });
+                }));
+            }
+
             // Extract the upper bound from the timing constraint and add it to all transitions
             if constexpr (std::is_same_v<TimingConstraint, std::vector<::TimingConstraint>>) {
                 // For non-parametric timing constraints
@@ -955,8 +967,20 @@ private:
                 }
             } else if constexpr (std::is_same_v<TimingConstraint, ParametricTimingConstraint>) {
                 // For parametric timing constraints
-                auto upperBound = extractUpperBound(guard, innerExpr.clockVariableSize);
+                auto upperBound = extractUpperBound(guard, this->parameters.size() + innerExpr.clockVariableSize - 1);
                 addConstraintToAllTransitions(result, upperBound);
+            }
+
+            if constexpr (std::is_same_v<TimingConstraint, ParametricTimingConstraint>) {
+                assert(std::all_of(result.states.begin(), result.states.end(), [&](const auto &state) {
+                    return std::all_of(state->next.begin(), state->next.end(), [&](const auto &transitionsPair) {
+                        const auto &transitions = transitionsPair.second;
+                        return std::all_of(transitions.begin(), transitions.end(), [&](const auto &transition) {
+                            return transition.guard.space_dimension() ==
+                                   this->parameters.size() + result.clockVariableSize;
+                        });
+                    });
+                }));
             }
 
             return result;

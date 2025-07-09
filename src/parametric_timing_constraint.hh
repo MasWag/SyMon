@@ -6,7 +6,9 @@
 #ifndef DATAMONITOR_PARAMETRIC_TIMING_CONSTRAINT_HH
 #define DATAMONITOR_PARAMETRIC_TIMING_CONSTRAINT_HH
 
+#ifndef mem_fun_ref
 #define mem_fun_ref mem_fn
+#endif
 
 #include <functional>
 #include <ppl.hh>
@@ -68,6 +70,7 @@ static ParametricTimingConstraint adjustDimension(const ParametricTimingConstrai
     } else if (result.space_dimension() > size) {
         result.remove_higher_space_dimensions(result.space_dimension() - size);
     }
+    assert(result.space_dimension() == size);
     return result;
 }
 
