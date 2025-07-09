@@ -1,6 +1,8 @@
 #pragma once
 
+#ifndef mem_fun_ref
 #define mem_fun_ref mem_fn
+#endif
 
 #include <functional>
 #include <ppl.hh>

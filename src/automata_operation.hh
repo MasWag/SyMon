@@ -278,7 +278,11 @@ TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> con
         for (auto &[label, transitions]: sourceState->next) {
             for (auto &transition: transitions) {
                 // Update the guard to include the new clock variable
-                transition.guard = adjustDimension(transition.guard, left.clockVariableSize);
+                if constexpr (std::is_same_v<TimingConstraint, std::vector<::TimingConstraint>>) {
+                    transition.guard = adjustDimension(transition.guard, left.clockVariableSize);
+                } else if constexpr (std::is_same_v<TimingConstraint, ParametricTimingConstraint>) {
+                    transition.guard = adjustDimension(transition.guard, left.clockVariableSize + left.parameterSize);
+                }
             }
         }
     }
@@ -381,8 +385,8 @@ TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> tim
         acceptEmpty = acceptEmpty && eval(clockValuation, guard);
     }
     if constexpr (std::is_same_v<TimingConstraint, ParametricTimingConstraint>) {
-        Parma_Polyhedra_Library::Variable var{given.clockVariableSize - 1};
-        Parma_Polyhedra_Library::NNC_Polyhedron clockValuation{given.clockVariableSize};
+        Parma_Polyhedra_Library::Variable var{given.parameterSize + given.clockVariableSize - 1};
+        Parma_Polyhedra_Library::NNC_Polyhedron clockValuation{given.parameterSize + given.clockVariableSize};
         clockValuation.add_constraint(var == 0);
         clockValuation.intersection_assign(guard);
         acceptEmpty = acceptEmpty && !clockValuation.is_empty();
@@ -391,7 +395,12 @@ TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> tim
     // Add a new final state that has no outgoing transitions and add transitions to this state from all transitions to the original final states.
     auto newFinalState = std::make_shared<AutomatonState<StringConstraint, NumberConstraint, TimingConstraint, Update> >(true);
     given.states.push_back(newFinalState);
-    guard = adjustDimension(guard, given.clockVariableSize); // Adjust the guard to include the new clock variable
+    if constexpr (std::is_same_v<TimingConstraint, std::vector<::TimingConstraint> >) {
+        guard = adjustDimension(guard, given.clockVariableSize); // Adjust the guard to include the new clock variable
+    }
+    if constexpr (std::is_same_v<TimingConstraint, ParametricTimingConstraint>) {
+        guard = adjustDimension(guard, given.parameterSize + given.clockVariableSize); // Adjust the guard to include the new clock variable
+    }
 
     // For each transition, we update the dimensions of the guard
     for (const auto &sourceState: given.states) {
@@ -399,8 +408,12 @@ TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> tim
             std::vector<AutomatonTransition<StringConstraint, NumberConstraint, TimingConstraint, Update> > newTransitions;
             for (auto it = transitions.begin(); it != transitions.end();) {
                 // Update the guard to include the new clock variable
-                it->guard = adjustDimension(it->guard, given.clockVariableSize);
-
+                if constexpr (std::is_same_v<TimingConstraint, std::vector<::TimingConstraint> >) {
+                    it->guard = adjustDimension(it->guard, given.clockVariableSize);
+                }
+                if constexpr (std::is_same_v<TimingConstraint, ParametricTimingConstraint>) {
+                    it->guard = adjustDimension(it->guard, given.parameterSize + given.clockVariableSize);
+                }
                 // If the target state is a final state, we add a transition to the new final state
                 if (it->target.lock()->isMatch) {
                     newTransitions.push_back({
@@ -488,8 +501,13 @@ TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update>& ad
     TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> &automaton,
     const TimingConstraint &constraint) {
 
+    TimingConstraint adjustedConstraint = constraint;
     // Ensure the constraint has the correct dimension for the automaton
-    TimingConstraint adjustedConstraint = adjustDimension(constraint, automaton.clockVariableSize);
+    if constexpr (std::is_same_v<TimingConstraint, std::vector<::TimingConstraint>>) {
+        adjustedConstraint = adjustDimension(constraint, automaton.clockVariableSize);
+    } else if constexpr (std::is_same_v<TimingConstraint, ParametricTimingConstraint>) {
+        adjustedConstraint = adjustDimension(constraint, automaton.parameterSize + automaton.clockVariableSize);
+    }
 
     // Iterate through all states in the automaton
     for (const auto &state : automaton.states) {
@@ -499,6 +517,36 @@ TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update>& ad
             for (auto &transition : transitions) {
                 // Combine the existing guard with the new constraint using logical AND
                 transition.guard = transition.guard && adjustedConstraint;
+            }
+        }
+    }
+
+    return automaton;
+}
+
+/*!
+ * @brief Add a timing constraint to all transitions in the given automaton.
+ *
+ * This function adds the specified timing constraint to all transitions in the automaton.
+ * The constraint is combined with the existing guard using logical AND.
+ *
+ * @param[in,out] automaton The timed automaton to modify.
+ * @param[in] constraint The timing constraint to add to all transitions.
+ * @return A reference to the modified automaton.
+ */
+template<typename StringConstraint, typename NumberConstraint, typename TimingConstraint, typename Update>
+TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update>& adjustAllDimensions(
+        TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> &&automaton) {
+
+    std::size_t totalDimension = automaton.clockVariableSize;
+    if constexpr (std::is_same_v<TimingConstraint, ParametricTimingConstraint>) {
+        totalDimension += automaton.parameterSize;
+    }
+
+    for (const auto &state : automaton.states) {
+        for (auto &[action, transitions] : state->next) {
+            for (auto &transition : transitions) {
+                transition.guard = adjustDimension(transition.guard, totalDimension);
             }
         }
     }
