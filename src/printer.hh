@@ -1,3 +1,5 @@
+#include <iomanip>
+
 #include "boolean_monitor.hh"
 
 struct BooleanPrinter : public Observer<BooleanMonitorResult> {
@@ -19,7 +21,7 @@ struct DataParametricPrinter : public Observer<DataParametricMonitorResult> {
 
   void notify(const DataParametricMonitorResult &result) override {
     using Parma_Polyhedra_Library::IO_Operators::operator<<;
-    std::cout << "@" << result.timestamp << ".\t(time-point " << result.index << ")\t";
+    std::cout << "@" << std::fixed << result.timestamp << ".\t(time-point " << result.index << ")\t";
     for (std::size_t i = 0; i < result.stringValuation.size(); i++) {
       if (result.stringValuation[i].index() == 0) {
         std::cout << "x" << i << " != {";
