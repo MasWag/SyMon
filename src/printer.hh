@@ -2,13 +2,24 @@
 
 #include "boolean_monitor.hh"
 
-struct BooleanPrinter : public Observer<BooleanMonitorResult> {
+template<class Number>
+struct BooleanPrinter : public Observer<BooleanMonitorResult<Number>> {
   BooleanPrinter() = default;
 
   virtual ~BooleanPrinter() = default;
 
-  void notify(const BooleanMonitorResult &result) override {
-    printf("@%f. (time-point %lu)\n", result.timestamp, result.index);
+  void notify(const BooleanMonitorResult<Number> &result) override {
+    printf("@%f.\t(time-point %lu)\t", result.timestamp, result.index);
+    for (std::size_t i = 0; i < result.stringValuation.size(); i++) {
+      if (result.stringValuation[i]) {
+          printf("x%zu == %s\t", i, result.stringValuation[i]->c_str());
+      }
+    }
+
+    for (std::size_t i = 0; i < result.numberValuation.size(); i++) {
+        std::cout << "x" << i << " == " << *(result.numberValuation[i]) << "\t";
+    }
+    printf("\n");
   }
 };
 

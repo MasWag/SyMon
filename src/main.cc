@@ -176,8 +176,8 @@ int main(int argc, char *argv[]) {
                 timedAutomatonFileName, signatureFileName, timedWordFileName, true);
         } else {
             // boolean with new syntax
-            return execute<NonParametricTA<Number>, NonParametricBoostTA<Number>, Number, double, BooleanMonitor<Number>
-                , BooleanPrinter,
+            return execute<NonParametricTA<Number>, NonParametricBoostTA<Number>, Number, double, BooleanMonitor<Number>,
+                BooleanPrinter<Number>,
                 NonSymbolic::StringConstraint, NonSymbolic::NumberConstraint<Number>, std::vector<TimingConstraint>,
                 NonSymbolic::Update>(
                 timedAutomatonFileName, signatureFileName, timedWordFileName, true);
@@ -197,7 +197,7 @@ int main(int argc, char *argv[]) {
     } else {
         // boolean
         return execute<NonParametricTA<Number>, NonParametricBoostTA<Number>, Number, double, BooleanMonitor<Number>,
-            BooleanPrinter,
+            BooleanPrinter<Number>,
             NonSymbolic::StringConstraint, NonSymbolic::NumberConstraint<Number>, std::vector<TimingConstraint>,
             NonSymbolic::Update>(
             timedAutomatonFileName, signatureFileName, timedWordFileName, false);
