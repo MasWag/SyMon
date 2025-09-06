@@ -117,7 +117,7 @@ jobs:
         with:
           submodules: recursive
       - run: |
-          brew update && brew install boost gmp ppl cmake tree-sitter
+          brew update && brew uninstall cmake && brew install boost gmp cmake ppl tree-sitter
           brew install --HEAD maswag/scientific/tree-sitter-symon
       - run: |
           mkdir -p build
@@ -134,7 +134,7 @@ jobs:
         with:
           submodules: recursive
       - run: |
-          brew update && brew install boost gmp ppl cmake tree-sitter
+          brew update && brew uninstall cmake && brew install boost gmp cmake ppl tree-sitter
           brew install --HEAD maswag/scientific/tree-sitter-symon
       - run: |
           mkdir -p build
@@ -151,7 +151,7 @@ jobs:
         with:
           submodules: recursive
       - run: |
-          brew update && brew install boost gmp ppl cmake tree-sitter
+          brew update && brew uninstall cmake && brew install boost gmp cmake ppl tree-sitter
           brew install --HEAD maswag/scientific/tree-sitter-symon
       - run: |
           mkdir -p build
