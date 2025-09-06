@@ -1,0 +1,5 @@
+# Automatically generated documents
+*.tex
+*.pdf
+*.html
+README.org
