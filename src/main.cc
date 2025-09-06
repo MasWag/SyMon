@@ -110,10 +110,10 @@ int execute(const std::string &timedAutomatonFileName,
 
 int main(int argc, char *argv[]) {
     using Number = double;
-    const auto programName = "dataMonitor";
+    const auto programName = "SyMon";
     std::cin.tie(0);
     std::ios::sync_with_stdio(false);
-    const auto errorHeader = "dataMonitor: ";
+    const auto errorHeader = "SyMon: ";
 
     const auto die = [&errorHeader](const char *message, int status) {
         std::cerr << errorHeader << message << std::endl;
@@ -150,7 +150,7 @@ int main(int argc, char *argv[]) {
         return 0;
     }
     if (vm.count("version")) {
-        std::cout << "dataMonitor 0.0.2\n"
+        std::cout << "SyMon 0.0.2\n"
                 << visible << std::endl;
         return 0;
     }
