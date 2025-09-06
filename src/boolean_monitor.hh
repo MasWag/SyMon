@@ -9,14 +9,17 @@
 #include "non_symbolic_update.hh"
 #include <boost/unordered_set.hpp>
 
+template<class Number>
 struct BooleanMonitorResult {
   std::size_t index;
   double timestamp;
+  NonSymbolic::NumberValuation<Number> numberValuation;
+  NonSymbolic::StringValuation stringValuation;
 };
 
 namespace NonSymbolic {
   template<typename Number>
-  class BooleanMonitor : public SingleSubject<BooleanMonitorResult>,
+  class BooleanMonitor : public SingleSubject<BooleanMonitorResult<Number>>,
                          public Observer<TimedWordEvent<Number>> {
   public:
     BooleanMonitor(const NonParametricTA<Number> &automaton) : automaton(automaton) {
@@ -70,10 +73,10 @@ namespace NonSymbolic {
             nextNEnv.resize(automaton.numberVariableSize);
             nextConfigurations.insert({transition.target.lock(),
                                        std::move(nextCVal),
-                                       std::move(nextSEnv),
-                                       std::move(nextNEnv)});
+                                       nextSEnv,
+                                       nextNEnv});
             if (transition.target.lock()->isMatch) {
-              notifyObservers({index, timestamp});
+              this->notifyObservers({index, timestamp, nextNEnv, nextSEnv});
             }
           }
         }

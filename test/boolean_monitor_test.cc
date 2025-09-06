@@ -15,13 +15,13 @@ struct DummyTimedWordSubject : public SingleSubject<TimedWordEvent<int>> {
   std::vector<TimedWordEvent<int>> vec;
 };
 
-struct DummyBooleanMonitorObserver : public Observer<BooleanMonitorResult> {
+struct DummyBooleanMonitorObserver : public Observer<BooleanMonitorResult<int>> {
   DummyBooleanMonitorObserver() {}
   virtual ~DummyBooleanMonitorObserver() {}
-  void notify(const BooleanMonitorResult& result) {
+  void notify(const BooleanMonitorResult<int>& result) {
     resultVec.push_back(result);
   }
-  std::vector<BooleanMonitorResult> resultVec;
+  std::vector<BooleanMonitorResult<int>> resultVec;
 };
 
 struct CopyBooleanMonitorFixture : public CopyFixture {
@@ -34,7 +34,7 @@ struct CopyBooleanMonitorFixture : public CopyFixture {
     subject.notifyAll();
     resultVec = std::move(observer->resultVec);
   }
-  std::vector<BooleanMonitorResult> resultVec;
+  std::vector<BooleanMonitorResult<int>> resultVec;
 };
 
 BOOST_AUTO_TEST_SUITE(BooleanMonitorTest)
