@@ -1,0 +1,23 @@
+#!/usr/bin/env symon -dnf
+var {
+    current_sender: string;
+    count: number;
+}
+
+signature arrival {
+    sender: string;
+}
+
+one_or_more {
+    arrival(sender | | count := 0)
+};
+within (<= 3) {
+    one_or_more {
+        one_of {
+            arrival( sender | sender != current_sender && count <= 10 )
+        } or {
+            arrival( sender | sender == current_sender && count <= 10 | count := count + 1 )
+        }
+    }
+};
+arrival( sender | count > 10 )

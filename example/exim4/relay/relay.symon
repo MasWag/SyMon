@@ -1,0 +1,47 @@
+#!/usr/bin/env symon -nf
+var {
+    current_id: string;
+    current_sender: string;
+    current_host: string;
+    current_user: string;
+    current_auth: string;
+    current_destination: string;
+}
+
+signature arrival {
+    id: string;
+    sender: string;
+    sender_domain: string;
+    host: string;
+    auth: string;
+    user: string;
+}
+signature delivery {
+    id: string;
+    destination: string;
+    destination_domain: string;
+}
+signature complete {
+    id: string;
+}
+
+zero_or_more {
+    one_of {
+        arrival(id, sender, sender_domain, host, auth, user)
+    } or {
+        delivery(id, destination, destination_domain)
+    } or {
+        complete(id)
+    }
+};
+arrival(id, sender, sender_domain, host, auth, user | sender_domain != "example.com" && sender_domain != "none" | current_id := id; current_sender := sender; current_host := host; current_auth := auth; current_user := user);
+zero_or_more {
+    one_of {
+        arrival(id, sender, sender_domain, host, auth, user | id != current_id)
+    } or {
+        delivery(id, destination, destination_domain | id != current_id)
+    } or {
+        complete(id | id != current_id)
+    }
+};
+delivery(id, destination, destination_domain | id == current_id && destination_domain != "example.com" | current_destination := destination)
