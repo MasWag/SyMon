@@ -128,6 +128,7 @@ static inline std::ostream &operator<<(std::ostream &os, const PPLRational &r) {
       os << r.getNumerator() << "/" << r.getDenominator();
     }
   }
+
   return os;
 }
 

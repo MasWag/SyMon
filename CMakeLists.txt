@@ -81,7 +81,8 @@ add_executable(
   test/automaton_deep_copy_test.cc
   test/timing_constraint_test.cc
   test/parametric_timing_constraint_test.cc
-  test/symon_parser_test.cc)
+  test/symon_parser_test.cc
+  test/ppl_rational_test.cc)
 
 target_link_libraries(
   unit_test
