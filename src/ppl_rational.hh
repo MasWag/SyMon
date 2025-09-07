@@ -78,8 +78,8 @@ public:
    * @brief Subtraction between two rationals.
    */
   PPLRational operator-(const PPLRational &other) const {
-    const auto num = numerator * other.denominator - other.numerator * denominator;
-    const auto den = denominator * other.denominator;
+    const Parma_Polyhedra_Library::Coefficient num = numerator * other.denominator - other.numerator * denominator;
+    const Parma_Polyhedra_Library::Coefficient den = denominator * other.denominator;
     return PPLRational(num, den);
   }
 };
@@ -91,8 +91,8 @@ static inline std::ostream &operator<<(std::ostream &os, const PPLRational &r) {
     os << -1 * r.getNumerator();
   } else {
     // Check if r can be represented as a decimal number
-    auto p = r.getNumerator();
-    auto q = r.getDenominator();
+    Parma_Polyhedra_Library::Coefficient p = r.getNumerator();
+    Parma_Polyhedra_Library::Coefficient q = r.getDenominator();
     int count2 = 0, count5 = 0;
     // remove all 2s
     while ((q % 2) == 0) {
