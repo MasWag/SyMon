@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <ppl.hh>
 
 /*!
@@ -47,6 +48,8 @@ protected:
 public:
   PPLRational() : numerator(0), denominator(1) {}
 
+  PPLRational(int c) : numerator(c), denominator(1) {}
+
   PPLRational(Parma_Polyhedra_Library::Coefficient numerator,
               Parma_Polyhedra_Library::Coefficient denominator)
       : numerator(numerator), denominator(denominator) {
@@ -82,7 +85,49 @@ public:
 };
 
 static inline std::ostream &operator<<(std::ostream &os, const PPLRational &r) {
-  os << r.getNumerator() << "/" << r.getDenominator();
+  if (r.getDenominator() == 1) {
+    os << r.getNumerator();
+  } else if (r.getDenominator() == -1) {
+    os << -1 * r.getNumerator();
+  } else {
+    // Check if r can be represented as a decimal number
+    auto p = r.getNumerator();
+    auto q = r.getDenominator();
+    int count2 = 0, count5 = 0;
+    // remove all 2s
+    while ((q % 2) == 0) {
+      count2++;
+      q /= 2;
+    }
+    // remove all 5s
+    while ((q % 5) == 0) {
+      q /= 5;
+      count5++;
+    }
+    if (q == 1 || q == -1) {
+     p *= q;
+     // r can be represented as a decimal number
+     const std::size_t width = std::max(count2, count5);
+     const auto offset = static_cast<Parma_Polyhedra_Library::Coefficient>(std::pow(10, width));
+     if (count2 > count5) {
+         p *= static_cast<Parma_Polyhedra_Library::Coefficient>(std::pow(5, count2 - count5));
+     } else if (count5 > count2) {
+         p *= static_cast<Parma_Polyhedra_Library::Coefficient>(std::pow(2, count5 - count2));
+     }
+     // We explicitly handle the negative sign because 0 in integer does not have sign.
+     if (p < 0) {
+         os << '-';
+         p *= -1;
+     }
+     os << p / offset;
+     os << ".";
+     auto frac = abs(p % offset);
+     os << std::setw(width) << std::setfill('0') << frac;
+    } else {
+      // r cannot be represented as a decimal number
+      os << r.getNumerator() << "/" << r.getDenominator();
+    }
+  }
   return os;
 }
 

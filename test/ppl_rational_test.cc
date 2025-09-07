@@ -1,4 +1,5 @@
 #include <boost/test/unit_test.hpp>
+#include <boost/test/data/test_case.hpp>
 #include <sstream>
 
 #ifndef mem_fun_ref
@@ -127,4 +128,20 @@ BOOST_AUTO_TEST_CASE(mixed_integer_and_fraction) {
   BOOST_TEST(r.getDenominator() == 3);
 }
 
+BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE(PPLRationalOStreamTests)
+namespace bdata = boost::unit_test::data;
+
+BOOST_DATA_TEST_CASE(random_decimal, bdata::xrange(100) ^ bdata::random( bdata::distribution = std::uniform_real_distribution<double>(-2, 2)), idx, value) {
+  std::stringstream ss;
+  ss << value;
+  std::istringstream is(ss.str());
+  std::string asString = ss.str();
+  PPLRational r;
+  is >> r;
+  ss.str("");
+  ss << r;
+  BOOST_TEST(ss.str() == asString);
+}
 BOOST_AUTO_TEST_SUITE_END()

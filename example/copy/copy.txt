@@ -6,4 +6,4 @@ update  y       100      20
 update  x       100      32
 update  y       50       40
 update  x       50       42
-update  z       200      51
+update  z       200      51.5

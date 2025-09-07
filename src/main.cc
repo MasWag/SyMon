@@ -138,7 +138,7 @@ int main(int argc, char *argv[]) {
 
   if (vm.count("parametric")) {
     // parametric
-    return execute<ParametricTA, BoostPTA, PPLRational, Parma_Polyhedra_Library::Coefficient, ParametricMonitor, ParametricPrinter>(
+    return execute<ParametricTA, BoostPTA, PPLRational, PPLRational, ParametricMonitor, ParametricPrinter>(
             timedAutomatonFileName, signatureFileName, timedWordFileName);
   } else if (vm.count("dataparametric")) {
     // data parametric

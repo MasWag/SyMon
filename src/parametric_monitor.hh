@@ -14,7 +14,7 @@
 
 struct ParametricMonitorResult {
   std::size_t index;
-  Parma_Polyhedra_Library::Coefficient timestamp;
+  PPLRational timestamp;
   Symbolic::NumberValuation numberValuation;
   Symbolic::StringValuation stringValuation;
   ParametricTimingValuation parametricTimingValuation;
@@ -26,7 +26,7 @@ struct ParametricMonitorResult {
  * @note If the last trantision is an unobservable transition, the timestamp is that of the latest event.
  */
 class ParametricMonitor : public SingleSubject<ParametricMonitorResult>,
-                          public Observer<TimedWordEvent<PPLRational, Parma_Polyhedra_Library::Coefficient>> {
+                          public Observer<TimedWordEvent<PPLRational, PPLRational>> {
 public:
   static const constexpr std::size_t unobservableActinoID = 127;
 
@@ -114,11 +114,11 @@ public:
   }
 
   void
-  notify(const TimedWordEvent<PPLRational, Parma_Polyhedra_Library::Coefficient> &event) override {
+  notify(const TimedWordEvent<PPLRational, PPLRational> &event) override {
     const Action actionId = event.actionId;
     const std::vector<std::string> &strings = event.strings;
     const std::vector<PPLRational> &numbers = event.numbers;
-    const Parma_Polyhedra_Library::Coefficient timestamp = event.timestamp;
+    const PPLRational timestamp = event.timestamp;
     const auto dwellTime = timestamp - absTime;
     boost::unordered_set<Configuration> nextConfigurations;
 
@@ -128,12 +128,13 @@ public:
       std::get<1>(conf).add_space_dimensions_and_project(1);
       currentConfigurations.insert(std::move(conf));
     }
-    // time elapse
+    // time elapse to the timestamp of the current event
     for (Configuration conf: configurations) {
       for (std::size_t i = 0; i < automaton.clockVariableSize; i++) {
         //! @todo Currently, the timestamp is mpz (integer). I will make it mpq (quadratic) later.
         std::get<1>(conf).affine_image(Parma_Polyhedra_Library::Variable(automaton.parameterSize + i),
-                                       Parma_Polyhedra_Library::Variable(automaton.parameterSize + i) + dwellTime);
+                                       Parma_Polyhedra_Library::Variable(automaton.parameterSize + i) * dwellTime.getDenominator() + dwellTime.getNumerator(),
+                                       dwellTime.getDenominator());
       }
       nextConfigurations.insert(std::move(conf));
     }
@@ -151,7 +152,7 @@ public:
         auto clockValuation = std::get<1>(conf);
         clockValuation.time_elapse_assign(elapsePolyhedron);
         clockValuation.add_constraint(
-                Parma_Polyhedra_Library::Variable(automaton.parameterSize + automaton.clockVariableSize) <= dwellTime);
+                Parma_Polyhedra_Library::Variable(automaton.parameterSize + automaton.clockVariableSize) * dwellTime.getDenominator() <= dwellTime.getNumerator());
         const auto stringEnv = std::get<2>(conf);
         const auto numberEnv = std::get<3>(conf);
         for (const auto &transition: transitionIt->second) {
@@ -182,9 +183,10 @@ public:
             for (std::size_t i = 0; i < automaton.clockVariableSize; i++) {
               //! @todo Currently, the timestamp is mpz (integer). I will make it mpq (quadratic) later.
               nextCVal.affine_image(Parma_Polyhedra_Library::Variable(automaton.parameterSize + i),
-                                    Parma_Polyhedra_Library::Variable(automaton.parameterSize + i) + dwellTime -
-                                    Parma_Polyhedra_Library::Variable(
-                                            automaton.parameterSize + automaton.clockVariableSize));
+                                    Parma_Polyhedra_Library::Variable(automaton.parameterSize + i) * dwellTime.getDenominator()
+                                    + dwellTime.getNumerator()
+                                    - Parma_Polyhedra_Library::Variable(automaton.parameterSize + automaton.clockVariableSize) * dwellTime.getDenominator(),
+                                    dwellTime.getDenominator());
             }
             nextCVal.remove_higher_space_dimensions(automaton.parameterSize + automaton.clockVariableSize);
             configurations.insert({transition.target.lock(),
@@ -279,7 +281,7 @@ private:
     Symbolic::NumberValuation numberEnv;
   };*/
   boost::unordered_set<Configuration> configurations;
-  Parma_Polyhedra_Library::Coefficient absTime;
+  PPLRational absTime;
   std::size_t index = 0;
   Parma_Polyhedra_Library::NNC_Polyhedron elapsePolyhedron;
 };
