@@ -61,6 +61,22 @@ public:
   Parma_Polyhedra_Library::Coefficient getDenominator() const {
     return denominator;
   }
+
+  /*
+   * @brief Unary negation.
+   */
+  PPLRational operator-() const {
+    return PPLRational(-numerator, denominator);
+  }
+
+  /*
+   * @brief Subtraction between two rationals.
+   */
+  PPLRational operator-(const PPLRational &other) const {
+    const auto num = numerator * other.denominator - other.numerator * denominator;
+    const auto den = denominator * other.denominator;
+    return PPLRational(num, den);
+  }
 };
 
 static inline std::ostream &operator<<(std::ostream &os, const PPLRational &r) {

@@ -82,3 +82,49 @@ BOOST_AUTO_TEST_CASE(parse_sequence) {
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE(PPLRationalOperatorMinusTests)
+
+BOOST_AUTO_TEST_CASE(binary_subtract_simple) {
+  PPLRational a(3, 4);  // 0.75
+  PPLRational b(1, 2);  // 0.5
+  PPLRational c = a - b; // 0.25
+  BOOST_TEST(c.getNumerator() == 1);
+  BOOST_TEST(c.getDenominator() == 4);
+}
+
+BOOST_AUTO_TEST_CASE(binary_subtract_negative_result) {
+  PPLRational a(1, 3);
+  PPLRational b(2, 3);
+  PPLRational c = a - b; // -1/3
+  BOOST_TEST(c.getNumerator() == -1);
+  BOOST_TEST(c.getDenominator() == 3);
+}
+
+BOOST_AUTO_TEST_CASE(binary_subtract_to_zero) {
+  PPLRational a(5, 7);
+  PPLRational b(5, 7);
+  PPLRational c = a - b; // 0
+  BOOST_TEST(c.getNumerator() == 0);
+  BOOST_TEST(c.getDenominator() == 1);
+}
+
+BOOST_AUTO_TEST_CASE(unary_negation) {
+  PPLRational a(2, 5);
+  PPLRational b = -a; // -2/5
+  BOOST_TEST(b.getNumerator() == -2);
+  BOOST_TEST(b.getDenominator() == 5);
+  PPLRational c = -b; // back to 2/5
+  BOOST_TEST(c.getNumerator() == 2);
+  BOOST_TEST(c.getDenominator() == 5);
+}
+
+BOOST_AUTO_TEST_CASE(mixed_integer_and_fraction) {
+  PPLRational one(1, 1);
+  PPLRational twoThirds(2, 3);
+  PPLRational r = one - twoThirds; // 1/3
+  BOOST_TEST(r.getNumerator() == 1);
+  BOOST_TEST(r.getDenominator() == 3);
+}
+
+BOOST_AUTO_TEST_SUITE_END()
