@@ -4,6 +4,10 @@
 */
 
 #include "../src/parametric_monitor.hh"
+#include "ppl_rational.hh"
+#include "symbolic_string_constraint.hh"
+#include <ppl.hh>
+#include <sstream>
 
 namespace Parma_Polyhedra_Library {
   static inline
@@ -15,7 +19,7 @@ namespace Parma_Polyhedra_Library {
 #include <boost/test/unit_test.hpp>
 #include <boost/test/data/test_case.hpp>
 
-using TWEvent = TimedWordEvent<Parma_Polyhedra_Library::Coefficient, Parma_Polyhedra_Library::Coefficient>;
+using TWEvent = TimedWordEvent<PPLRational, Parma_Polyhedra_Library::Coefficient>;
 
 struct DummyParametricTimedWordSubject : public SingleSubject<TWEvent> {
   DummyParametricTimedWordSubject(std::vector<TWEvent> &&vec) : vec(std::move(vec)) {}
@@ -120,6 +124,40 @@ BOOST_AUTO_TEST_SUITE(ParametricMonitorTest)
     dummyTimedWord.at(0) = {0, {}, {}, timestamp};
     feed(automaton, std::move(dummyTimedWord));
     BOOST_CHECK_EQUAL(resultVec.empty(), result);
+  }
+
+  BOOST_FIXTURE_TEST_CASE(none, ParametricMonitorFixture) {
+    ParametricTA automaton;
+    automaton.clockVariableSize = 0;
+    automaton.parameterSize = 0;
+    automaton.stringVariableSize = 1;
+    automaton.numberVariableSize = 1;
+    automaton.states.resize(2);
+    automaton.states[0] = std::make_shared<PTAState>(false);
+    automaton.states[1] = std::make_shared<PTAState>(true);
+    automaton.initialStates = {automaton.states[0]};
+
+    using namespace Parma_Polyhedra_Library;
+
+    automaton.states[0]->next[0].resize(1);
+    automaton.states[0]->next[0].at(0).target = automaton.states[1];
+    automaton.states[0]->next[0].at(0).numConstraints.emplace_back(Variable(0) == Variable(1));
+    automaton.states[0]->next[0].at(0).stringConstraints.emplace_back(Symbolic::StringConstraint{{Symbolic::StringAtom{VariableID(0)}, Symbolic::StringAtom{VariableID(1)}}, Symbolic::StringConstraint::kind_t::EQ});
+
+    std::vector<TWEvent> dummyTimedWord(1);
+    Coefficient timestamp = 2;
+    dummyTimedWord.at(0) = {0, {"foo"}, {PPLRational{2, 5}}, timestamp};
+    feed(automaton, std::move(dummyTimedWord));
+    BOOST_CHECK_EQUAL(1, resultVec.size());
+
+    using namespace Parma_Polyhedra_Library::IO_Operators;
+    std::stringstream ss;
+    ss << resultVec.at(0).numberValuation;
+    BOOST_CHECK_EQUAL("5*A = 2", ss.str());
+
+    BOOST_CHECK_EQUAL(1, resultVec.at(0).stringValuation.size());
+    BOOST_CHECK_EQUAL(1, resultVec.at(0).stringValuation.at(0).index());
+    BOOST_CHECK_EQUAL("foo", std::get<std::string>(resultVec.at(0).stringValuation.at(0)));
   }
 
 BOOST_AUTO_TEST_SUITE_END()
