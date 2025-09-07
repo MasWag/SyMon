@@ -164,8 +164,7 @@ int main(int argc, char *argv[]) {
         // Use the new syntax parser
         if (vm.count("parametric")) {
             // parametric with new syntax
-            using Coefficient = Parma_Polyhedra_Library::Coefficient;
-            return execute<ParametricTA, BoostPTA, PPLRational, Coefficient, ParametricMonitor, ParametricPrinter,
+            return execute<ParametricTA, BoostPTA, PPLRational, PPLRational, ParametricMonitor, ParametricPrinter,
                 Symbolic::StringConstraint, Symbolic::NumberConstraint, ParametricTimingConstraint, Symbolic::Update>(
                 timedAutomatonFileName, signatureFileName, timedWordFileName, true);
         } else if (vm.count("dataparametric")) {
@@ -186,8 +185,7 @@ int main(int argc, char *argv[]) {
         }
     } else if (vm.count("parametric")) {
         // parametric
-        using Coefficient = Parma_Polyhedra_Library::Coefficient;
-        return execute<ParametricTA, BoostPTA, PPLRational, Coefficient, ParametricMonitor, ParametricPrinter,
+        return execute<ParametricTA, BoostPTA, PPLRational, PPLRational, ParametricMonitor, ParametricPrinter,
             Symbolic::StringConstraint, Symbolic::NumberConstraint, ParametricTimingConstraint, Symbolic::Update>(
             timedAutomatonFileName, signatureFileName, timedWordFileName, false);
     } else if (vm.count("dataparametric")) {

@@ -19,7 +19,7 @@ namespace Parma_Polyhedra_Library {
 #include <boost/test/unit_test.hpp>
 #include <boost/test/data/test_case.hpp>
 
-using TWEvent = TimedWordEvent<PPLRational, Parma_Polyhedra_Library::Coefficient>;
+using TWEvent = TimedWordEvent<PPLRational, PPLRational>;
 
 struct DummyParametricTimedWordSubject : public SingleSubject<TWEvent> {
   DummyParametricTimedWordSubject(std::vector<TWEvent> &&vec) : vec(std::move(vec)) {}
@@ -145,7 +145,7 @@ BOOST_AUTO_TEST_SUITE(ParametricMonitorTest)
     automaton.states[0]->next[0].at(0).stringConstraints.emplace_back(Symbolic::StringConstraint{{Symbolic::StringAtom{VariableID(0)}, Symbolic::StringAtom{VariableID(1)}}, Symbolic::StringConstraint::kind_t::EQ});
 
     std::vector<TWEvent> dummyTimedWord(1);
-    Coefficient timestamp = 2;
+    PPLRational timestamp = 2;
     dummyTimedWord.at(0) = {0, {"foo"}, {PPLRational{2, 5}}, timestamp};
     feed(automaton, std::move(dummyTimedWord));
     BOOST_CHECK_EQUAL(1, resultVec.size());
