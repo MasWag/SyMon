@@ -8,6 +8,7 @@
 #include "symbolic_number_constraint.hh"
 #include "symbolic_string_constraint.hh"
 #include "parametric_timing_constraint.hh"
+#include "ppl_rational.hh"
 
 #include <boost/unordered_set.hpp>
 
@@ -25,7 +26,7 @@ struct ParametricMonitorResult {
  * @note If the last trantision is an unobservable transition, the timestamp is that of the latest event.
  */
 class ParametricMonitor : public SingleSubject<ParametricMonitorResult>,
-                          public Observer<TimedWordEvent<Parma_Polyhedra_Library::Coefficient, Parma_Polyhedra_Library::Coefficient>> {
+                          public Observer<TimedWordEvent<PPLRational, Parma_Polyhedra_Library::Coefficient>> {
 public:
   static const constexpr std::size_t unobservableActinoID = 127;
 
@@ -113,10 +114,10 @@ public:
   }
 
   void
-  notify(const TimedWordEvent<Parma_Polyhedra_Library::Coefficient, Parma_Polyhedra_Library::Coefficient> &event) override {
+  notify(const TimedWordEvent<PPLRational, Parma_Polyhedra_Library::Coefficient> &event) override {
     const Action actionId = event.actionId;
     const std::vector<std::string> &strings = event.strings;
-    const std::vector<Parma_Polyhedra_Library::Coefficient> &numbers = event.numbers;
+    const std::vector<PPLRational> &numbers = event.numbers;
     const Parma_Polyhedra_Library::Coefficient timestamp = event.timestamp;
     const auto dwellTime = timestamp - absTime;
     boost::unordered_set<Configuration> nextConfigurations;
@@ -219,7 +220,7 @@ public:
       assert(numberEnv.space_dimension() == automaton.numberVariableSize);
       numberEnv.add_space_dimensions_and_embed(numbers.size());
       for (std::size_t i = 0; i < numbers.size(); i++) {
-        numberEnv.add_constraint(Parma_Polyhedra_Library::Variable(automaton.numberVariableSize + i) == numbers[i]);
+        numberEnv.add_constraint(Parma_Polyhedra_Library::Variable(automaton.numberVariableSize + i) * numbers[i].getDenominator() == numbers[i].getNumerator());
       }
       for (const auto &transition: transitionIt->second) {
         // evaluate the guards

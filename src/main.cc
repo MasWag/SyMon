@@ -8,6 +8,7 @@
 #include "data_parametric_monitor.hh"
 #include "parametric_monitor.hh"
 #include "printer.hh"
+#include "ppl_rational.hh"
 
 using namespace boost::program_options;
 using namespace boost;
@@ -137,7 +138,7 @@ int main(int argc, char *argv[]) {
 
   if (vm.count("parametric")) {
     // parametric
-    return execute<ParametricTA, BoostPTA, Parma_Polyhedra_Library::Coefficient, Parma_Polyhedra_Library::Coefficient, ParametricMonitor, ParametricPrinter>(
+    return execute<ParametricTA, BoostPTA, PPLRational, Parma_Polyhedra_Library::Coefficient, ParametricMonitor, ParametricPrinter>(
             timedAutomatonFileName, signatureFileName, timedWordFileName);
   } else if (vm.count("dataparametric")) {
     // data parametric
