@@ -97,6 +97,18 @@ BOOST_AUTO_TEST_SUITE(ParametricTimingConstraintHelperTest)
       Constraint expectedConstraint = Variable(2) + Variable(1) >= Variable(3) - 10 + Variable(0);
       BOOST_TEST(constraint.is_equal_to(expectedConstraint));
     }
+  BOOST_AUTO_TEST_SUITE_END()
+
+  BOOST_AUTO_TEST_SUITE(LexicalCastTest)
+    BOOST_AUTO_TEST_CASE(complicatedLT) {
+      using namespace Parma_Polyhedra_Library;
+      ParametricTimingConstraintHelper helper = boost::lexical_cast<ParametricTimingConstraintHelper>("x0 <= p0 + 5");
+
+      Constraint constraint;
+      helper.extract(1, constraint);
+      Constraint expectedConstraint = Variable(1) <= Variable(0) + 5;
+      BOOST_TEST(constraint.is_equal_to(expectedConstraint));
+    }
 
   BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE_END() // ParametricTimingConstraintHelperTest

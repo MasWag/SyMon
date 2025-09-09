@@ -86,7 +86,7 @@ public:
 
 
 static std::istream &skipBlank(std::istream &is) {
-  while (true) {
+  while (is.good()) {
     switch (is.peek()) {
       case ' ':
       case '\t':
@@ -97,6 +97,8 @@ static std::istream &skipBlank(std::istream &is) {
         return is;
     }
   }
+
+  return is;
 }
 
 static std::istream &readAtom(std::istream &is, ParametricTimingConstraintHelper::atom_t &atom) {
@@ -154,6 +156,13 @@ std::istream &operator>>(std::istream &is, ParametricTimingConstraintHelper &hel
     bool keepHere = true;
     while (keepHere) {
       skipBlank(is);
+      if (is.eof()) {
+        if (position != 1) {
+          is.setstate(std::ios::failbit);
+        } else {
+          return is;
+        }
+      }
       switch (is.get()) {
         case '+': {
           std::pair<ParametricTimingConstraintHelper::op_t, ParametricTimingConstraintHelper::atom_t> elem;
