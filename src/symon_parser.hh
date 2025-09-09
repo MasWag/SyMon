@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <istream>
 #include <stdexcept>
 #include <type_traits>
@@ -549,17 +550,29 @@ private:
             bool isUpperInclusive = ts_node_type(ts_node_child(parent, 4)) == std::string("]");
 
             if constexpr (std::is_same_v<TimingConstraint, ParametricTimingConstraint>) {
-                auto lowerGuard = boost::lexical_cast<ParametricTimingConstraintHelper>(
-                    "x" + std::to_string(clockIndex) + " " + (isLowerInclusive ? ">=" : ">") + " " + lowerBound);
-                auto upperGuard = boost::lexical_cast<ParametricTimingConstraintHelper>(
-                    "x" + std::to_string(clockIndex) + " " + (isUpperInclusive ? "<=" : "<") + " " + upperBound);
-                Parma_Polyhedra_Library::Constraint lowerConstraint, upperConstraint;
-                lowerGuard.extract(this->parameters.size(), lowerConstraint);
-                upperGuard.extract(this->parameters.size(), upperConstraint);
-                ParametricTimingValuation result{this->parameters.size() + clockIndex + 1};
-                result.add_constraint(lowerConstraint);
-                result.add_constraint(upperConstraint);
-                return result;
+                const std::string lowerGuardString = "x" + std::to_string(clockIndex) + " " + (isLowerInclusive ? ">=" : ">") + " " + lowerBound;
+                const std::string upperGuardString = "x" + std::to_string(clockIndex) + " " + (isUpperInclusive ? "<=" : "<") + " " + upperBound;
+                try {
+                  auto lowerGuard =
+                      boost::lexical_cast<ParametricTimingConstraintHelper>(
+                          lowerGuardString);
+                  auto upperGuard =
+                      boost::lexical_cast<ParametricTimingConstraintHelper>(
+                          upperGuardString);
+                  Parma_Polyhedra_Library::Constraint lowerConstraint,
+                      upperConstraint;
+                  lowerGuard.extract(this->parameters.size(), lowerConstraint);
+                  upperGuard.extract(this->parameters.size(), upperConstraint);
+                  ParametricTimingValuation result{this->parameters.size() +
+                                                   clockIndex + 1};
+                  result.add_constraint(lowerConstraint);
+                  result.add_constraint(upperConstraint);
+                  return result;
+                } catch (const boost::bad_lexical_cast &err) {
+                    std::cerr << "lowerGuard: " << lowerGuardString.c_str() << std::endl;
+                    std::cerr << "upperGuard: " << upperGuardString.c_str() << std::endl;
+                    throw err;
+                }
             } else {
                 return {
                     boost::lexical_cast<::TimingConstraint>(
