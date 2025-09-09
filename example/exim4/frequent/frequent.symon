@@ -11,13 +11,14 @@ signature arrival {
 one_or_more {
     arrival(sender | | count := 0)
 };
+# Nondeterministically start counting for current_sender
 within (<= 3) {
     one_or_more {
         one_of {
             arrival( sender | sender != current_sender && count <= 10 )
         } or {
-            arrival( sender | sender == current_sender && count <= 10 | count := count + 1 )
+            arrival( sender | sender == current_sender && count < 10 | count := count + 1 )
         }
-    }
-};
-arrival( sender | count > 10 )
+    };
+    arrival( sender | sender == current_sender && count = 10 )
+}
