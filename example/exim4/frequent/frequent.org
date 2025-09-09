@@ -69,26 +69,35 @@ First, we ignore irrelevant arrivals.
   }
 #+END_SRC
 
-Then, we count the number of the arrival from the same sender for 3 seconds, while ignoring arrival from other senders.
+Then, we count the number of the arrival from the same sender for 3 seconds up to 10, while ignoring arrival from other senders.
 
-#+NAME: COUNT
+#+NAME: COUNT_INTERNAL
 #+BEGIN_SRC symon
-  within (<= 3) {
-      one_or_more {
-          one_of {
-              arrival( sender | sender != current_sender && count <= 10 )
-          } or {
-              arrival( sender | sender == current_sender && count <= 10 | count := count + 1 )
-          }
+  one_or_more {
+      one_of {
+          arrival( sender | sender != current_sender && count <= 10 )
+      } or {
+          arrival( sender | sender == current_sender && count < 10 | count := count + 1 )
       }
   }
 #+END_SRC
 
-Finally, we deem the message was too frequent if the total count is more than 10.
+We stop counting and report if we have another arrival when count is 10, i.e., we have 11th arrival.
 
 #+NAME: FINAL
 #+BEGIN_SRC symon
-  arrival( sender | count > 10 )
+  arrival( sender | sender == current_sender && count = 10 )
+#+END_SRC
+
+And, these thing must happen within 3 seconds.
+
+#+NAME: COUNT
+#+BEGIN_SRC symon :noweb yes
+  # Nondeterministically start counting for current_sender
+  within (<= 3) {
+      <<COUNT_INTERNAL>>;
+      <<FINAL>>
+  }
 #+END_SRC
 
 Overall, the following shows the specification.
@@ -99,8 +108,7 @@ Overall, the following shows the specification.
 <<SIGNATURE>>
 
 <<IGNORE_BEFORE>>;
-<<COUNT>>;
-<<FINAL>>
+<<COUNT>>
 #+END_SRC
 
 * Example Execution
@@ -139,4 +147,4 @@ Here is the command to run SyMon with a monitoring result:
 #+END_SRC
 
 #+RESULTS:
-: @3.400000.	(time-point 19)	sender: alice@example.com	count: 11
+: @3.300000.	(time-point 18)	sender: alice@example.com	count: 10
