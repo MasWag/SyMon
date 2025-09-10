@@ -110,7 +110,15 @@ int execute(const std::string &timedAutomatonFileName,
 
 int main(int argc, char *argv[]) {
     using Number = double;
-    const auto programName = "SyMon";
+#ifdef NDEBUG
+    const auto programName = "SyMon (relase build)";
+#else
+#ifdef DEBUG
+    const auto programName = "SyMon (debug build)";
+#else
+    const auto programName = "SyMon (unknown)";
+#endif
+#endif
     std::cin.tie(0);
     std::ios::sync_with_stdio(false);
     const auto errorHeader = "SyMon: ";
