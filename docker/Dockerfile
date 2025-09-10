@@ -1,4 +1,4 @@
-FROM debian:bookworm-slim
+FROM debian:trixie-slim
 LABEL maintainer="Masaki Waga <masakiwaga@gmail.com>"
 
 # The branch of SyMon to build. This can be overridden at build time
