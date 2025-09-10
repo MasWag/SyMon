@@ -1,4 +1,4 @@
-FROM debian:bookworm-slim
+FROM debian:trixie-slim
 LABEL maintainer="Masaki Waga <masakiwaga@gmail.com>"
 
 # Install required build dependencies
