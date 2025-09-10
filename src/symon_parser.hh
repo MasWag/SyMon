@@ -100,6 +100,7 @@ public:
         TSParser *inParser = ts_parser_new();
         ts_parser_set_language(inParser, tree_sitter_symon());
         const TSTree *tree = ts_parser_parse_string(inParser, nullptr, content.c_str(), content.length());
+	ts_parser_delete(inParser);
         const TSNode rootNode = ts_tree_root_node(tree);
         const uint32_t rootSize = ts_node_child_count(rootNode);
         for (uint32_t i = 0; i < rootSize; i++) {
