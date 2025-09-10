@@ -1,0 +1,132 @@
+#+TITLE: Periodic Withdrawal Detection
+#+AUTHOR: Masaki Waga
+#+EMAIL: mwaga@fos.kuis.kyoto-u.ac.jp
+#+OPTIONS: toc:nil
+
+This is an example to detect a periodic withdrawal for a certain bank account using [[https://github.com/MasWag/SyMon/][SyMon]].
+
+* Requirements
+
+- [[https://github.com/MasWag/SyMon/][SyMon]]
+- Python3
+- Emacs
+  - to tangle the resulting files from periodic.org
+
+* Usage
+
+The usage of the generated files is as follows:
+
+#+BEGIN_SRC sh
+  cat example.log |
+      ./periodic.symon |
+      ./pretty_print.sh
+#+END_SRC
+
+You can re-generate =periodic.symon= by ~make~. You can also generate the document with ~make doc~
+
+* Events
+
+We monitor the following event:
+
+- =withdraw=: The event showing the withdraw of money from a bank account.
+
+Each =withdraw= event is tied with a number =amount= showing the amount of money withdrawn. The corresponding signature for SyMon is as follows:
+
+#+NAME: SIGNATURE
+#+BEGIN_SRC symon
+  signature withdraw {
+      amount: number;
+  }
+#+END_SRC
+
+* Specification
+
+What we want to do in the monitoring process is as follows:
+
+- For each =withdraw=, we check if the amount is larger than a nondeterministically  determined threshold.
+- If =amount= is smaller than the threshold, we ignore the event.
+- If =amount= is larger than or equal to the threshold, we check if the time elapse from the latest withdraw event with the amount larger than the threshold is in a certain range, which is also nondeterministically determined.
+
+To represent this specification, we need a parametric numeric variable =threshold= to represent the threshold, and one timing parameter =period= to represent the time range.
+
+#+NAME: VARIABLES
+#+BEGIN_SRC symon
+  var {
+      threshold: number;
+      period: param;
+  }
+#+END_SRC
+
+First, we ignore irrelevant =withdraw= events, i.e., those with the amount smaller than the threshold.
+
+#+NAME: IGNORE_IRRELEVANT
+#+BEGIN_SRC symon
+  zero_or_more {
+      withdraw( amount | amount < threshold )
+  }
+#+END_SRC
+
+Then, we consider the first relevant =withdraw= event, i.e., the one with the amount larger than or equal to the threshold. 
+
+#+NAME: RELEVANT_WITHDRAW
+#+BEGIN_SRC symon
+  withdraw( amount | amount >= threshold )
+#+END_SRC
+
+From this point, we check if there is another relevant =withdraw= event within the time range specified by =period=. We specify this as follows.
+
+#+NAME: CHECK_NEXT
+#+BEGIN_SRC symon :noweb yes
+  one_or_more {
+        # We constrain the time elapse between two relevant withdraw events with a closed interval.
+        within [period - 1, period + 1] {
+            <<IGNORE_IRRELEVANT>>;
+            <<RELEVANT_WITHDRAW>>
+        }
+  }
+#+END_SRC
+
+Finally, we may have a sequence of irrelevant =withdraw= events. Overall, the following shows the specification.
+
+#+BEGIN_SRC symon :tangle periodic.symon :noweb yes :shebang #!/usr/bin/env symon -pnf
+  <<VARIABLES>>
+
+  <<SIGNATURE>>
+
+  <<IGNORE_IRRELEVANT>>;
+  <<RELEVANT_WITHDRAW>>;
+  <<CHECK_NEXT>>;
+  <<IGNORE_IRRELEVANT>>
+#+END_SRC
+
+* Example Execution
+
+Here is an example of the log 
+
+#+BEGIN_SRC txt :tangle example.log
+withdraw  1000  0.0
+withdraw   200  1.0
+withdraw  1200 10.0
+withdraw  1300 20.5
+withdraw   300 22.0
+withdraw  1100 31.2
+#+END_SRC
+
+Here is the command to run SyMon with a monitoring result:
+
+#+BEGIN_SRC sh :results output replace :exports both
+  cat example.log | 
+      ./periodic.symon |
+      ./pretty_print.sh
+#+END_SRC
+
+#+RESULTS:
+: @1.	(time-point 1)	Num: -threshold >= -200	Clock: last_interval = 1, period >= 0, -period >= -2
+: @10.	(time-point 2)	Num: threshold > 200, -threshold >= -1000	Clock: last_interval = 10, period >= 9, -period >= -11
+: @20.5.	(time-point 3)	Num: threshold > 200, -threshold >= -1000	Clock: 2*last_interval = 21, -period >= -11, 2*period >= 19
+: @20.5.	(time-point 3)	Num: threshold > 1000, -threshold >= -1200	Clock: 2*last_interval = 21, 2*period >= 19, -2*period >= -23
+: @22.	(time-point 4)	Num: threshold > 1000, -threshold >= -1200	Clock: last_interval = 12, -2*period >= -23, 2*period >= 19
+: @22.	(time-point 4)	Num: threshold > 300, -threshold >= -1000	Clock: last_interval = 12, -period >= -11, 2*period >= 19
+: @31.2.	(time-point 5)	Num: threshold > 1100, -threshold >= -1200	Clock: 5*last_interval = 106, -2*period >= -23, 2*period >= 19
+: @31.2.	(time-point 5)	Num: threshold > 300, -threshold >= -1000	Clock: 10*last_interval = 107, -period >= -11, 10*period >= 97
+: @31.2.	(time-point 5)	Num: threshold > 1000, -threshold >= -1100	Clock: 10*last_interval = 107, -2*period >= -23, 10*period >= 97

@@ -1,0 +1,26 @@
+#!/usr/bin/env symon -pnf
+var {
+    threshold: number;
+    period: param;
+}
+
+signature withdraw {
+    amount: number;
+}
+
+zero_or_more {
+    withdraw( amount | amount < threshold )
+};
+withdraw( amount | amount >= threshold );
+one_or_more {
+      # We constrain the time elapse between two relevant withdraw events with a closed interval.
+      within [period - 1, period + 1] {
+          zero_or_more {
+              withdraw( amount | amount < threshold )
+          };
+          withdraw( amount | amount >= threshold )
+      }
+};
+zero_or_more {
+    withdraw( amount | amount < threshold )
+}
