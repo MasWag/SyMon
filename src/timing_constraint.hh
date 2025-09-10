@@ -94,11 +94,11 @@ public:
 /*!
   @brief remove any inequality x > c or x >= c
  */
-static void widen(std::vector<TimingConstraint> &guard) {
-    guard.erase(std::remove_if(guard.begin(), guard.end(), [](TimingConstraint g) {
-        return g.odr == TimingConstraint::Order::ge || g.odr == TimingConstraint::Order::gt;
-    }), guard.end());
-}
+// static void widen(std::vector<TimingConstraint> &guard) {
+//     guard.erase(std::remove_if(guard.begin(), guard.end(), [](TimingConstraint g) {
+//         return g.odr == TimingConstraint::Order::ge || g.odr == TimingConstraint::Order::gt;
+//     }), guard.end());
+// }
 
 using TimingValuation = std::vector<double>;
 
