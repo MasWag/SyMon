@@ -20,5 +20,5 @@ within (<= 3) {
             arrival( sender | sender == current_sender && count < 10 | count := count + 1 )
         }
     };
-    arrival( sender | sender == current_sender && count = 10 )
+    arrival( sender | sender == current_sender && count = 10 | count := count + 1 )
 }
