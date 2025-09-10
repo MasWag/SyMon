@@ -124,8 +124,9 @@ static inline std::ostream &operator<<(std::ostream &os, const PPLRational &r) {
      }
      os << p / offset;
      os << ".";
-     auto frac = abs(p % offset);
-     os << std::setw(width) << std::setfill('0') << frac;
+     const auto frac = p % offset;
+     const auto absFrac = abs(frac);
+     os << std::setw(width) << std::setfill('0') << absFrac;
     } else {
       // r cannot be represented as a decimal number
       os << r.getNumerator() << "/" << r.getDenominator();

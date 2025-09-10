@@ -616,10 +616,10 @@ private:
     }
 
     std::vector<Action> parseActionList(const std::string &content, const TSNode &identifierListNode) const {
-        const auto size = (ts_node_child_count(identifierListNode) + 1) / 2;
+        const std::size_t size = (ts_node_child_count(identifierListNode) + 1) / 2;
         std::vector<Action> actions;
         actions.reserve(size);
-        for (int i = 0; i < size; ++i) {
+        for (std::size_t i = 0; i < size; ++i) {
             TSNode identityNode = ts_node_child(identifierListNode, i * 2);
             auto identifier =
                 std::string(content.begin() + ts_node_start_byte(identityNode),
@@ -717,8 +717,8 @@ private:
             AutomatonTransition<StringConstraint, NumberConstraint, TimingConstraint, Update> transition;
             std::optional<TSNode> argNode = this->ts_node_child_by_type(child, "arg_list");
             if (argNode) {
-                int count = 0;
-                for (int i = 0; i < ts_node_child_count(*argNode); ++i) {
+                std::size_t count = 0;
+                for (std::size_t i = 0; i < ts_node_child_count(*argNode); ++i) {
                     TSNode cur = ts_node_child(*argNode, i);
                     if (ts_node_type(cur) == std::string("identifier")) {
                         auto identifier = std::string(content.begin() + ts_node_start_byte(cur),
@@ -745,7 +745,7 @@ private:
                 }
                 if (updateNode.has_value()) {
                     const std::size_t updateSize = ts_node_child_count(*updateNode);
-                    for (int i = 0; i < updateSize; ++i ) {
+                    for (std::size_t i = 0; i < updateSize; ++i ) {
                         TSNode update = ts_node_child(*updateNode, i);
                         if (ts_node_type(update) != std::string("assignment")) {
                             continue;
