@@ -1,0 +1,41 @@
+name: Integrated Test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build_and_integrated_test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install BATS and dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install -y --no-install-recommends \
+          bats gawk \
+          build-essential \
+          libppl-dev \
+          libboost-all-dev \
+          cmake \
+          libgmp-dev \
+          libtree-sitter-dev \
+          git
+
+      - name: Install tree-sitter
+        run: |
+         git clone https://github.com/maswag/tree-sitter-symon.git /tmp/tree-sitter-symon
+         cmake -B /tmp/tree-sitter-symon/build -S /tmp/tree-sitter-symon
+         cmake --build /tmp/tree-sitter-symon/build
+         sudo cmake --install /tmp/tree-sitter-symon/build
+
+      - name: Build SyMon
+        run: |
+          cmake -S . -B build
+          cmake --build build
+
+      - name: Run BATS tests
+        working-directory: bats
+        run: bats .
