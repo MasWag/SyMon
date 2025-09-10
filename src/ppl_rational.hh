@@ -109,6 +109,9 @@ static inline std::ostream &operator<<(std::ostream &os, const PPLRational &r) {
      // r can be represented as a decimal number
      const std::size_t width = std::max(count2, count5);
      const auto offset = static_cast<Parma_Polyhedra_Library::Coefficient>(std::pow(10, width));
+     if (offset == 0) {
+       throw std::overflow_error("Offset overflowed.");
+     }
      if (count2 > count5) {
          p *= static_cast<Parma_Polyhedra_Library::Coefficient>(std::pow(5, count2 - count5));
      } else if (count5 > count2) {
