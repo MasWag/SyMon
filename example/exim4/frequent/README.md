@@ -72,12 +72,38 @@ First, we ignore irrelevant arrivals.
 
 ``` symon
 one_or_more {
-    arrival(sender | | count := 0)
+    arrival(sender)
 }
 ```
 
-Then, we count the number of the arrival from the same sender for 3
-seconds, while ignoring arrival from other senders.
+Then, we have a relevant arrival.
+
+``` symon
+# Nondeterministically start counting for current_sender
+arrival( sender | sender == current_sender | count := 1 )
+```
+
+After that, we count the number of the arrival from the same sender for
+3 seconds up to 10, while ignoring arrival from other senders.
+
+``` symon
+one_or_more {
+    one_of {
+        arrival( sender | sender != current_sender && count <= 10 )
+    } or {
+        arrival( sender | sender == current_sender && count < 10 | count := count + 1 )
+    }
+}
+```
+
+We stop counting and report if we have another arrival when count is 10,
+i.e., we have 11th arrival.
+
+``` symon
+arrival( sender | sender == current_sender && count = 10 | count := count + 1 )
+```
+
+And, these thing must happen within 3 seconds.
 
 ``` symon
 within (<= 3) {
@@ -85,17 +111,11 @@ within (<= 3) {
         one_of {
             arrival( sender | sender != current_sender && count <= 10 )
         } or {
-            arrival( sender | sender == current_sender && count <= 10 | count := count + 1 )
+            arrival( sender | sender == current_sender && count < 10 | count := count + 1 )
         }
-    }
+    };
+    arrival( sender | sender == current_sender && count = 10 | count := count + 1 )
 }
-```
-
-Finally, we deem the message was too frequent if the total count is more
-than 10.
-
-``` symon
-arrival( sender | count > 10 )
 ```
 
 Overall, the following shows the specification.
@@ -111,18 +131,20 @@ signature arrival {
 }
 
 one_or_more {
-    arrival(sender | | count := 0)
+    arrival(sender)
 };
+# Nondeterministically start counting for current_sender
+arrival( sender | sender == current_sender | count := 1 );
 within (<= 3) {
     one_or_more {
         one_of {
             arrival( sender | sender != current_sender && count <= 10 )
         } or {
-            arrival( sender | sender == current_sender && count <= 10 | count := count + 1 )
+            arrival( sender | sender == current_sender && count < 10 | count := count + 1 )
         }
-    }
-};
-arrival( sender | count > 10 )
+    };
+    arrival( sender | sender == current_sender && count = 10 | count := count + 1 )
+}
 ```
 
 # Example Execution
@@ -161,5 +183,5 @@ cat example.log |
 ```
 
 ``` example
-@3.400000.    (time-point 19) sender: alice@example.com   count: 11
+@3.300000.    (time-point 18) current_sender: alice@example.com   count: 11
 ```
