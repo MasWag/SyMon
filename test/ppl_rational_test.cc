@@ -1,5 +1,6 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/data/test_case.hpp>
+
 #include <sstream>
 
 #ifndef mem_fun_ref
@@ -145,3 +146,4 @@ BOOST_DATA_TEST_CASE(random_decimal, bdata::xrange(100) ^ bdata::random( bdata::
   BOOST_TEST(ss.str() == asString);
 }
 BOOST_AUTO_TEST_SUITE_END()
+

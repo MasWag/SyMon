@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - new_syntax
   workflow_dispatch:
 
 jobs:
@@ -27,10 +28,21 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Set Docker tag
+        id: set-tag
+        run: |
+          if [[ "${GITHUB_REF##*/}" == "master" ]]; then
+            echo "tag=maswag/symon:latest" >> "$GITHUB_OUTPUT"
+          elif [[ "${GITHUB_REF##*/}" == "new_syntax" ]]; then
+            echo "tag=maswag/symon:new_syntax" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
           context: ./docker
           push: true
           platforms: linux/amd64,linux/arm64
-          tags: maswag/symon:latest
+          tags: ${{ steps.set-tag.outputs.tag }}
+          build-args: |
+            SYMON_BRANCH=${{ github.ref_name }}

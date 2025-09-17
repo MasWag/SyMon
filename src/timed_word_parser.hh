@@ -40,7 +40,7 @@ public:
       if (!sig.isDefined(action)) {
         std::string skipped;
         std::getline(is, skipped);
-        std::cerr << "Undefined action: " << action << std::endl;
+        std::cerr << "Undefined action: " << action.c_str() << std::endl;
         continue;
       }
       const std::size_t stringSize = sig.getStringSize(action);

@@ -6,6 +6,10 @@
 #include "../src/automaton.hh"
 #include "../src/automaton_parser.hh"
 
+#ifndef PROJECT_ROOT
+#define PROJECT_ROOT ".."
+#endif
+
 std::ostream &operator<<(std::ostream &os, const std::vector<ClockVariables> &resetVars);
 
 BOOST_AUTO_TEST_SUITE(AutomatonParserTests)
@@ -175,7 +179,7 @@ BOOST_AUTO_TEST_SUITE(AutomatonParserTests)
 
       BOOST_AUTO_TEST_CASE(Copy) {
         NonParametricBoostTA<int> BoostTA;
-        std::ifstream file("../example/copy/copy.dot");
+        std::ifstream file(PROJECT_ROOT "/example/copy/copy.dot");
         parseBoostTA(file, BoostTA);
 
         BOOST_CHECK_EQUAL(boost::get_property(BoostTA, boost::graph_clock_variable_size), 1);
@@ -211,7 +215,7 @@ BOOST_AUTO_TEST_SUITE(AutomatonParserTests)
 
       BOOST_AUTO_TEST_CASE(Copy) {
         DataParametricBoostTA BoostTA;
-        std::ifstream file("../example/copy/copy_data_parametric.dot");
+        std::ifstream file(PROJECT_ROOT "/example/copy/copy_data_parametric.dot");
         parseBoostTA(file, BoostTA);
 
         BOOST_CHECK_EQUAL(boost::get_property(BoostTA, boost::graph_clock_variable_size), 1);
@@ -251,7 +255,7 @@ BOOST_AUTO_TEST_SUITE(AutomatonParserTests)
         NonParametricBoostTA<int> BoostTA;
         NonParametricTA<int> TA;
         // NonParametricTA<int> TA;
-        std::ifstream file("../example/copy/copy.dot");
+        std::ifstream file(PROJECT_ROOT "/example/copy/copy.dot");
         parseBoostTA(file, BoostTA);
         convBoostTA(BoostTA, TA);
 
@@ -353,7 +357,7 @@ BOOST_AUTO_TEST_SUITE(AutomatonParserTests)
         using namespace Parma_Polyhedra_Library;
         DataParametricBoostTA BoostTA;
         DataParametricTA TA;
-        std::ifstream file("../example/copy/copy_data_parametric.dot");
+        std::ifstream file(PROJECT_ROOT "/example/copy/copy_data_parametric.dot");
         parseBoostTA(file, BoostTA);
         convBoostTA(BoostTA, TA);
 
@@ -439,7 +443,7 @@ BOOST_AUTO_TEST_SUITE(AutomatonParserTests)
         using namespace Parma_Polyhedra_Library;
         DataParametricBoostTA BoostTA;
         DataParametricTA TA;
-        std::ifstream file("../example/withdraw/withdraw.dot");
+        std::ifstream file(PROJECT_ROOT "/example/withdraw/withdraw.dot");
         parseBoostTA(file, BoostTA);
         convBoostTA(BoostTA, TA);
 

@@ -1,0 +1,32 @@
+var {
+    currentId: string;
+    total: number;
+}
+
+signature withdraw {
+    id: string;
+    value: number;
+}
+
+expr ignoreInitial { (withdraw(id, value))* }
+expr start { withdraw( id, value | id == currentId | total := value) }
+expr end { withdraw( id, value | total > 10000 ) }
+expr ignoreIrrelevant { withdraw(id, value | id != currentId ) }
+expr addRelevant { withdraw(id, value | id == currentId | total := total + value) }
+
+expr main {
+    ignoreInitial;
+    start;
+    within (> 30) {
+        zero_or_more {
+            one_of {
+                ignoreIrrelevant
+            } or {
+                addRelevant
+            }
+        };
+        end
+    }
+}
+
+main

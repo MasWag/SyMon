@@ -5,25 +5,6 @@ on:
   pull_request:
 
 jobs:
-  unit_test_container:
-    name: Container
-    runs-on: ubuntu-latest
-    container:
-      image: maswag/monaa-test-env
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-      - name: Build and test
-        run: |
-          export CC=/usr/bin/gcc
-          export CXX=/usr/bin/g++
-          mkdir -p gcc_build
-          cd gcc_build
-          cmake ..
-          make unit_test
-          ./unit_test
-
   noble:
     name: Ubuntu Noble (24.04)
     runs-on: ubuntu-24.04
@@ -38,8 +19,17 @@ jobs:
             libboost-all-dev \
             cmake \
             libgmp-dev \
+            libtree-sitter-dev \
             git
-      - run: mkdir -p build && cd build && cmake .. && make unit_test && ./unit_test
+      - run: |
+          git clone https://github.com/maswag/tree-sitter-symon.git /tmp/tree-sitter-symon
+          cmake -B /tmp/tree-sitter-symon/build -S /tmp/tree-sitter-symon
+          cmake --build /tmp/tree-sitter-symon/build
+          sudo cmake --install /tmp/tree-sitter-symon/build
+      - run: |
+          cmake -S . -B build
+          cmake --build build -t unit_test
+          ./build/unit_test
 
   jammy:
     name: Ubuntu Jammy (22.04)
@@ -55,8 +45,17 @@ jobs:
             libboost-all-dev \
             cmake \
             libgmp-dev \
+            libtree-sitter-dev \
             git
-      - run: mkdir -p build && cd build && cmake .. && make unit_test && ./unit_test
+      - run: |
+          git clone https://github.com/maswag/tree-sitter-symon.git /tmp/tree-sitter-symon
+          cmake -B /tmp/tree-sitter-symon/build -S /tmp/tree-sitter-symon
+          cmake --build /tmp/tree-sitter-symon/build
+          sudo cmake --install /tmp/tree-sitter-symon/build
+      - run: |
+          cmake -S . -B build
+          cmake --build build -t unit_test
+          ./build/unit_test
 
   noble-arm:
     name: Ubuntu Noble ARM
@@ -72,8 +71,17 @@ jobs:
             libboost-all-dev \
             cmake \
             libgmp-dev \
+            libtree-sitter-dev \
             git
-      - run: mkdir -p build && cd build && cmake .. && make unit_test && ./unit_test
+      - run: |
+          git clone https://github.com/maswag/tree-sitter-symon.git /tmp/tree-sitter-symon
+          cmake -B /tmp/tree-sitter-symon/build -S /tmp/tree-sitter-symon
+          cmake --build /tmp/tree-sitter-symon/build
+          sudo cmake --install /tmp/tree-sitter-symon/build
+      - run: |
+          cmake -S . -B build
+          cmake --build build -t unit_test
+          ./build/unit_test
 
   jammy-arm:
     name: Ubuntu Jammy ARM
@@ -89,8 +97,17 @@ jobs:
             libboost-all-dev \
             cmake \
             libgmp-dev \
+            libtree-sitter-dev \
             git
-      - run: mkdir -p build && cd build && cmake .. && make unit_test && ./unit_test
+      - run: |
+          git clone https://github.com/maswag/tree-sitter-symon.git /tmp/tree-sitter-symon
+          cmake -B /tmp/tree-sitter-symon/build -S /tmp/tree-sitter-symon
+          cmake --build /tmp/tree-sitter-symon/build
+          sudo cmake --install /tmp/tree-sitter-symon/build
+      - run: |
+          cmake -S . -B build
+          cmake --build build -t unit_test
+          ./build/unit_test
 
   sequoia:
     name: macOS Sequoia (15)
@@ -99,7 +116,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - run: brew update && brew uninstall cmake && brew install boost gmp cmake ppl
+      - run: |
+          brew update && brew uninstall cmake && brew install boost gmp cmake ppl tree-sitter
+          brew install --HEAD maswag/scientific/tree-sitter-symon
       - run: |
           mkdir -p build
           cd build
@@ -114,7 +133,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - run: brew update && brew uninstall cmake && brew install boost gmp cmake ppl
+      - run: |
+          brew update && brew uninstall cmake && brew install boost gmp cmake ppl tree-sitter
+          brew install --HEAD maswag/scientific/tree-sitter-symon
       - run: |
           mkdir -p build
           cd build
@@ -129,7 +150,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
-      - run: brew update && brew uninstall cmake && brew install boost gmp cmake ppl
+      - run: |
+          brew update && brew uninstall cmake && brew install boost gmp cmake ppl tree-sitter
+          brew install --HEAD maswag/scientific/tree-sitter-symon
       - run: |
           mkdir -p build
           cd build

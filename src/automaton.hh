@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <vector>
 #include <boost/unordered_map.hpp>
 #include <memory>
@@ -46,7 +47,7 @@ template<typename StringConstraint, typename NumberConstraint, typename TimingCo
 struct AutomatonState {
   //! @brief The value is true if and only if the state is an accepting state.
   bool isMatch;
-  /*! 
+  /*!
     @brief An mapping of a character to the transitions.
     @note Because of non-determinism, the second element is a vector.
    */
@@ -67,13 +68,62 @@ struct AutomatonState {
  */
 template<typename StringConstraint, typename NumberConstraint, typename TimingConstraint, typename Update>
 struct TimedAutomaton : public Automaton<AutomatonState<StringConstraint, NumberConstraint, TimingConstraint, Update>> {
-  std::size_t stringVariableSize, numberVariableSize, clockVariableSize;
+  std::size_t stringVariableSize = 0;
+  std::size_t numberVariableSize = 0;
+  std::size_t clockVariableSize = 0;
+
+  /*!
+   * @brief Creates a deep copy of this timed automaton
+   * @return A new TimedAutomaton instance that is a deep copy of this automaton
+   */
+  TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> deepCopy() const {
+    using BaseAutomaton = Automaton<AutomatonState<StringConstraint, NumberConstraint, TimingConstraint, Update>>;
+
+    // Create a new TimedAutomaton
+    TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> result;
+
+    // Copy the base class members using the base class deepCopy method
+    auto baseAutomatonCopy = BaseAutomaton::deepCopy();
+    result.states = std::move(baseAutomatonCopy.states);
+    result.initialStates = std::move(baseAutomatonCopy.initialStates);
+
+    // Copy the TimedAutomaton specific members
+    result.stringVariableSize = this->stringVariableSize;
+    result.numberVariableSize = this->numberVariableSize;
+    result.clockVariableSize = this->clockVariableSize;
+
+    return result;
+  }
 };
 
 template<typename StringConstraint, typename NumberConstraint, typename Update>
 struct TimedAutomaton<StringConstraint, NumberConstraint, ParametricTimingConstraint, Update>
         : public Automaton<AutomatonState<StringConstraint, NumberConstraint, ParametricTimingConstraint, Update>> {
   std::size_t stringVariableSize, numberVariableSize, clockVariableSize, parameterSize;
+
+  /*!
+   * @brief Creates a deep copy of this parametric timed automaton
+   * @return A new TimedAutomaton instance that is a deep copy of this automaton
+   */
+  TimedAutomaton<StringConstraint, NumberConstraint, ParametricTimingConstraint, Update> deepCopy() const {
+    using BaseAutomaton = Automaton<AutomatonState<StringConstraint, NumberConstraint, ParametricTimingConstraint, Update>>;
+
+    // Create a new TimedAutomaton
+    TimedAutomaton<StringConstraint, NumberConstraint, ParametricTimingConstraint, Update> result;
+
+    // Copy the base class members using the base class deepCopy method
+    auto baseAutomatonCopy = BaseAutomaton::deepCopy();
+    result.states = std::move(baseAutomatonCopy.states);
+    result.initialStates = std::move(baseAutomatonCopy.initialStates);
+
+    // Copy the TimedAutomaton specific members
+    result.stringVariableSize = this->stringVariableSize;
+    result.numberVariableSize = this->numberVariableSize;
+    result.clockVariableSize = this->clockVariableSize;
+    result.parameterSize = this->parameterSize;
+
+    return result;
+  }
 };
 
 #include "non_symbolic_string_constraint.hh"
