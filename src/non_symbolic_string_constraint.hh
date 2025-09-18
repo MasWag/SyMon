@@ -1,10 +1,10 @@
 #pragma once
 
-#include <vector>
 #include <array>
+#include <optional>
 #include <string>
 #include <variant>
-#include <optional>
+#include <vector>
 
 #include "common_types.hh"
 
@@ -23,9 +23,9 @@ namespace NonSymbolic {
       }
     }
 
-      bool operator==(const StringAtom &other) const {
-        return value == other.value;
-      }
+    bool operator==(const StringAtom &other) const {
+      return value == other.value;
+    }
   };
 
   /*!
@@ -35,9 +35,7 @@ namespace NonSymbolic {
   */
   struct StringConstraint {
     std::array<StringAtom, 2> children;
-    enum class kind_t {
-      EQ, NE
-    } kind;
+    enum class kind_t { EQ, NE } kind;
 
     bool eval(StringValuation &env) const {
       std::array<std::variant<VariableID, std::string>, 2> evaluated;
@@ -47,7 +45,8 @@ namespace NonSymbolic {
       switch (kind) {
         case kind_t::EQ: {
           if (evaluated[0].index() == 0 && evaluated[1].index() == 0) {
-            throw "Unimplemented case: At least one of the children must have a concrete value. StringConstraint";
+            throw "Unimplemented case: At least one of the children must have a concrete value. "
+                  "StringConstraint";
           } else if (evaluated[0].index() == 0 && evaluated[1].index() == 1) {
             const VariableID assignedID = std::get<VariableID>(evaluated[0]);
             const std::string &assignedString = std::get<std::string>(evaluated[1]);
@@ -63,7 +62,8 @@ namespace NonSymbolic {
         }
         case kind_t::NE: {
           if (evaluated[0].index() == 0 && evaluated[1].index() == 0) {
-            throw "Unimplemented case: At least one of the children must have a concrete value. StringConstraint";
+            throw "Unimplemented case: At least one of the children must have a concrete value. "
+                  "StringConstraint";
           } else if (evaluated[0].index() == 0 && evaluated[1].index() == 1) {
             const std::string &disabledString = std::get<std::string>(evaluated[1]);
             env[std::get<0>(evaluated[0])] = disabledString;
@@ -95,7 +95,8 @@ namespace NonSymbolic {
 
   class SCMaker {
   public:
-    explicit SCMaker(VariableID id) : first({id}) {}
+    explicit SCMaker(VariableID id) : first({id}) {
+    }
 
     StringConstraint operator==(const std::string &str) const {
       const StringAtom second{str};
@@ -120,4 +121,4 @@ namespace NonSymbolic {
   private:
     const StringAtom first;
   };
-}
+} // namespace NonSymbolic

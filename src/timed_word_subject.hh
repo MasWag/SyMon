@@ -1,10 +1,10 @@
 #pragma once
 
-#include <memory>
-#include "timed_word_parser.hh"
 #include "subject.hh"
+#include "timed_word_parser.hh"
+#include <memory>
 
-template<typename Number, typename TimeStamp = double>
+template <typename Number, typename TimeStamp = double>
 class TimedWordSubject : public SingleSubject<TimedWordEvent<Number, TimeStamp>> {
 public:
   TimedWordSubject(std::unique_ptr<TimedWordParser<Number, TimeStamp>> parser) : parser(std::move(parser)) {
@@ -14,7 +14,8 @@ public:
     while (parser->parse(event)) {
       this->notifyObservers(event);
     }
-  }  
+  }
+
 private:
   std::unique_ptr<TimedWordParser<Number, TimeStamp>> parser;
 };

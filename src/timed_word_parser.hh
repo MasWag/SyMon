@@ -1,12 +1,11 @@
 #pragma once
+#include "signature.hh"
+#include <iostream>
 #include <istream>
 #include <string>
 #include <vector>
-#include "signature.hh"
-#include <iostream>
 
-template<typename Number, typename TimeStamp = double>
-struct TimedWordEvent {
+template <typename Number, typename TimeStamp = double> struct TimedWordEvent {
   std::size_t actionId;
   std::vector<std::string> strings;
   std::vector<Number> numbers;
@@ -16,10 +15,10 @@ struct TimedWordEvent {
 /*!
   @brief Parser of a timed word
  */
-template<typename Number, typename TimeStamp = double>
-class TimedWordParser {
+template <typename Number, typename TimeStamp = double> class TimedWordParser {
 public:
-  TimedWordParser(std::istream &is, const Signature &sig) : is(is), sig(sig) {}
+  TimedWordParser(std::istream &is, const Signature &sig) : is(is), sig(sig) {
+  }
   /*!
     @brief Parse and return an event with data
     @retval true If the parse succeeded
@@ -62,7 +61,8 @@ public:
       return true;
     }
   }
+
 private:
   std::istream &is;
-  const Signature &sig;  
+  const Signature &sig;
 };

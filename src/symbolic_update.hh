@@ -5,8 +5,8 @@
 #ifndef DATAMONITOR_SYMBOLIC_UPDATE_HH
 #define DATAMONITOR_SYMBOLIC_UPDATE_HH
 
-#include "symbolic_string_constraint.hh"
 #include "symbolic_number_constraint.hh"
+#include "symbolic_string_constraint.hh"
 
 namespace Symbolic {
   struct Update {
@@ -24,15 +24,15 @@ namespace Symbolic {
         const auto to = update.first;
         Parma_Polyhedra_Library::Variable toVar(to);
         numEnv.affine_image(toVar, from);
-        //numEnv.unconstrain(toVar);
-        //Parma_Polyhedra_Library::TimingConstraint constraint = toVar == from;
-        //numEnv.add_constraint(constraint);
+        // numEnv.unconstrain(toVar);
+        // Parma_Polyhedra_Library::TimingConstraint constraint = toVar == from;
+        // numEnv.add_constraint(constraint);
       }
     }
   };
 
-  static inline bool
-  evalUpdate(const std::vector<Symbolic::NumberConstraint> &numConstraints, Symbolic::NumberValuation &numEnv) {
+  static inline bool evalUpdate(const std::vector<Symbolic::NumberConstraint> &numConstraints,
+                                Symbolic::NumberValuation &numEnv) {
     Parma_Polyhedra_Library::Constraint_System cs;
     for (const auto &numConstraint: numConstraints) {
       numEnv.add_constraint(numConstraint);
@@ -40,14 +40,14 @@ namespace Symbolic {
     return !numEnv.is_empty();
   }
 
-  static inline bool
-  eval(const std::vector<Symbolic::StringConstraint> &stringConstraints, Symbolic::StringValuation &stringEnv,
-       const std::vector<Symbolic::NumberConstraint> &numConstraints, Symbolic::NumberValuation &numEnv) {
-    return
-            std::all_of(stringConstraints.begin(), stringConstraints.end(),
-                        [&stringEnv](const Symbolic::StringConstraint &constraint) {
-                               return constraint.eval(stringEnv);
-                             }) && evalUpdate(numConstraints, numEnv);
+  static inline bool eval(const std::vector<Symbolic::StringConstraint> &stringConstraints,
+                          Symbolic::StringValuation &stringEnv,
+                          const std::vector<Symbolic::NumberConstraint> &numConstraints,
+                          Symbolic::NumberValuation &numEnv) {
+    return std::all_of(
+               stringConstraints.begin(), stringConstraints.end(),
+               [&stringEnv](const Symbolic::StringConstraint &constraint) { return constraint.eval(stringEnv); }) &&
+           evalUpdate(numConstraints, numEnv);
   }
-}
-#endif //DATAMONITOR_SYMBOLIC_UPDATE_HH
+} // namespace Symbolic
+#endif // DATAMONITOR_SYMBOLIC_UPDATE_HH

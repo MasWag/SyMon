@@ -1,0 +1,21 @@
+BasedOnStyle: LLVM
+Standard: c++20
+IndentWidth: 2
+BreakBeforeBraces: Attach
+AllowShortCaseLabelsOnASingleLine: false
+IndentCaseLabels: true
+AccessModifierOffset: -2
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+ColumnLimit: 120
+IncludeBlocks: Preserve
+DerivePointerAlignment: false
+NamespaceIndentation: All
+PointerAlignment: Right
+FixNamespaceComments: true
+SpaceBeforeRangeBasedForLoopColon: false
+MacroBlockBegin: "BOOST_AUTO_TEST_SUITE"
+MacroBlockEnd: "BOOST_AUTO_TEST_SUITE_END"
+StatementMacros:
+  - "BOOST_AUTO_TEST_SUITE_END"

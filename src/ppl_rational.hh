@@ -15,9 +15,8 @@ private:
    * @brief Compute the greatest common divisor (GCD) of two coefficients with
    * the Euclidean algorithm.
    */
-  static Parma_Polyhedra_Library::Coefficient
-  gcd(Parma_Polyhedra_Library::Coefficient a,
-      Parma_Polyhedra_Library::Coefficient b) {
+  static Parma_Polyhedra_Library::Coefficient gcd(Parma_Polyhedra_Library::Coefficient a,
+                                                  Parma_Polyhedra_Library::Coefficient b) {
     while (b != 0) {
       Parma_Polyhedra_Library::Coefficient temp = b;
       b = a % b;
@@ -46,12 +45,13 @@ protected:
   }
 
 public:
-  PPLRational() : numerator(0), denominator(1) {}
+  PPLRational() : numerator(0), denominator(1) {
+  }
 
-  PPLRational(int c) : numerator(c), denominator(1) {}
+  PPLRational(int c) : numerator(c), denominator(1) {
+  }
 
-  PPLRational(Parma_Polyhedra_Library::Coefficient numerator,
-              Parma_Polyhedra_Library::Coefficient denominator)
+  PPLRational(Parma_Polyhedra_Library::Coefficient numerator, Parma_Polyhedra_Library::Coefficient denominator)
       : numerator(numerator), denominator(denominator) {
     if (denominator == 0) {
       throw std::invalid_argument("Denominator cannot be zero.");
@@ -105,28 +105,28 @@ static inline std::ostream &operator<<(std::ostream &os, const PPLRational &r) {
       count5++;
     }
     if (q == 1 || q == -1) {
-     p *= q;
-     // r can be represented as a decimal number
-     const std::size_t width = std::max(count2, count5);
-     const auto offset = static_cast<Parma_Polyhedra_Library::Coefficient>(std::pow(10, width));
-     if (offset == 0) {
-       throw std::overflow_error("Offset overflowed.");
-     }
-     if (count2 > count5) {
-         p *= static_cast<Parma_Polyhedra_Library::Coefficient>(std::pow(5, count2 - count5));
-     } else if (count5 > count2) {
-         p *= static_cast<Parma_Polyhedra_Library::Coefficient>(std::pow(2, count5 - count2));
-     }
-     // We explicitly handle the negative sign because 0 in integer does not have sign.
-     if (p < 0) {
-         os << '-';
-         p *= -1;
-     }
-     os << p / offset;
-     os << ".";
-     const auto frac = p % offset;
-     const auto absFrac = abs(frac);
-     os << std::setw(width) << std::setfill('0') << absFrac;
+      p *= q;
+      // r can be represented as a decimal number
+      const std::size_t width = std::max(count2, count5);
+      const auto offset = static_cast<Parma_Polyhedra_Library::Coefficient>(std::pow(10, width));
+      if (offset == 0) {
+        throw std::overflow_error("Offset overflowed.");
+      }
+      if (count2 > count5) {
+        p *= static_cast<Parma_Polyhedra_Library::Coefficient>(std::pow(5, count2 - count5));
+      } else if (count5 > count2) {
+        p *= static_cast<Parma_Polyhedra_Library::Coefficient>(std::pow(2, count5 - count2));
+      }
+      // We explicitly handle the negative sign because 0 in integer does not have sign.
+      if (p < 0) {
+        os << '-';
+        p *= -1;
+      }
+      os << p / offset;
+      os << ".";
+      const auto frac = p % offset;
+      const auto absFrac = abs(frac);
+      os << std::setw(width) << std::setfill('0') << absFrac;
     } else {
       // r cannot be represented as a decimal number
       os << r.getNumerator() << "/" << r.getDenominator();
@@ -153,10 +153,10 @@ static inline std::istream &operator>>(std::istream &is, PPLRational &r) {
     return is;
   }
   if (is.peek() == '-') {
-      isNegative = true;
-      is >> ch; // consume the '-'
+    isNegative = true;
+    is >> ch; // consume the '-'
   } else if (is.peek() == '+') {
-      is >> ch; // consume the '+'
+    is >> ch; // consume the '+'
   }
   while (is.peek() == '.' || isdigit(is.peek())) {
     is >> ch;
@@ -174,8 +174,7 @@ static inline std::istream &operator>>(std::istream &is, PPLRational &r) {
         denominator *= 10;
       }
     } else {
-      throw std::runtime_error(
-          "Unexpected character encountered while parsing rational number.");
+      throw std::runtime_error("Unexpected character encountered while parsing rational number.");
     }
   }
 

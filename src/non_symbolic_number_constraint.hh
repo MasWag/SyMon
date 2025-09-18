@@ -1,12 +1,12 @@
 #pragma once
 
-#include <memory>
-#include <array>
-#include <vector>
-#include <variant>
 #include <algorithm>
-#include <optional>
+#include <array>
 #include <cassert>
+#include <memory>
+#include <optional>
+#include <variant>
+#include <vector>
 
 #include "common_types.hh"
 
@@ -15,22 +15,19 @@ namespace NonSymbolic {
     @brief valuation of number variables
     @note We do nothing symbolic.
   */
-  template<typename Number>
-  using NumberValuation = std::vector<std::optional<Number>>;
+  template <typename Number> using NumberValuation = std::vector<std::optional<Number>>;
 
   /*!
     @note When we need an optimization, we can make it a vector of children not a tree.
    */
   struct NumberExpression {
-    enum class kind_t {
-      ATOM, PLUS, MINUS
-    } kind;
+    enum class kind_t { ATOM, PLUS, MINUS } kind;
 
-    NumberExpression(VariableID id = 0) : kind(kind_t::ATOM), child(id) {}
+    NumberExpression(VariableID id = 0) : kind(kind_t::ATOM), child(id) {
+    }
 
-    NumberExpression(kind_t kind,
-                     std::shared_ptr<NumberExpression> first,
-                     std::shared_ptr<NumberExpression> second) : kind(kind) {
+    NumberExpression(kind_t kind, std::shared_ptr<NumberExpression> first, std::shared_ptr<NumberExpression> second)
+        : kind(kind) {
       assert(kind != kind_t::ATOM);
       child = std::array<std::shared_ptr<NumberExpression>, 2>();
       std::get<1>(child)[0] = std::move(first);
@@ -39,8 +36,7 @@ namespace NonSymbolic {
 
     std::variant<VariableID, std::array<std::shared_ptr<NumberExpression>, 2>> child;
 
-    template<typename Number>
-    void eval(const NumberValuation<Number> &env, std::optional<Number> &result) const {
+    template <typename Number> void eval(const NumberValuation<Number> &env, std::optional<Number> &result) const {
       switch (kind) {
         case kind_t::ATOM:
           assert(child.index() == 0);
@@ -68,12 +64,9 @@ namespace NonSymbolic {
     }
   };
 
-  template<typename Number>
-  struct NumberConstraint {
+  template <typename Number> struct NumberConstraint {
     NumberExpression expr;
-    enum class kind_t {
-      GT, GE, EQ, NE, LE, LT
-    } kind;
+    enum class kind_t { GT, GE, EQ, NE, LE, LT } kind;
     Number num;
 
     bool eval(const NumberValuation<Number> &env) const {
@@ -98,14 +91,13 @@ namespace NonSymbolic {
   };
 
   //! @todo Write other operators e.g.,
-  template<typename Number>
-  class NCMakerVar {
+  template <typename Number> class NCMakerVar {
   public:
     NCMakerVar(VariableID id) : id(id) {
     }
 
     NonSymbolic::NumberConstraint<Number> operator==(Number num) {
-      NumberExpression expr {id};
+      NumberExpression expr{id};
       return {expr, NonSymbolic::NumberConstraint<Number>::kind_t::EQ, num};
     }
 
@@ -113,11 +105,12 @@ namespace NonSymbolic {
       auto first = std::make_shared<NumberExpression>(id);
       auto second = std::make_shared<NumberExpression>(maker.id);
       return {{NumberExpression::kind_t::MINUS, std::move(first), std::move(second)},
-              NonSymbolic::NumberConstraint<Number>::kind_t::EQ, 0};
+              NonSymbolic::NumberConstraint<Number>::kind_t::EQ,
+              0};
     }
 
     NonSymbolic::NumberConstraint<Number> operator!=(Number num) {
-      NumberExpression expr {id};
+      NumberExpression expr{id};
       return {expr, NonSymbolic::NumberConstraint<Number>::kind_t::NE, num};
     }
 
@@ -125,7 +118,8 @@ namespace NonSymbolic {
       auto first = std::make_shared<NumberExpression>(id);
       auto second = std::make_shared<NumberExpression>(maker.id);
       return {{NumberExpression::kind_t::MINUS, std::move(first), std::move(second)},
-              NonSymbolic::NumberConstraint<Number>::kind_t::NE, 0};
+              NonSymbolic::NumberConstraint<Number>::kind_t::NE,
+              0};
     }
 
     NonSymbolic::NumberConstraint<Number> operator>(Number num) {
@@ -137,10 +131,11 @@ namespace NonSymbolic {
       auto first = std::make_shared<NumberExpression>(id);
       auto second = std::make_shared<NumberExpression>(maker.id);
       return {{NumberExpression::kind_t::MINUS, std::move(first), std::move(second)},
-        NonSymbolic::NumberConstraint<Number>::kind_t::GT, 0};
+              NonSymbolic::NumberConstraint<Number>::kind_t::GT,
+              0};
     }
 
   private:
     const VariableID id;
   };
-}
+} // namespace NonSymbolic

@@ -13,20 +13,20 @@
  * @param[in] right  The second (right-hand) timed automaton.
  * @return A TimedAutomaton representing the logical disjunction (union) of the two input automata.
  */
-template<typename StringConstraint, typename NumberConstraint, typename TimingConstraint, typename Update>
-TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> disjunction(
-    TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> &&left,
-    TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> &&right) {
-    // Juxtapose two automata
-    left.clockVariableSize = std::max(left.clockVariableSize, right.clockVariableSize);
-    left.stringVariableSize = std::max(left.stringVariableSize, right.stringVariableSize);
-    left.numberVariableSize = std::max(left.numberVariableSize, right.numberVariableSize);
-    left.states.reserve(left.states.size() + right.states.size());
-    std::move(right.states.begin(), right.states.end(), std::back_inserter(left.states));
-    left.initialStates.reserve(left.initialStates.size() + right.initialStates.size());
-    std::move(right.initialStates.begin(), right.initialStates.end(), std::back_inserter(left.initialStates));
+template <typename StringConstraint, typename NumberConstraint, typename TimingConstraint, typename Update>
+TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update>
+disjunction(TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> &&left,
+            TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> &&right) {
+  // Juxtapose two automata
+  left.clockVariableSize = std::max(left.clockVariableSize, right.clockVariableSize);
+  left.stringVariableSize = std::max(left.stringVariableSize, right.stringVariableSize);
+  left.numberVariableSize = std::max(left.numberVariableSize, right.numberVariableSize);
+  left.states.reserve(left.states.size() + right.states.size());
+  std::move(right.states.begin(), right.states.end(), std::back_inserter(left.states));
+  left.initialStates.reserve(left.initialStates.size() + right.initialStates.size());
+  std::move(right.initialStates.begin(), right.initialStates.end(), std::back_inserter(left.initialStates));
 
-    return left;
+  return left;
 }
 
 /*!
@@ -40,132 +40,117 @@ TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> dis
  * @param[in] right  The second (right-hand) timed automaton.
  * @return A TimedAutomaton representing the intersection of two automata.
  */
-template<typename StringConstraint, typename NumberConstraint, typename TimingConstraint, typename Update>
-TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> conjunction(
-    const TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> &left,
-    const TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> &right) {
-    using State = AutomatonState<StringConstraint, NumberConstraint, TimingConstraint, Update>;
-    using StatePtr = std::shared_ptr<State>;
-    // Create a new automaton for the intersection
-    TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> result;
-    result.clockVariableSize = left.clockVariableSize + right.clockVariableSize;
-    result.stringVariableSize = std::max(left.stringVariableSize, right.stringVariableSize);
-    result.numberVariableSize = std::max(left.numberVariableSize, right.numberVariableSize);
-    result.states.reserve(left.states.size() * right.states.size());
-    result.initialStates.reserve(left.initialStates.size() * right.initialStates.size());
-    // Create a map to hold the states of the product automaton
-    std::unordered_map<State *, std::pair<StatePtr, StatePtr> > stateMap;
-    boost::unordered_map<std::pair<State *, State *>, StatePtr> reverseStateMap;
-    std::vector<StatePtr> waitingStates;
-    waitingStates.reserve(left.states.size() * right.states.size());
-    // Create the initial states of the product automaton
-    for (const auto &leftInitial: left.initialStates) {
-        for (const auto &rightInitial: right.initialStates) {
-            auto newState = std::make_shared<State>(leftInitial->isMatch && rightInitial->isMatch);
-            stateMap[newState.get()] = {leftInitial, rightInitial};
-            reverseStateMap[std::make_pair(leftInitial.get(), rightInitial.get())] = newState;
-            result.initialStates.push_back(newState);
-            waitingStates.push_back(newState);
-        }
+template <typename StringConstraint, typename NumberConstraint, typename TimingConstraint, typename Update>
+TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update>
+conjunction(const TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> &left,
+            const TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> &right) {
+  using State = AutomatonState<StringConstraint, NumberConstraint, TimingConstraint, Update>;
+  using StatePtr = std::shared_ptr<State>;
+  // Create a new automaton for the intersection
+  TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> result;
+  result.clockVariableSize = left.clockVariableSize + right.clockVariableSize;
+  result.stringVariableSize = std::max(left.stringVariableSize, right.stringVariableSize);
+  result.numberVariableSize = std::max(left.numberVariableSize, right.numberVariableSize);
+  result.states.reserve(left.states.size() * right.states.size());
+  result.initialStates.reserve(left.initialStates.size() * right.initialStates.size());
+  // Create a map to hold the states of the product automaton
+  std::unordered_map<State *, std::pair<StatePtr, StatePtr>> stateMap;
+  boost::unordered_map<std::pair<State *, State *>, StatePtr> reverseStateMap;
+  std::vector<StatePtr> waitingStates;
+  waitingStates.reserve(left.states.size() * right.states.size());
+  // Create the initial states of the product automaton
+  for (const auto &leftInitial: left.initialStates) {
+    for (const auto &rightInitial: right.initialStates) {
+      auto newState = std::make_shared<State>(leftInitial->isMatch && rightInitial->isMatch);
+      stateMap[newState.get()] = {leftInitial, rightInitial};
+      reverseStateMap[std::make_pair(leftInitial.get(), rightInitial.get())] = newState;
+      result.initialStates.push_back(newState);
+      waitingStates.push_back(newState);
     }
+  }
 
-    // Process the waiting states
-    while (!waitingStates.empty()) {
-        auto currentState = waitingStates.back();
-        waitingStates.pop_back();
-        auto &[leftState, rightState] = stateMap[currentState.get()];
+  // Process the waiting states
+  while (!waitingStates.empty()) {
+    auto currentState = waitingStates.back();
+    waitingStates.pop_back();
+    auto &[leftState, rightState] = stateMap[currentState.get()];
 
-        // Create transitions for the product automaton
-        for (const auto &[label, leftTransitions]: leftState->next) {
-            for (const auto &leftTransition: leftTransitions) {
-                auto it = rightState->next.find(label);
-                if (it == rightState->next.end()) {
-                    continue;
-                }
-                for (const auto &rightTransition: it->second) {
-                    // Create a new transition in the product automaton
-                    std::vector<StringConstraint> stringConstraints;
-                    stringConstraints.reserve(leftTransition.stringConstraints.size() +
-                                              rightTransition.stringConstraints.size());
-                    std::copy(leftTransition.stringConstraints.begin(),
-                              leftTransition.stringConstraints.end(),
-                              std::back_inserter(stringConstraints));
-                    std::copy(rightTransition.stringConstraints.begin(),
-                              rightTransition.stringConstraints.end(),
-                              std::back_inserter(stringConstraints));
-
-                    std::vector<NumberConstraint> numConstraints;
-                    numConstraints.reserve(leftTransition.numConstraints.size() +
-                                           rightTransition.numConstraints.size());
-                    std::copy(leftTransition.numConstraints.begin(),
-                              leftTransition.numConstraints.end(),
-                              std::back_inserter(numConstraints));
-                    std::copy(rightTransition.numConstraints.begin(),
-                              rightTransition.numConstraints.end(),
-                              std::back_inserter(numConstraints));
-
-                    Update update;
-                    update.stringUpdate.reserve(leftTransition.update.stringUpdate.size() +
-                                                rightTransition.update.stringUpdate.size());
-                    std::copy(leftTransition.update.stringUpdate.begin(),
-                              leftTransition.update.stringUpdate.end(),
-                              std::back_inserter(update.stringUpdate));
-                    std::copy(rightTransition.update.stringUpdate.begin(),
-                              rightTransition.update.stringUpdate.end(),
-                              std::back_inserter(update.stringUpdate));
-
-                    update.numberUpdate.reserve(leftTransition.update.numberUpdate.size() +
-                                                rightTransition.update.numberUpdate.size());
-                    std::copy(leftTransition.update.numberUpdate.begin(),
-                              leftTransition.update.numberUpdate.end(),
-                              std::back_inserter(update.numberUpdate));
-                    std::copy(rightTransition.update.numberUpdate.begin(),
-                              rightTransition.update.numberUpdate.end(),
-                              std::back_inserter(update.numberUpdate));
-
-                    // Reset variables are combined from both transitions
-                    std::vector<VariableID> resetVars;
-                    resetVars.reserve(leftTransition.resetVars.size() +
-                                      rightTransition.resetVars.size());
-                    std::copy(leftTransition.resetVars.begin(), leftTransition.resetVars.end(),
-                              std::back_inserter(resetVars));
-                    for (const auto &var: rightTransition.resetVars) {
-                        // Adjust the variable ID for the right automaton
-                        resetVars.push_back(var + left.clockVariableSize);
-                    }
-
-                    // Create the guard for the transition
-                    TimingConstraint guard = leftTransition.guard && shift(
-                                                 rightTransition.guard, left.clockVariableSize);
-
-                    // Check if the target state already exists
-                    auto it2 = reverseStateMap.find(
-                        std::make_pair(leftTransition.target.lock().get(), rightTransition.target.lock().get()));
-                    if (it2 != reverseStateMap.end()) {
-                        // If it exists, add the transition to the existing state
-                        currentState->next[label].push_back({
-                            std::move(stringConstraints), std::move(numConstraints), std::move(update),
-                            std::move(resetVars), std::move(guard), it2->second
-                        });
-                    } else {
-                        // If it does not exist, create a new state
-                        auto newTargetState = std::make_shared<State>(
-                            leftTransition.target.lock()->isMatch && rightTransition.target.lock()->isMatch);
-                        stateMap[newTargetState.get()] = {leftTransition.target.lock(), rightTransition.target.lock()};
-                        reverseStateMap[std::make_pair(leftTransition.target.lock().get(),
-                                                       rightTransition.target.lock().get())] = newTargetState;
-                        currentState->next[label].push_back({
-                            std::move(stringConstraints), std::move(numConstraints), std::move(update),
-                            std::move(resetVars), std::move(guard), newTargetState
-                        });
-                        waitingStates.push_back(newTargetState);
-                    }
-                }
-            }
+    // Create transitions for the product automaton
+    for (const auto &[label, leftTransitions]: leftState->next) {
+      for (const auto &leftTransition: leftTransitions) {
+        auto it = rightState->next.find(label);
+        if (it == rightState->next.end()) {
+          continue;
         }
-    }
+        for (const auto &rightTransition: it->second) {
+          // Create a new transition in the product automaton
+          std::vector<StringConstraint> stringConstraints;
+          stringConstraints.reserve(leftTransition.stringConstraints.size() + rightTransition.stringConstraints.size());
+          std::copy(leftTransition.stringConstraints.begin(), leftTransition.stringConstraints.end(),
+                    std::back_inserter(stringConstraints));
+          std::copy(rightTransition.stringConstraints.begin(), rightTransition.stringConstraints.end(),
+                    std::back_inserter(stringConstraints));
 
-    return result;
+          std::vector<NumberConstraint> numConstraints;
+          numConstraints.reserve(leftTransition.numConstraints.size() + rightTransition.numConstraints.size());
+          std::copy(leftTransition.numConstraints.begin(), leftTransition.numConstraints.end(),
+                    std::back_inserter(numConstraints));
+          std::copy(rightTransition.numConstraints.begin(), rightTransition.numConstraints.end(),
+                    std::back_inserter(numConstraints));
+
+          Update update;
+          update.stringUpdate.reserve(leftTransition.update.stringUpdate.size() +
+                                      rightTransition.update.stringUpdate.size());
+          std::copy(leftTransition.update.stringUpdate.begin(), leftTransition.update.stringUpdate.end(),
+                    std::back_inserter(update.stringUpdate));
+          std::copy(rightTransition.update.stringUpdate.begin(), rightTransition.update.stringUpdate.end(),
+                    std::back_inserter(update.stringUpdate));
+
+          update.numberUpdate.reserve(leftTransition.update.numberUpdate.size() +
+                                      rightTransition.update.numberUpdate.size());
+          std::copy(leftTransition.update.numberUpdate.begin(), leftTransition.update.numberUpdate.end(),
+                    std::back_inserter(update.numberUpdate));
+          std::copy(rightTransition.update.numberUpdate.begin(), rightTransition.update.numberUpdate.end(),
+                    std::back_inserter(update.numberUpdate));
+
+          // Reset variables are combined from both transitions
+          std::vector<VariableID> resetVars;
+          resetVars.reserve(leftTransition.resetVars.size() + rightTransition.resetVars.size());
+          std::copy(leftTransition.resetVars.begin(), leftTransition.resetVars.end(), std::back_inserter(resetVars));
+          for (const auto &var: rightTransition.resetVars) {
+            // Adjust the variable ID for the right automaton
+            resetVars.push_back(var + left.clockVariableSize);
+          }
+
+          // Create the guard for the transition
+          TimingConstraint guard = leftTransition.guard && shift(rightTransition.guard, left.clockVariableSize);
+
+          // Check if the target state already exists
+          auto it2 = reverseStateMap.find(
+              std::make_pair(leftTransition.target.lock().get(), rightTransition.target.lock().get()));
+          if (it2 != reverseStateMap.end()) {
+            // If it exists, add the transition to the existing state
+            currentState->next[label].push_back({std::move(stringConstraints), std::move(numConstraints),
+                                                 std::move(update), std::move(resetVars), std::move(guard),
+                                                 it2->second});
+          } else {
+            // If it does not exist, create a new state
+            auto newTargetState = std::make_shared<State>(leftTransition.target.lock()->isMatch &&
+                                                          rightTransition.target.lock()->isMatch);
+            stateMap[newTargetState.get()] = {leftTransition.target.lock(), rightTransition.target.lock()};
+            reverseStateMap[std::make_pair(leftTransition.target.lock().get(), rightTransition.target.lock().get())] =
+                newTargetState;
+            currentState->next[label].push_back({std::move(stringConstraints), std::move(numConstraints),
+                                                 std::move(update), std::move(resetVars), std::move(guard),
+                                                 newTargetState});
+            waitingStates.push_back(newTargetState);
+          }
+        }
+      }
+    }
+  }
+
+  return result;
 }
 
 /*!
@@ -176,13 +161,13 @@ TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> con
  */
 template <typename StringConstraint, typename NumberConstraint, typename TimingConstraint, typename Update>
 bool acceptsEmptyWord(const TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> &automaton) {
-    // Check if there is an initial state that is also a final state
-    for (const auto &state: automaton.initialStates) {
-        if (state->isMatch) {
-            return true; // The automaton accepts the empty word
-        }
+  // Check if there is an initial state that is also a final state
+  for (const auto &state: automaton.initialStates) {
+    if (state->isMatch) {
+      return true; // The automaton accepts the empty word
     }
-    return false; // No initial state is a final state
+  }
+  return false; // No initial state is a final state
 }
 
 /*!
@@ -192,102 +177,100 @@ bool acceptsEmptyWord(const TimedAutomaton<StringConstraint, NumberConstraint, T
  * @param[in] right  The second (right-hand) timed automaton.
  * @return A TimedAutomaton representing the concatenation of two automata.
  */
-template<typename StringConstraint, typename NumberConstraint, typename TimingConstraint, typename Update>
-TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> concatenate(
-    TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> &&left,
-    TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> &&right) {
-    // Concatenate two automata
-    left.clockVariableSize = std::max(left.clockVariableSize, right.clockVariableSize);
-    left.stringVariableSize = std::max(left.stringVariableSize, right.stringVariableSize);
-    left.numberVariableSize = std::max(left.numberVariableSize, right.numberVariableSize);
+template <typename StringConstraint, typename NumberConstraint, typename TimingConstraint, typename Update>
+TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update>
+concatenate(TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> &&left,
+            TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> &&right) {
+  // Concatenate two automata
+  left.clockVariableSize = std::max(left.clockVariableSize, right.clockVariableSize);
+  left.stringVariableSize = std::max(left.stringVariableSize, right.stringVariableSize);
+  left.numberVariableSize = std::max(left.numberVariableSize, right.numberVariableSize);
 
-    std::vector<std::shared_ptr<AutomatonState<StringConstraint, NumberConstraint, TimingConstraint, Update> > >
-            removedStates;
-    removedStates.reserve(left.states.size());
-    std::vector<std::shared_ptr<AutomatonState<StringConstraint, NumberConstraint, TimingConstraint, Update> > >
-            leftFinalStates;
-    leftFinalStates.reserve(left.states.size());
-    for (const auto &state: left.states) {
-        if (state->isMatch) {
-            leftFinalStates.push_back(state);
-            // The left final state is removed if it has no successor
-            if (state->next.empty()) {
-                removedStates.push_back(state);
+  std::vector<std::shared_ptr<AutomatonState<StringConstraint, NumberConstraint, TimingConstraint, Update>>>
+      removedStates;
+  removedStates.reserve(left.states.size());
+  std::vector<std::shared_ptr<AutomatonState<StringConstraint, NumberConstraint, TimingConstraint, Update>>>
+      leftFinalStates;
+  leftFinalStates.reserve(left.states.size());
+  for (const auto &state: left.states) {
+    if (state->isMatch) {
+      leftFinalStates.push_back(state);
+      // The left final state is removed if it has no successor
+      if (state->next.empty()) {
+        removedStates.push_back(state);
+      }
+    }
+  }
+
+  // For any transition to the left final state, we make a transition with the same meta data to the right initial
+  // state
+  for (const auto &source: left.states) {
+    for (auto &[label, transitions]: source->next) {
+      std::vector<AutomatonTransition<StringConstraint, NumberConstraint, TimingConstraint, Update>> newTransitions;
+      for (auto it = transitions.begin(); it != transitions.end();) {
+        if (it->target.lock()->isMatch) {
+          for (auto &ri: right.initialStates) {
+            // Create a new transition to the initial state of the right automaton
+            // We need to reset all clock variables
+            std::vector<VariableID> resetVars;
+            resetVars.reserve(right.clockVariableSize);
+            for (VariableID i = 0; i < right.clockVariableSize; ++i) {
+              resetVars.push_back(i);
             }
+            newTransitions.push_back({it->stringConstraints, it->numConstraints, it->update, resetVars, it->guard, ri});
+          }
+          // If the target state has no successor, we remove it
+          if (it->target.lock()->next.empty()) {
+            it = transitions.erase(it);
+          } else {
+            ++it;
+          }
+        } else {
+          ++it;
         }
+      }
+      // Add the new transitions to the left automaton
+      transitions.reserve(transitions.size() + newTransitions.size());
+      std::move(newTransitions.begin(), newTransitions.end(), std::back_inserter(transitions));
     }
+  }
 
-    // For any transition to the left final state, we make a transition with the same meta data to the right initial state
-    for (const auto &source: left.states) {
-        for (auto &[label, transitions]: source->next) {
-            std::vector<AutomatonTransition<StringConstraint, NumberConstraint, TimingConstraint, Update> >
-                    newTransitions;
-            for (auto it = transitions.begin(); it != transitions.end();) {
-                if (it->target.lock()->isMatch) {
-                    for (auto &ri: right.initialStates) {
-                        // Create a new transition to the initial state of the right automaton
-                        // We need to reset all clock variables
-                        std::vector<VariableID> resetVars;
-                        resetVars.reserve(right.clockVariableSize);
-                        for (VariableID i = 0; i < right.clockVariableSize; ++i) {
-                            resetVars.push_back(i);
-                        }
-                        newTransitions.push_back({
-                            it->stringConstraints, it->numConstraints, it->update,
-                            resetVars, it->guard, ri
-                        });
-                    }
-                    // If the target state has no successor, we remove it
-                    if (it->target.lock()->next.empty()) {
-                        it = transitions.erase(it);
-                    } else {
-                        ++it;
-                    }
-                } else {
-                    ++it;
-                }
-            }
-            // Add the new transitions to the left automaton
-            transitions.reserve(transitions.size() + newTransitions.size());
-            std::move(newTransitions.begin(), newTransitions.end(), std::back_inserter(transitions));
+  // If the left automaton accepts the empty word, we need to add the right initial states as the initial states
+  if (acceptsEmptyWord(left)) {
+    left.initialStates.reserve(left.initialStates.size() + right.initialStates.size());
+    std::move(right.initialStates.begin(), right.initialStates.end(), std::back_inserter(left.initialStates));
+  }
+
+  // Make the left final states non-final
+  for (const auto &state: leftFinalStates) {
+    state->isMatch = false;
+  }
+  // Remove the unnecessary states
+  for (const auto &state: removedStates) {
+    left.states.erase(std::remove(left.states.begin(), left.states.end(), state), left.states.end());
+    left.initialStates.erase(std::remove(left.initialStates.begin(), left.initialStates.end(), state),
+                             left.initialStates.end());
+  }
+
+  // Move the right states to left
+  left.states.reserve(left.states.size() + right.states.size());
+  std::move(right.states.begin(), right.states.end(), std::back_inserter(left.states));
+
+  // For each transition, we update the dimensions of the guard
+  for (const auto &sourceState: left.states) {
+    for (auto &[label, transitions]: sourceState->next) {
+      for (auto &transition: transitions) {
+        // Update the guard to include the new clock variable
+        if constexpr (std::is_same_v<TimingConstraint, std::vector<::TimingConstraint>>) {
+          transition.guard = adjustDimension(transition.guard, left.clockVariableSize);
+        } else if constexpr (std::is_same_v<TimingConstraint, ParametricTimingConstraint>) {
+          transition.guard = adjustDimension(transition.guard, left.clockVariableSize + left.parameterSize);
         }
+      }
     }
+  }
 
-    // If the left automaton accepts the empty word, we need to add the right initial states as the initial states
-    if (acceptsEmptyWord(left)) {
-        left.initialStates.reserve(left.initialStates.size() + right.initialStates.size());
-        std::move(right.initialStates.begin(), right.initialStates.end(), std::back_inserter(left.initialStates));
-    }
-
-    // Make the left final states non-final
-    for (const auto &state: leftFinalStates) {
-        state->isMatch = false;
-    }
-    // Remove the unnecessary states
-    for (const auto &state: removedStates) {
-        left.states.erase(std::remove(left.states.begin(), left.states.end(), state), left.states.end());
-        left.initialStates.erase(std::remove(left.initialStates.begin(), left.initialStates.end(), state), left.initialStates.end());
-    }
-
-    // Move the right states to left
-    left.states.reserve(left.states.size() + right.states.size());
-    std::move(right.states.begin(), right.states.end(), std::back_inserter(left.states));
-
-    // For each transition, we update the dimensions of the guard
-    for (const auto &sourceState: left.states) {
-        for (auto &[label, transitions]: sourceState->next) {
-            for (auto &transition: transitions) {
-                // Update the guard to include the new clock variable
-                if constexpr (std::is_same_v<TimingConstraint, std::vector<::TimingConstraint>>) {
-                    transition.guard = adjustDimension(transition.guard, left.clockVariableSize);
-                } else if constexpr (std::is_same_v<TimingConstraint, ParametricTimingConstraint>) {
-                    transition.guard = adjustDimension(transition.guard, left.clockVariableSize + left.parameterSize);
-                }
-            }
-        }
-    }
-
-    return left;
+  return left;
 }
 
 /*!
@@ -296,15 +279,16 @@ TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> con
  * @param[in] given The given timed automaton.
  * @return A TimedAutomaton recognizing the empty string or the words accepted by the given automaton.
  */
-template<typename StringConstraint, typename NumberConstraint, typename TimingConstraint, typename Update>
-TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> emptyOr(
-    TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> &&given) {
-    // Create a new initial state that is also a final state and has no outgoing transitions.
-    auto newInitialState = std::make_shared<AutomatonState<StringConstraint, NumberConstraint, TimingConstraint, Update> >(true);
-    given.states.push_back(newInitialState);
-    given.initialStates.push_back(std::move(newInitialState));
+template <typename StringConstraint, typename NumberConstraint, typename TimingConstraint, typename Update>
+TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update>
+emptyOr(TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> &&given) {
+  // Create a new initial state that is also a final state and has no outgoing transitions.
+  auto newInitialState =
+      std::make_shared<AutomatonState<StringConstraint, NumberConstraint, TimingConstraint, Update>>(true);
+  given.states.push_back(newInitialState);
+  given.initialStates.push_back(std::move(newInitialState));
 
-    return given;
+  return given;
 }
 
 /*!
@@ -313,45 +297,38 @@ TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> emp
  * @param[in] given The given timed automaton.
  * @return A TimedAutomaton representing the concatenation of two automata.
  */
-template<typename StringConstraint, typename NumberConstraint, typename TimingConstraint, typename Update>
-TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> plus(
-    TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> &&given) {
-    // For each transition to the final state, we duplicate it and make a transition to the initial state
-    for (const auto &sourceState: given.states) {
-        for (auto &[label, transitions]: sourceState->next) {
-            std::vector<AutomatonTransition<StringConstraint, NumberConstraint, TimingConstraint, Update> >
-                    newTransitions;
+template <typename StringConstraint, typename NumberConstraint, typename TimingConstraint, typename Update>
+TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update>
+plus(TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> &&given) {
+  // For each transition to the final state, we duplicate it and make a transition to the initial state
+  for (const auto &sourceState: given.states) {
+    for (auto &[label, transitions]: sourceState->next) {
+      std::vector<AutomatonTransition<StringConstraint, NumberConstraint, TimingConstraint, Update>> newTransitions;
 
-            for (const auto &transition: transitions) {
-                if (transition.target.lock()->isMatch) {
-                    // If this transition leads to a final state, duplicate it to also lead to all initial states
-                    for (auto &initialState: given.initialStates) {
-                        // Create a new transition to the initial state
-                        // We need to reset all clock variables
-                        std::vector<VariableID> resetVars;
-                        resetVars.reserve(given.clockVariableSize);
-                        for (VariableID i = 0; i < given.clockVariableSize; ++i) {
-                            resetVars.push_back(i);
-                        }
-                        newTransitions.push_back({
-                            transition.stringConstraints,
-                            transition.numConstraints,
-                            transition.update,
-                            resetVars,
-                            transition.guard,
-                            initialState
-                        });
-                    }
-                }
+      for (const auto &transition: transitions) {
+        if (transition.target.lock()->isMatch) {
+          // If this transition leads to a final state, duplicate it to also lead to all initial states
+          for (auto &initialState: given.initialStates) {
+            // Create a new transition to the initial state
+            // We need to reset all clock variables
+            std::vector<VariableID> resetVars;
+            resetVars.reserve(given.clockVariableSize);
+            for (VariableID i = 0; i < given.clockVariableSize; ++i) {
+              resetVars.push_back(i);
             }
-
-            // Add the new transitions
-            transitions.reserve(transitions.size() + newTransitions.size());
-            std::move(newTransitions.begin(), newTransitions.end(), std::back_inserter(transitions));
+            newTransitions.push_back({transition.stringConstraints, transition.numConstraints, transition.update,
+                                      resetVars, transition.guard, initialState});
+          }
         }
-    }
+      }
 
-    return given;
+      // Add the new transitions
+      transitions.reserve(transitions.size() + newTransitions.size());
+      std::move(newTransitions.begin(), newTransitions.end(), std::back_inserter(transitions));
+    }
+  }
+
+  return given;
 }
 
 /*!
@@ -360,10 +337,10 @@ TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> plu
  * @param[in] given The given timed automaton.
  * @return A TimedAutomaton representing the Kleene-Star of the given automaton.
  */
-template<typename StringConstraint, typename NumberConstraint, typename TimingConstraint, typename Update>
-TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> star(
-    TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> &&given) {
-    return emptyOr(plus(std::move(given)));
+template <typename StringConstraint, typename NumberConstraint, typename TimingConstraint, typename Update>
+TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update>
+star(TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> &&given) {
+  return emptyOr(plus(std::move(given)));
 }
 
 /*!
@@ -373,91 +350,91 @@ TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> sta
  * @param[in] guard The timing constraint that restricts the time.
  * @return A TimedAutomaton with the new timing constraint on the total elapsed time.
  */
-template<typename StringConstraint, typename NumberConstraint, typename TimingConstraint, typename Update>
-TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> timeRestriction(
-    TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> &&given, TimingConstraint guard){
-    given.clockVariableSize += 1; // Add a new clock variable for the time restriction
+template <typename StringConstraint, typename NumberConstraint, typename TimingConstraint, typename Update>
+TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update>
+timeRestriction(TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> &&given,
+                TimingConstraint guard) {
+  given.clockVariableSize += 1; // Add a new clock variable for the time restriction
 
-    bool acceptEmpty = acceptsEmptyWord(given);
+  bool acceptEmpty = acceptsEmptyWord(given);
 
-    if constexpr (std::is_same_v<TimingConstraint, std::vector<::TimingConstraint> >) {
-        TimingValuation clockValuation(given.clockVariableSize, 0);
-        acceptEmpty = acceptEmpty && eval(clockValuation, guard);
-    }
-    if constexpr (std::is_same_v<TimingConstraint, ParametricTimingConstraint>) {
-        Parma_Polyhedra_Library::Variable var{given.parameterSize + given.clockVariableSize - 1};
-        Parma_Polyhedra_Library::NNC_Polyhedron clockValuation{given.parameterSize + given.clockVariableSize};
-        clockValuation.add_constraint(var == 0);
-        clockValuation.intersection_assign(guard);
-        acceptEmpty = acceptEmpty && !clockValuation.is_empty();
-    }
+  if constexpr (std::is_same_v<TimingConstraint, std::vector<::TimingConstraint>>) {
+    TimingValuation clockValuation(given.clockVariableSize, 0);
+    acceptEmpty = acceptEmpty && eval(clockValuation, guard);
+  }
+  if constexpr (std::is_same_v<TimingConstraint, ParametricTimingConstraint>) {
+    Parma_Polyhedra_Library::Variable var{given.parameterSize + given.clockVariableSize - 1};
+    Parma_Polyhedra_Library::NNC_Polyhedron clockValuation{given.parameterSize + given.clockVariableSize};
+    clockValuation.add_constraint(var == 0);
+    clockValuation.intersection_assign(guard);
+    acceptEmpty = acceptEmpty && !clockValuation.is_empty();
+  }
 
-    // Add a new final state that has no outgoing transitions and add transitions to this state from all transitions to the original final states.
-    auto newFinalState = std::make_shared<AutomatonState<StringConstraint, NumberConstraint, TimingConstraint, Update> >(true);
-    given.states.push_back(newFinalState);
-    if constexpr (std::is_same_v<TimingConstraint, std::vector<::TimingConstraint> >) {
-        guard = adjustDimension(guard, given.clockVariableSize); // Adjust the guard to include the new clock variable
-    }
-    if constexpr (std::is_same_v<TimingConstraint, ParametricTimingConstraint>) {
-        guard = adjustDimension(guard, given.parameterSize + given.clockVariableSize); // Adjust the guard to include the new clock variable
-    }
+  // Add a new final state that has no outgoing transitions and add transitions to this state from all transitions to
+  // the original final states.
+  auto newFinalState =
+      std::make_shared<AutomatonState<StringConstraint, NumberConstraint, TimingConstraint, Update>>(true);
+  given.states.push_back(newFinalState);
+  if constexpr (std::is_same_v<TimingConstraint, std::vector<::TimingConstraint>>) {
+    guard = adjustDimension(guard, given.clockVariableSize); // Adjust the guard to include the new clock variable
+  }
+  if constexpr (std::is_same_v<TimingConstraint, ParametricTimingConstraint>) {
+    guard = adjustDimension(guard, given.parameterSize +
+                                       given.clockVariableSize); // Adjust the guard to include the new clock variable
+  }
 
-    // For each transition, we update the dimensions of the guard
-    for (const auto &sourceState: given.states) {
-        for (auto &[label, transitions]: sourceState->next) {
-            std::vector<AutomatonTransition<StringConstraint, NumberConstraint, TimingConstraint, Update> > newTransitions;
-            for (auto it = transitions.begin(); it != transitions.end();) {
-                // Update the guard to include the new clock variable
-                if constexpr (std::is_same_v<TimingConstraint, std::vector<::TimingConstraint> >) {
-                    it->guard = adjustDimension(it->guard, given.clockVariableSize);
-                }
-                if constexpr (std::is_same_v<TimingConstraint, ParametricTimingConstraint>) {
-                    it->guard = adjustDimension(it->guard, given.parameterSize + given.clockVariableSize);
-                }
-                // If the target state is a final state, we add a transition to the new final state
-                if (it->target.lock()->isMatch) {
-                    newTransitions.push_back({
-                        it->stringConstraints,
-                        it->numConstraints,
-                        it->update,
-                        it->resetVars,
-                        guard && it->guard, // Combine the original guard with the new time restriction
-                        newFinalState
-                    });
-                    // If the target state has no successor, we remove it
-                    if (it->target.lock()->next.empty()) {
-                        it = transitions.erase(it);
-                    } else {
-                        ++it;
-                    }
-                } else {
-                    ++it; // If not a final state, just move to the next transition
-                }
-            }
-            // Add the new transitions to the source state
-            transitions.reserve(transitions.size() + newTransitions.size());
-            std::move(newTransitions.begin(), newTransitions.end(), std::back_inserter(transitions));
+  // For each transition, we update the dimensions of the guard
+  for (const auto &sourceState: given.states) {
+    for (auto &[label, transitions]: sourceState->next) {
+      std::vector<AutomatonTransition<StringConstraint, NumberConstraint, TimingConstraint, Update>> newTransitions;
+      for (auto it = transitions.begin(); it != transitions.end();) {
+        // Update the guard to include the new clock variable
+        if constexpr (std::is_same_v<TimingConstraint, std::vector<::TimingConstraint>>) {
+          it->guard = adjustDimension(it->guard, given.clockVariableSize);
         }
-    }
-
-    // Remove the original final states with no outgoing transitions
-    for (auto it = given.states.begin(); it != given.states.end();) {
-        if ((*it)->isMatch && (*it)->next.empty() && *it != newFinalState) {
-            given.initialStates.erase(std::remove(given.initialStates.begin(), given.initialStates.end(), *it), given.initialStates.end());
-            it = given.states.erase(it);
-        } else {
+        if constexpr (std::is_same_v<TimingConstraint, ParametricTimingConstraint>) {
+          it->guard = adjustDimension(it->guard, given.parameterSize + given.clockVariableSize);
+        }
+        // If the target state is a final state, we add a transition to the new final state
+        if (it->target.lock()->isMatch) {
+          newTransitions.push_back({it->stringConstraints, it->numConstraints, it->update, it->resetVars,
+                                    guard && it->guard, // Combine the original guard with the new time restriction
+                                    newFinalState});
+          // If the target state has no successor, we remove it
+          if (it->target.lock()->next.empty()) {
+            it = transitions.erase(it);
+          } else {
             ++it;
+          }
+        } else {
+          ++it; // If not a final state, just move to the next transition
         }
+      }
+      // Add the new transitions to the source state
+      transitions.reserve(transitions.size() + newTransitions.size());
+      std::move(newTransitions.begin(), newTransitions.end(), std::back_inserter(transitions));
     }
+  }
 
-    // Make the original final states non-final
-    for (auto &state: given.states) {
-        if (state != newFinalState && state->isMatch) {
-            state->isMatch = false;
-        }
+  // Remove the original final states with no outgoing transitions
+  for (auto it = given.states.begin(); it != given.states.end();) {
+    if ((*it)->isMatch && (*it)->next.empty() && *it != newFinalState) {
+      given.initialStates.erase(std::remove(given.initialStates.begin(), given.initialStates.end(), *it),
+                                given.initialStates.end());
+      it = given.states.erase(it);
+    } else {
+      ++it;
     }
+  }
 
-    return acceptEmpty ? emptyOr(std::move(given)) : given;
+  // Make the original final states non-final
+  for (auto &state: given.states) {
+    if (state != newFinalState && state->isMatch) {
+      state->isMatch = false;
+    }
+  }
+
+  return acceptEmpty ? emptyOr(std::move(given)) : given;
 }
 
 /*!
@@ -469,21 +446,21 @@ TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> tim
  * @param[in] ignored The set of actions to ignore.
  * @return A TimedAutomaton with the specified actions ignored.
  */
-template <typename StringConstraint, typename NumberConstraint,
-          typename TimingConstraint, typename Update>
+template <typename StringConstraint, typename NumberConstraint, typename TimingConstraint, typename Update>
 TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update>
-    ignoreActions(TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> &&given, const std::vector<Action> &ignored) {
-    // Add a self-loop transition for each ignored action
-    for (const auto &state : given.states) {
-        for (const auto &action : ignored) {
-            // Self-loop with no constraints or updates
-            AutomatonTransition<StringConstraint, NumberConstraint, TimingConstraint, Update> transition;
-            transition.target = state;
-            state->next[action].push_back(transition);
-        }
+ignoreActions(TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> &&given,
+              const std::vector<Action> &ignored) {
+  // Add a self-loop transition for each ignored action
+  for (const auto &state: given.states) {
+    for (const auto &action: ignored) {
+      // Self-loop with no constraints or updates
+      AutomatonTransition<StringConstraint, NumberConstraint, TimingConstraint, Update> transition;
+      transition.target = state;
+      state->next[action].push_back(transition);
     }
+  }
 
-    return given;
+  return given;
 }
 
 /*!
@@ -496,32 +473,32 @@ TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update>
  * @param[in] constraint The timing constraint to add to all transitions.
  * @return A reference to the modified automaton.
  */
-template<typename StringConstraint, typename NumberConstraint, typename TimingConstraint, typename Update>
-TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update>& addConstraintToAllTransitions(
-    TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> &automaton,
-    const TimingConstraint &constraint) {
+template <typename StringConstraint, typename NumberConstraint, typename TimingConstraint, typename Update>
+TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> &
+addConstraintToAllTransitions(TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> &automaton,
+                              const TimingConstraint &constraint) {
 
-    TimingConstraint adjustedConstraint = constraint;
-    // Ensure the constraint has the correct dimension for the automaton
-    if constexpr (std::is_same_v<TimingConstraint, std::vector<::TimingConstraint>>) {
-        adjustedConstraint = adjustDimension(constraint, automaton.clockVariableSize);
-    } else if constexpr (std::is_same_v<TimingConstraint, ParametricTimingConstraint>) {
-        adjustedConstraint = adjustDimension(constraint, automaton.parameterSize + automaton.clockVariableSize);
+  TimingConstraint adjustedConstraint = constraint;
+  // Ensure the constraint has the correct dimension for the automaton
+  if constexpr (std::is_same_v<TimingConstraint, std::vector<::TimingConstraint>>) {
+    adjustedConstraint = adjustDimension(constraint, automaton.clockVariableSize);
+  } else if constexpr (std::is_same_v<TimingConstraint, ParametricTimingConstraint>) {
+    adjustedConstraint = adjustDimension(constraint, automaton.parameterSize + automaton.clockVariableSize);
+  }
+
+  // Iterate through all states in the automaton
+  for (const auto &state: automaton.states) {
+    // Iterate through all transitions for each action
+    for (auto &[action, transitions]: state->next) {
+      // Add the constraint to each transition
+      for (auto &transition: transitions) {
+        // Combine the existing guard with the new constraint using logical AND
+        transition.guard = transition.guard && adjustedConstraint;
+      }
     }
+  }
 
-    // Iterate through all states in the automaton
-    for (const auto &state : automaton.states) {
-        // Iterate through all transitions for each action
-        for (auto &[action, transitions] : state->next) {
-            // Add the constraint to each transition
-            for (auto &transition : transitions) {
-                // Combine the existing guard with the new constraint using logical AND
-                transition.guard = transition.guard && adjustedConstraint;
-            }
-        }
-    }
-
-    return automaton;
+  return automaton;
 }
 
 /*!
@@ -534,22 +511,22 @@ TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update>& ad
  * @param[in] constraint The timing constraint to add to all transitions.
  * @return A reference to the modified automaton.
  */
-template<typename StringConstraint, typename NumberConstraint, typename TimingConstraint, typename Update>
-TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update>& adjustAllDimensions(
-        TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> &&automaton) {
+template <typename StringConstraint, typename NumberConstraint, typename TimingConstraint, typename Update>
+TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> &
+adjustAllDimensions(TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update> &&automaton) {
 
-    std::size_t totalDimension = automaton.clockVariableSize;
-    if constexpr (std::is_same_v<TimingConstraint, ParametricTimingConstraint>) {
-        totalDimension += automaton.parameterSize;
+  std::size_t totalDimension = automaton.clockVariableSize;
+  if constexpr (std::is_same_v<TimingConstraint, ParametricTimingConstraint>) {
+    totalDimension += automaton.parameterSize;
+  }
+
+  for (const auto &state: automaton.states) {
+    for (auto &[action, transitions]: state->next) {
+      for (auto &transition: transitions) {
+        transition.guard = adjustDimension(transition.guard, totalDimension);
+      }
     }
+  }
 
-    for (const auto &state : automaton.states) {
-        for (auto &[action, transitions] : state->next) {
-            for (auto &transition : transitions) {
-                transition.guard = adjustDimension(transition.guard, totalDimension);
-            }
-        }
-    }
-
-    return automaton;
+  return automaton;
 }

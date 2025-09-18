@@ -2,8 +2,7 @@
 
 #include "boolean_monitor.hh"
 
-template<class Number>
-struct BooleanPrinter : public Observer<BooleanMonitorResult<Number>> {
+template <class Number> struct BooleanPrinter : public Observer<BooleanMonitorResult<Number>> {
   BooleanPrinter() = default;
 
   virtual ~BooleanPrinter() = default;
@@ -12,12 +11,12 @@ struct BooleanPrinter : public Observer<BooleanMonitorResult<Number>> {
     printf("@%f.\t(time-point %lu)\t", result.timestamp, result.index);
     for (std::size_t i = 0; i < result.stringValuation.size(); i++) {
       if (result.stringValuation[i]) {
-          printf("x%zu == %s\t", i, result.stringValuation[i]->c_str());
+        printf("x%zu == %s\t", i, result.stringValuation[i]->c_str());
       }
     }
 
     for (std::size_t i = 0; i < result.numberValuation.size(); i++) {
-        std::cout << "x" << i << " == " << *(result.numberValuation[i]) << "\t";
+      std::cout << "x" << i << " == " << *(result.numberValuation[i]) << "\t";
     }
     printf("\n");
   }
@@ -45,8 +44,7 @@ struct DataParametricPrinter : public Observer<DataParametricMonitorResult> {
       }
     }
 
-    std::cout << result.numberValuation
-              << "\n";
+    std::cout << result.numberValuation << "\n";
   }
 };
 
@@ -72,8 +70,6 @@ struct ParametricPrinter : public Observer<ParametricMonitorResult> {
       }
     }
 
-    std::cout << "Num: " << result.numberValuation
-              << "\tClock: " << result.parametricTimingValuation << "\n";
+    std::cout << "Num: " << result.numberValuation << "\tClock: " << result.parametricTimingValuation << "\n";
   }
 };
-

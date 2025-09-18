@@ -1,7 +1,7 @@
 /*
  * @author Masaki Waga
  * @date 2019/01/26
-*/
+ */
 
 #ifndef DATAMONITOR_PARAMETRIC_TIMING_CONSTRAINT_HH
 #define DATAMONITOR_PARAMETRIC_TIMING_CONSTRAINT_HH
@@ -17,8 +17,8 @@ using ParametricTimingValuation = Parma_Polyhedra_Library::NNC_Polyhedron;
 using ParametricTimingConstraint = Parma_Polyhedra_Library::NNC_Polyhedron;
 
 static bool eval(ParametricTimingValuation &cval, const ParametricTimingConstraint &guard) {
-    cval.intersection_assign(guard);
-    return !cval.is_empty();
+  cval.intersection_assign(guard);
+  return !cval.is_empty();
 }
 
 /**
@@ -29,9 +29,9 @@ static bool eval(ParametricTimingValuation &cval, const ParametricTimingConstrai
  * @return a new ParametricTimingConstraint with the clock variable shifted
  */
 static ParametricTimingConstraint shift(const ParametricTimingConstraint &guard, const std::size_t width) {
-    auto result = Parma_Polyhedra_Library::NNC_Polyhedron(width, Parma_Polyhedra_Library::UNIVERSE);
-    result.concatenate_assign(guard);
-    return result;
+  auto result = Parma_Polyhedra_Library::NNC_Polyhedron(width, Parma_Polyhedra_Library::UNIVERSE);
+  result.concatenate_assign(guard);
+  return result;
 }
 
 /*!
@@ -43,17 +43,17 @@ static ParametricTimingConstraint shift(const ParametricTimingConstraint &guard,
  */
 static ParametricTimingConstraint operator&&(const ParametricTimingConstraint &left,
                                              const ParametricTimingConstraint &right) {
-    auto result = left;
-    if (result.space_dimension() < right.space_dimension()) {
-        result.add_space_dimensions_and_embed(right.space_dimension() - result.space_dimension());
-    } else if (result.space_dimension() > right.space_dimension()) {
-        auto shiftedRight = right;
-        shiftedRight.add_space_dimensions_and_embed(result.space_dimension() - right.space_dimension());
-        result.concatenate_assign(shiftedRight);
-        return result;
-    }
-    result.intersection_assign(right);
+  auto result = left;
+  if (result.space_dimension() < right.space_dimension()) {
+    result.add_space_dimensions_and_embed(right.space_dimension() - result.space_dimension());
+  } else if (result.space_dimension() > right.space_dimension()) {
+    auto shiftedRight = right;
+    shiftedRight.add_space_dimensions_and_embed(result.space_dimension() - right.space_dimension());
+    result.concatenate_assign(shiftedRight);
     return result;
+  }
+  result.intersection_assign(right);
+  return result;
 }
 
 /*!
@@ -64,14 +64,14 @@ static ParametricTimingConstraint operator&&(const ParametricTimingConstraint &l
  * @return a new vector of TimingConstraint with the clock variables adjusted
  */
 static ParametricTimingConstraint adjustDimension(const ParametricTimingConstraint &guard, const std::size_t size) {
-    auto result = guard;
-    if (result.space_dimension() < size) {
-        result.add_space_dimensions_and_embed(size - result.space_dimension());
-    } else if (result.space_dimension() > size) {
-        result.remove_higher_space_dimensions(result.space_dimension() - size);
-    }
-    assert(result.space_dimension() == size);
-    return result;
+  auto result = guard;
+  if (result.space_dimension() < size) {
+    result.add_space_dimensions_and_embed(size - result.space_dimension());
+  } else if (result.space_dimension() > size) {
+    result.remove_higher_space_dimensions(result.space_dimension() - size);
+  }
+  assert(result.space_dimension() == size);
+  return result;
 }
 
-#endif //DATAMONITOR_PARAMETRIC_TIMING_CONSTRAINT_HH
+#endif // DATAMONITOR_PARAMETRIC_TIMING_CONSTRAINT_HH

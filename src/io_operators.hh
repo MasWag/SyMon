@@ -2,16 +2,15 @@
 
 #include <iostream>
 
-#include "non_symbolic_string_constraint.hh"
 #include "non_symbolic_number_constraint.hh"
+#include "non_symbolic_string_constraint.hh"
 
-#include "symbolic_string_constraint.hh"
 #include "symbolic_number_constraint.hh"
+#include "symbolic_string_constraint.hh"
 #include "timing_constraint.hh"
 
 namespace NonSymbolic {
-  static inline
-  std::ostream &operator<<(std::ostream &os, const NonSymbolic::StringAtom &atom) {
+  static inline std::ostream &operator<<(std::ostream &os, const NonSymbolic::StringAtom &atom) {
     switch (atom.value.index()) {
       case 0:
         os << "x" << std::get<0>(atom.value);
@@ -23,8 +22,7 @@ namespace NonSymbolic {
     return os;
   }
 
-  static inline
-  std::istream &operator>>(std::istream &is, NonSymbolic::StringAtom &atom) {
+  static inline std::istream &operator>>(std::istream &is, NonSymbolic::StringAtom &atom) {
     switch (is.get()) {
       case 'x': {
         VariableID id;
@@ -49,8 +47,7 @@ namespace NonSymbolic {
     return is;
   }
 
-  static inline
-  std::istream &operator>>(std::istream &is, NonSymbolic::StringConstraint::kind_t &kind) {
+  static inline std::istream &operator>>(std::istream &is, NonSymbolic::StringConstraint::kind_t &kind) {
     std::string str;
     is >> str;
     if (str == "==") {
@@ -63,8 +60,7 @@ namespace NonSymbolic {
     return is;
   }
 
-  static inline
-  std::istream &operator>>(std::istream &is, NonSymbolic::StringConstraint &constraint) {
+  static inline std::istream &operator>>(std::istream &is, NonSymbolic::StringConstraint &constraint) {
     is >> constraint.children[0];
     if (is.get() != ' ') {
       is.setstate(std::ios_base::failbit);
@@ -81,8 +77,7 @@ namespace NonSymbolic {
     return is;
   }
 
-  static inline
-  std::ostream &operator<<(std::ostream &os, const NonSymbolic::StringConstraint::kind_t &kind) {
+  static inline std::ostream &operator<<(std::ostream &os, const NonSymbolic::StringConstraint::kind_t &kind) {
     switch (kind) {
       case NonSymbolic::StringConstraint::kind_t::EQ:
         os << " == ";
@@ -94,16 +89,15 @@ namespace NonSymbolic {
     return os;
   }
 
-  static inline
-  std::ostream &operator<<(std::ostream &os, const NonSymbolic::StringConstraint &stringConstraint) {
+  static inline std::ostream &operator<<(std::ostream &os, const NonSymbolic::StringConstraint &stringConstraint) {
     os << stringConstraint.children[0];
     os << stringConstraint.kind;
     os << stringConstraint.children[1];
     return os;
   }
 
-  static inline
-  std::ostream &operator<<(std::ostream &os, const std::vector<NonSymbolic::StringConstraint> &stringConstraints) {
+  static inline std::ostream &operator<<(std::ostream &os,
+                                         const std::vector<NonSymbolic::StringConstraint> &stringConstraints) {
     os << "{";
     for (const NonSymbolic::StringConstraint &stringConstraint: stringConstraints) {
       os << stringConstraint;
@@ -113,8 +107,7 @@ namespace NonSymbolic {
     return os;
   }
 
-  static inline
-  std::ostream &operator<<(std::ostream &os, const NonSymbolic::NumberExpression &numberExpression) {
+  static inline std::ostream &operator<<(std::ostream &os, const NonSymbolic::NumberExpression &numberExpression) {
     switch (numberExpression.kind) {
       case NonSymbolic::NumberExpression::kind_t::ATOM:
         os << "x" << std::get<VariableID>(numberExpression.child);
@@ -133,8 +126,7 @@ namespace NonSymbolic {
     return os;
   }
 
-  static inline
-  std::ostream &operator<<(std::ostream &os, const typename NonSymbolic::NumberExpression::kind_t &kind) {
+  static inline std::ostream &operator<<(std::ostream &os, const typename NonSymbolic::NumberExpression::kind_t &kind) {
     switch (kind) {
       case NonSymbolic::NumberExpression::kind_t::ATOM:
         break;
@@ -148,9 +140,7 @@ namespace NonSymbolic {
     return os;
   }
 
-
-  static inline
-  std::istream &operator>>(std::istream &is, NonSymbolic::NumberExpression &numberExpression) {
+  static inline std::istream &operator>>(std::istream &is, NonSymbolic::NumberExpression &numberExpression) {
     //! @note I should rewrite it by lex/yacc if I want more expressiveness.
     if (is.get() != 'x') {
       is.unget();
@@ -198,9 +188,9 @@ namespace NonSymbolic {
     return is;
   }
 
-  template<typename Number>
-  static inline
-  std::ostream &print(std::ostream &os, const typename NonSymbolic::NumberConstraint<Number>::kind_t kind) {
+  template <typename Number>
+  static inline std::ostream &print(std::ostream &os,
+                                    const typename NonSymbolic::NumberConstraint<Number>::kind_t kind) {
     switch (kind) {
       case NonSymbolic::NumberConstraint<Number>::kind_t::GT:
         os << " > ";
@@ -224,24 +214,23 @@ namespace NonSymbolic {
     return os;
   }
 
-  template<typename Number>
-  static inline
-  std::ostream &operator<<(std::ostream &os, const typename NonSymbolic::NumberConstraint<Number>::kind_t kind) {
+  template <typename Number>
+  static inline std::ostream &operator<<(std::ostream &os,
+                                         const typename NonSymbolic::NumberConstraint<Number>::kind_t kind) {
     return print(os, kind);
   }
 
-  template<typename Number>
-  static inline
-  std::ostream &operator<<(std::ostream &os, const NonSymbolic::NumberConstraint<Number> &numberConstraint) {
+  template <typename Number>
+  static inline std::ostream &operator<<(std::ostream &os,
+                                         const NonSymbolic::NumberConstraint<Number> &numberConstraint) {
     os << numberConstraint.expr;
     print<Number>(os, numberConstraint.kind);
     os << numberConstraint.num;
     return os;
   }
 
-  template<typename Number>
-  static inline
-  std::istream &scan(std::istream &is, typename NonSymbolic::NumberConstraint<Number>::kind_t &kind) {
+  template <typename Number>
+  static inline std::istream &scan(std::istream &is, typename NonSymbolic::NumberConstraint<Number>::kind_t &kind) {
     std::string str;
     is >> str;
     if (str == ">") {
@@ -262,9 +251,8 @@ namespace NonSymbolic {
     return is;
   }
 
-  template<typename Number>
-  static inline
-  std::istream &operator>>(std::istream &is, NonSymbolic::NumberConstraint<Number> &numberConstraint) {
+  template <typename Number>
+  static inline std::istream &operator>>(std::istream &is, NonSymbolic::NumberConstraint<Number> &numberConstraint) {
     is >> numberConstraint.expr;
     if (is.get() != ' ') {
       is.setstate(std::ios_base::failbit);
@@ -280,11 +268,10 @@ namespace NonSymbolic {
     is >> numberConstraint.num;
     return is;
   }
-}
+} // namespace NonSymbolic
 
 namespace Symbolic {
-  static inline
-  std::ostream &operator<<(std::ostream &os, const Symbolic::StringAtom &atom) {
+  static inline std::ostream &operator<<(std::ostream &os, const Symbolic::StringAtom &atom) {
     switch (atom.value.index()) {
       case 0:
         os << "x" << std::get<0>(atom.value);
@@ -296,8 +283,7 @@ namespace Symbolic {
     return os;
   }
 
-  static inline
-  std::istream &operator>>(std::istream &is, Symbolic::StringAtom &atom) {
+  static inline std::istream &operator>>(std::istream &is, Symbolic::StringAtom &atom) {
     switch (is.get()) {
       case 'x': {
         VariableID id;
@@ -322,8 +308,7 @@ namespace Symbolic {
     return is;
   }
 
-  static inline
-  std::istream &operator>>(std::istream &is, Symbolic::StringConstraint::kind_t &kind) {
+  static inline std::istream &operator>>(std::istream &is, Symbolic::StringConstraint::kind_t &kind) {
     std::string str;
     is >> str;
     if (str == "==") {
@@ -336,8 +321,7 @@ namespace Symbolic {
     return is;
   }
 
-  static inline
-  std::istream &operator>>(std::istream &is, Symbolic::StringConstraint &constraint) {
+  static inline std::istream &operator>>(std::istream &is, Symbolic::StringConstraint &constraint) {
     is >> constraint.children[0];
     if (is.get() != ' ') {
       is.setstate(std::ios_base::failbit);
@@ -354,8 +338,7 @@ namespace Symbolic {
     return is;
   }
 
-  static inline
-  std::ostream &operator<<(std::ostream &os, const Symbolic::StringConstraint::kind_t &kind) {
+  static inline std::ostream &operator<<(std::ostream &os, const Symbolic::StringConstraint::kind_t &kind) {
     switch (kind) {
       case Symbolic::StringConstraint::kind_t::EQ:
         os << " == ";
@@ -367,16 +350,15 @@ namespace Symbolic {
     return os;
   }
 
-  static inline
-  std::ostream &operator<<(std::ostream &os, const Symbolic::StringConstraint &stringConstraint) {
+  static inline std::ostream &operator<<(std::ostream &os, const Symbolic::StringConstraint &stringConstraint) {
     os << stringConstraint.children[0];
     os << stringConstraint.kind;
     os << stringConstraint.children[1];
     return os;
   }
 
-  static inline
-  std::ostream &operator<<(std::ostream &os, const std::vector<Symbolic::StringConstraint> &stringConstraints) {
+  static inline std::ostream &operator<<(std::ostream &os,
+                                         const std::vector<Symbolic::StringConstraint> &stringConstraints) {
     os << "{";
     for (const Symbolic::StringConstraint &stringConstraint: stringConstraints) {
       os << stringConstraint;
@@ -385,16 +367,14 @@ namespace Symbolic {
     os << "}";
     return os;
   }
-}
+} // namespace Symbolic
 
-static inline
-std::ostream &operator<<(std::ostream &os, const std::pair<VariableID, VariableID> &update) {
+static inline std::ostream &operator<<(std::ostream &os, const std::pair<VariableID, VariableID> &update) {
   os << "x" << update.first << " := x" << update.second;
   return os;
 }
 
-static inline
-std::istream &operator>>(std::istream &is, std::pair<VariableID, VariableID> &update) {
+static inline std::istream &operator>>(std::istream &is, std::pair<VariableID, VariableID> &update) {
   if (is.get() != 'x') {
     is.unget();
     is.setstate(std::ios_base::failbit);
@@ -425,8 +405,8 @@ std::istream &operator>>(std::istream &is, std::pair<VariableID, VariableID> &up
   return is;
 }
 
-static inline
-std::ostream &operator<<(std::ostream &os, const std::vector<std::pair<VariableID, VariableID>> &updates) {
+static inline std::ostream &operator<<(std::ostream &os,
+                                       const std::vector<std::pair<VariableID, VariableID>> &updates) {
   os << "{";
   for (const auto &update: updates) {
     os << update;
@@ -436,9 +416,9 @@ std::ostream &operator<<(std::ostream &os, const std::vector<std::pair<VariableI
   return os;
 }
 
-template<class Number>
-static inline
-std::ostream &operator<<(std::ostream &os, const std::vector<NonSymbolic::NumberConstraint<Number>> &vector) {
+template <class Number>
+static inline std::ostream &operator<<(std::ostream &os,
+                                       const std::vector<NonSymbolic::NumberConstraint<Number>> &vector) {
   os << "{";
   for (const auto &element: vector) {
     os << element;
@@ -448,8 +428,7 @@ std::ostream &operator<<(std::ostream &os, const std::vector<NonSymbolic::Number
   return os;
 }
 
-static inline
-std::istream &operator>>(std::istream &is, Symbolic::NumberExpression &numberExpression) {
+static inline std::istream &operator>>(std::istream &is, Symbolic::NumberExpression &numberExpression) {
   //! @note I should rewrite it by lex/yacc if I want more expressiveness.
   if (is.peek() == 'x') {
     is.get();
@@ -500,8 +479,7 @@ std::istream &operator>>(std::istream &is, Symbolic::NumberExpression &numberExp
   return is;
 }
 
-static inline
-std::istream &operator>>(std::istream &is, Symbolic::NumberConstraint &numberConstraint) {
+static inline std::istream &operator>>(std::istream &is, Symbolic::NumberConstraint &numberConstraint) {
   std::array<Symbolic::NumberExpression, 2> expr;
   is >> expr[0];
   if (is.get() != ' ') {
@@ -533,15 +511,14 @@ std::istream &operator>>(std::istream &is, Symbolic::NumberConstraint &numberCon
   return is;
 }
 
-static inline
-std::ostream &operator<<(std::ostream &os, const std::pair<VariableID, Symbolic::NumberExpression> &update) {
+static inline std::ostream &operator<<(std::ostream &os,
+                                       const std::pair<VariableID, Symbolic::NumberExpression> &update) {
   using Parma_Polyhedra_Library::IO_Operators::operator<<;
   os << "x" << update.first << " := " << update.second;
   return os;
 }
 
-static inline
-std::istream &operator>>(std::istream &is, std::pair<VariableID, Symbolic::NumberExpression> &update) {
+static inline std::istream &operator>>(std::istream &is, std::pair<VariableID, Symbolic::NumberExpression> &update) {
   if (is.get() != 'x') {
     is.unget();
     is.setstate(std::ios_base::failbit);
@@ -567,9 +544,8 @@ std::istream &operator>>(std::istream &is, std::pair<VariableID, Symbolic::Numbe
   return is;
 }
 
-static inline
-std::ostream &
-operator<<(std::ostream &os, const std::vector<std::pair<VariableID, Symbolic::NumberExpression>> &updates) {
+static inline std::ostream &operator<<(std::ostream &os,
+                                       const std::vector<std::pair<VariableID, Symbolic::NumberExpression>> &updates) {
   os << "{";
   for (const auto &update: updates) {
     os << update;
@@ -579,9 +555,7 @@ operator<<(std::ostream &os, const std::vector<std::pair<VariableID, Symbolic::N
   return os;
 }
 
-template<class T>
-static inline
-std::istream &operator>>(std::istream &is, std::vector<T> &resetVars) {
+template <class T> static inline std::istream &operator>>(std::istream &is, std::vector<T> &resetVars) {
   resetVars.clear();
   if (!is) {
     is.setstate(std::ios_base::failbit);
@@ -625,8 +599,7 @@ std::istream &operator>>(std::istream &is, std::vector<T> &resetVars) {
   return is;
 }
 
-static inline
-std::ostream &operator<<(std::ostream &os, const std::vector<Symbolic::NumberConstraint> &vector) {
+static inline std::ostream &operator<<(std::ostream &os, const std::vector<Symbolic::NumberConstraint> &vector) {
   using Parma_Polyhedra_Library::IO_Operators::operator<<;
   os << "{";
   for (const auto &element: vector) {

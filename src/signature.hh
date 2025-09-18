@@ -11,11 +11,11 @@
 class Signature {
 public:
   Signature() = default;
-  explicit Signature(std::istream& is) {
+  explicit Signature(std::istream &is) {
     std::string key;
     std::size_t stringSize, numberSize;
     std::size_t id = 0;
-    while(is.good()) {
+    while (is.good()) {
       is >> key >> stringSize;
       if (!is.good()) {
         break;
@@ -47,7 +47,7 @@ public:
   [[nodiscard]] std::vector<std::string> getKeys() const {
     std::vector<std::string> keys;
     keys.reserve(idMap.size());
-    for (const auto &[fst, snd] : idMap) {
+    for (const auto &[fst, snd]: idMap) {
       keys.push_back(fst);
     }
     return keys;
@@ -61,6 +61,7 @@ public:
       throw std::runtime_error("Signature maps must have the same size");
     }
   }
+
 private:
   std::unordered_map<std::string, std::size_t> idMap;
   std::unordered_map<std::string, std::size_t> stringSizeMap;

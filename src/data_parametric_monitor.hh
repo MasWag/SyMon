@@ -1,19 +1,18 @@
 #pragma once
 
-#include "subject.hh"
-#include "observer.hh"
-#include "timed_word_subject.hh"
 #include "automaton.hh"
-#include "symbolic_update.hh"
+#include "observer.hh"
+#include "subject.hh"
 #include "symbolic_number_constraint.hh"
 #include "symbolic_string_constraint.hh"
+#include "symbolic_update.hh"
+#include "timed_word_subject.hh"
 
 namespace Parma_Polyhedra_Library {
-  static inline
-  std::size_t hash_value(const Symbolic::NumberValuation &p) {
+  static inline std::size_t hash_value(const Symbolic::NumberValuation &p) {
     return static_cast<std::size_t>(p.hash_code());
   }
-}
+} // namespace Parma_Polyhedra_Library
 
 #include <boost/unordered_set.hpp>
 
@@ -75,8 +74,7 @@ public:
         auto nextSEnv = stringEnv;
         auto nextNEnv = numberEnv;
         if (eval(clockValuation, transition.guard) &&
-            eval(transition.stringConstraints, nextSEnv,
-                 transition.numConstraints, nextNEnv)) {
+            eval(transition.stringConstraints, nextSEnv, transition.numConstraints, nextNEnv)) {
           auto nextCVal = clockValuation;
           for (const VariableID resetVar: transition.resetVars) {
             nextCVal[resetVar] = 0;
@@ -84,10 +82,7 @@ public:
           transition.update.execute(nextSEnv, nextNEnv);
           nextSEnv.resize(automaton.stringVariableSize);
           nextNEnv.remove_higher_space_dimensions(automaton.numberVariableSize);
-          nextConfigurations.insert({transition.target.lock(),
-                                     std::move(nextCVal),
-                                     nextSEnv,
-                                     nextNEnv});
+          nextConfigurations.insert({transition.target.lock(), std::move(nextCVal), nextSEnv, nextNEnv});
           if (transition.target.lock()->isMatch) {
             notifyObservers({index, timestamp, nextNEnv, nextSEnv});
           }
@@ -101,17 +96,15 @@ public:
 
 private:
   const DataParametricTA automaton;
-  using Configuration = std::tuple<std::shared_ptr<DataParametricTAState>,
-          std::vector<double>,
-          Symbolic::StringValuation,
-          Symbolic::NumberValuation>;
-  //Symbolic::NumberValuation>;
-/*  struct Configuration {
-    std::shared_ptr<DataParametricTAState> state;
-    std::vector<double> clockValuation;
-    NonSymbolic::StringValuation stringEnv;
-    Symbolic::NumberValuation numberEnv;
-  };*/
+  using Configuration = std::tuple<std::shared_ptr<DataParametricTAState>, std::vector<double>,
+                                   Symbolic::StringValuation, Symbolic::NumberValuation>;
+  // Symbolic::NumberValuation>;
+  /*  struct Configuration {
+      std::shared_ptr<DataParametricTAState> state;
+      std::vector<double> clockValuation;
+      NonSymbolic::StringValuation stringEnv;
+      Symbolic::NumberValuation numberEnv;
+    };*/
   boost::unordered_set<Configuration> configurations;
   double absTime;
   std::size_t index = 0;

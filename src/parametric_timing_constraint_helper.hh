@@ -15,15 +15,9 @@
  */
 struct ParametricTimingConstraintHelper {
 public:
-  enum class kind_t {
-    VARIABLE, PARAMETER, CONSTANT
-  };
-  enum class op_t {
-    PLUS, MINUS
-  };
-  enum class comparison_t {
-    LT, LE, EQ, GE, GT
-  };
+  enum class kind_t { VARIABLE, PARAMETER, CONSTANT };
+  enum class op_t { PLUS, MINUS };
+  enum class comparison_t { LT, LE, EQ, GE, GT };
   using atom_t = std::pair<std::variant<std::size_t, Parma_Polyhedra_Library::Coefficient>, kind_t>;
   //! @brief head of each expression
   std::array<atom_t, 2> head;
@@ -32,8 +26,8 @@ public:
   //! @brief comparison in the constraint
   comparison_t comparison = comparison_t::EQ;
 
-  void
-  toExpr(const std::size_t parameterSize, const atom_t &atom, Parma_Polyhedra_Library::Linear_Expression &expr) const {
+  void toExpr(const std::size_t parameterSize, const atom_t &atom,
+              Parma_Polyhedra_Library::Linear_Expression &expr) const {
     switch (atom.second) {
       case kind_t::VARIABLE:
         expr = Parma_Polyhedra_Library::Variable(parameterSize + std::get<std::size_t>(atom.first));
@@ -84,7 +78,6 @@ public:
   }
 };
 
-
 static std::istream &skipBlank(std::istream &is) {
   while (is.good()) {
     switch (is.peek()) {
@@ -132,7 +125,7 @@ static std::istream &readAtom(std::istream &is, ParametricTimingConstraintHelper
       atom.first = id;
       break;
     }
-    default : {
+    default: {
       atom.second = ParametricTimingConstraintHelper::kind_t::CONSTANT;
       Parma_Polyhedra_Library::Coefficient constant;
       is >> constant;
@@ -145,8 +138,7 @@ static std::istream &readAtom(std::istream &is, ParametricTimingConstraintHelper
   return is;
 }
 
-static inline
-std::istream &operator>>(std::istream &is, ParametricTimingConstraintHelper &helper) {
+static inline std::istream &operator>>(std::istream &is, ParametricTimingConstraintHelper &helper) {
   std::size_t position = 0;
   while (position < 2) {
     readAtom(is, helper.head[position]);
@@ -236,8 +228,7 @@ std::istream &operator>>(std::istream &is, ParametricTimingConstraintHelper &hel
   return is;
 }
 
-static inline
-std::ostream &operator<<(std::ostream &is, const ParametricTimingConstraintHelper::op_t &op) {
+static inline std::ostream &operator<<(std::ostream &is, const ParametricTimingConstraintHelper::op_t &op) {
   switch (op) {
     case ParametricTimingConstraintHelper::op_t::PLUS:
       is << "plus";
@@ -249,8 +240,7 @@ std::ostream &operator<<(std::ostream &is, const ParametricTimingConstraintHelpe
   return is;
 }
 
-static inline
-std::ostream &operator<<(std::ostream &is, const ParametricTimingConstraintHelper::kind_t &kind) {
+static inline std::ostream &operator<<(std::ostream &is, const ParametricTimingConstraintHelper::kind_t &kind) {
   switch (kind) {
     case ParametricTimingConstraintHelper::kind_t::CONSTANT:
       is << "constant";
@@ -265,8 +255,8 @@ std::ostream &operator<<(std::ostream &is, const ParametricTimingConstraintHelpe
   return is;
 }
 
-static inline
-std::ostream &operator<<(std::ostream &is, const ParametricTimingConstraintHelper::comparison_t &comparison) {
+static inline std::ostream &operator<<(std::ostream &is,
+                                       const ParametricTimingConstraintHelper::comparison_t &comparison) {
   switch (comparison) {
     case ParametricTimingConstraintHelper::comparison_t::LE:
       is << "<=";
@@ -287,10 +277,9 @@ std::ostream &operator<<(std::ostream &is, const ParametricTimingConstraintHelpe
   return is;
 }
 
-static inline
-std::ostream &operator<<(std::ostream &is, const ParametricTimingConstraintHelper &helper) {
+static inline std::ostream &operator<<(std::ostream &is, const ParametricTimingConstraintHelper &helper) {
   is << "stub\n";
   return is;
 }
 
-#endif //DATAMONITOR_PARAMETRIC_TIMING_CONSTRAINT_HELPER_HH
+#endif // DATAMONITOR_PARAMETRIC_TIMING_CONSTRAINT_HELPER_HH

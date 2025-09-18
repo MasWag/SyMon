@@ -15,5 +15,4 @@ namespace Symbolic {
   using NumberExpression = Parma_Polyhedra_Library::Linear_Expression;
   using NumberConstraint = Parma_Polyhedra_Library::Constraint;
   using Parma_Polyhedra_Library::IO_Operators::operator<<;
-}
-
+} // namespace Symbolic
