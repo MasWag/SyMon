@@ -2,6 +2,7 @@ SyMon --- SYmbolic MONitor
 ==========================
 
 [![Boost.Test](https://github.com/MasWag/SyMon/actions/workflows/boosttest.yml/badge.svg?branch=master)](https://github.com/MasWag/SyMon/actions/workflows/boosttest.yml)
+[![Documentation](https://img.shields.io/badge/docs-SyMon-blue)](https://maswag.github.io/SyMon/)
 [![Docker Pulls](https://img.shields.io/docker/pulls/maswag/symon)](https://hub.docker.com/r/maswag/symon)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](./LICENSE)
 
