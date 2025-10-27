@@ -2,6 +2,7 @@
 
 #include "automaton.hh"
 #include "observer.hh"
+#include "ppl_rational.hh"
 #include "subject.hh"
 #include "symbolic_number_constraint.hh"
 #include "symbolic_string_constraint.hh"
@@ -24,7 +25,7 @@ struct DataParametricMonitorResult {
 };
 
 class DataParametricMonitor : public SingleSubject<DataParametricMonitorResult>,
-                              public Observer<TimedWordEvent<Parma_Polyhedra_Library::Coefficient>> {
+                              public Observer<TimedWordEvent<PPLRational>> {
 public:
   explicit DataParametricMonitor(const DataParametricTA &automaton) : automaton(automaton) {
     absTime = 0;
@@ -42,10 +43,10 @@ public:
 
   virtual ~DataParametricMonitor() = default;
 
-  void notify(const TimedWordEvent<Parma_Polyhedra_Library::Coefficient> &event) override {
+  void notify(const TimedWordEvent<PPLRational> &event) override {
     const Action actionId = event.actionId;
     const std::vector<std::string> &strings = event.strings;
-    const std::vector<Parma_Polyhedra_Library::Coefficient> &numbers = event.numbers;
+    const std::vector<PPLRational> &numbers = event.numbers;
     const double timestamp = event.timestamp;
     boost::unordered_set<Configuration> nextConfigurations;
 
@@ -62,7 +63,7 @@ public:
       assert(numberEnv.space_dimension() == automaton.numberVariableSize);
       numberEnv.add_space_dimensions_and_embed(numbers.size());
       for (std::size_t i = 0; i < numbers.size(); i++) {
-        numberEnv.add_constraint(Parma_Polyhedra_Library::Variable(automaton.numberVariableSize + i) == numbers[i]);
+        numberEnv.add_constraint(Parma_Polyhedra_Library::Variable(automaton.numberVariableSize + i) * numbers[i].getDenominator() == numbers[i].getNumerator());
       }
 
       auto transitionIt = std::get<0>(conf)->next.find(actionId);

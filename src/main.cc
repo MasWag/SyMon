@@ -169,8 +169,7 @@ int main(int argc, char *argv[]) {
                      Symbolic::Update>(timedAutomatonFileName, signatureFileName, timedWordFileName, true);
     } else if (vm.count("dataparametric")) {
       // data parametric with new syntax
-      using Coefficient = Parma_Polyhedra_Library::Coefficient;
-      return execute<DataParametricTA, DataParametricBoostTA, Coefficient, double, DataParametricMonitor,
+      return execute<DataParametricTA, DataParametricBoostTA, PPLRational, double, DataParametricMonitor,
                      DataParametricPrinter, Symbolic::StringConstraint, Symbolic::NumberConstraint,
                      std::vector<TimingConstraint>, Symbolic::Update>(timedAutomatonFileName, signatureFileName,
                                                                       timedWordFileName, true);
@@ -188,8 +187,7 @@ int main(int argc, char *argv[]) {
                    Symbolic::Update>(timedAutomatonFileName, signatureFileName, timedWordFileName, false);
   } else if (vm.count("dataparametric")) {
     // data parametric
-    using Coefficient = Parma_Polyhedra_Library::Coefficient;
-    return execute<DataParametricTA, DataParametricBoostTA, Coefficient, double, DataParametricMonitor,
+    return execute<DataParametricTA, DataParametricBoostTA, PPLRational, double, DataParametricMonitor,
                    DataParametricPrinter, Symbolic::StringConstraint, Symbolic::NumberConstraint,
                    std::vector<TimingConstraint>, Symbolic::Update>(timedAutomatonFileName, signatureFileName,
                                                                     timedWordFileName, false);
