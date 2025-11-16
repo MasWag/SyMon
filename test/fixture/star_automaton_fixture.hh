@@ -38,7 +38,7 @@ struct StarAutomatonFixture {
             stringConstraints.push_back(NonSymbolic::SCMaker(0) == "a");
             
             std::vector<NonSymbolic::NumberConstraint<int> > numConstraints;
-            NonSymbolic::Update update;
+            NonSymbolic::Update<int> update;
             std::vector<VariableID> resetVars = {VariableID{0}};
             
             automaton.states[0]->next[0].resize(1);
@@ -58,7 +58,7 @@ struct StarAutomatonFixture {
             stringConstraints.push_back(NonSymbolic::SCMaker(0) == "b");
             
             std::vector<NonSymbolic::NumberConstraint<int> > numConstraints;
-            NonSymbolic::Update update;
+            NonSymbolic::Update<int> update;
             std::vector<VariableID> resetVars;
             
             automaton.states[1]->next[0].resize(1);

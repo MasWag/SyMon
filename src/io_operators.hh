@@ -149,6 +149,26 @@ namespace NonSymbolic {
     return os;
   }
 
+  // Concrete overload for the common Number = int case. Boost unit tests (and other code)
+  // often stream values of type NonSymbolic::NumberExpression<int>::kind_t directly.
+  // Template argument deduction doesn't work when the parameter is a nested dependent
+  // type, so provide this non-template overload so streaming compiles cleanly.
+  static inline std::ostream &operator<<(std::ostream &os, const NonSymbolic::NumberExpression<int>::kind_t &kind) {
+    switch (kind) {
+      case NonSymbolic::NumberExpression<int>::kind_t::ATOM:
+        break;
+      case NonSymbolic::NumberExpression<int>::kind_t::CONSTANT:
+        break;
+      case NonSymbolic::NumberExpression<int>::kind_t::PLUS:
+        os << " + ";
+        break;
+      case NonSymbolic::NumberExpression<int>::kind_t::MINUS:
+        os << " - ";
+        break;
+    }
+    return os;
+  }
+
   template <typename Number>
   static inline std::ostream &operator<<(std::ostream &os,
                                         const std::pair<VariableID, NonSymbolic::NumberExpression<Number>> &update) {

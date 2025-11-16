@@ -45,7 +45,7 @@ struct WithdrawFixture {
         {
             std::vector<NonSymbolic::StringConstraint> stringConstraints;
             std::vector<NonSymbolic::NumberConstraint<int> > numConstraints;
-            NonSymbolic::Update update;
+            NonSymbolic::Update<int> update;
             std::vector<VariableID> resetVars;
 
             automaton.states[0]->next[0][0] = {
@@ -63,7 +63,7 @@ struct WithdrawFixture {
             std::vector<NonSymbolic::StringConstraint> stringConstraints;
             std::vector<NonSymbolic::NumberConstraint<int> > numConstraints;
 
-            NonSymbolic::Update update;
+            NonSymbolic::Update<int> update;
             update.stringUpdate.emplace_back(VariableID{0}, VariableID{1});
             update.numberUpdate.emplace_back(VariableID{0}, VariableID{1});
 
@@ -88,7 +88,7 @@ struct WithdrawFixture {
             stringConstraints.push_back(NonSymbolic::SCMaker(0) != VariableID{1});
 
             std::vector<NonSymbolic::NumberConstraint<int> > numConstraints;
-            NonSymbolic::Update update;
+            NonSymbolic::Update<int> update;
             std::vector<VariableID> resetVars;
 
             automaton.states[1]->next[0][0] = {
@@ -108,7 +108,7 @@ struct WithdrawFixture {
 
             std::vector<NonSymbolic::NumberConstraint<int> > numConstraints;
 
-            NonSymbolic::Update update;
+            NonSymbolic::Update<int> update;
             update.numberUpdate.emplace_back(VariableID{0}, VariableID{1});
 
             std::vector<VariableID> resetVars;
@@ -130,7 +130,7 @@ struct WithdrawFixture {
             std::vector<NonSymbolic::NumberConstraint<int> > numConstraints;
             numConstraints.push_back(NonSymbolic::NCMakerVar<int>(0) > 10000);
 
-            NonSymbolic::Update update;
+            NonSymbolic::Update<int> update;
             std::vector<VariableID> resetVars;
 
             automaton.states[1]->next[0][2] = {
