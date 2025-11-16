@@ -81,26 +81,28 @@ namespace NonSymbolic {
   };
 
   template <typename Number> struct NumberConstraint {
-    NumberExpression<Number> expr;
     enum class kind_t { GT, GE, EQ, NE, LE, LT } kind;
-    Number num;
+    NumberExpression<Number> left;
+    NumberExpression<Number> right;
 
     bool eval(const NumberValuation<Number> &env) const {
-      std::optional<Number> result;
-      expr.eval(env, result);
+      std::optional<Number> leftResult;
+      left.eval(env, leftResult);
+      std::optional<Number> rightResult;
+      right.eval(env, rightResult);
       switch (kind) {
         case kind_t::GT:
-          return *result > num;
+          return *leftResult > rightResult;
         case kind_t::GE:
-          return *result >= num;
+          return *leftResult >= rightResult;
         case kind_t::EQ:
-          return *result == num;
+          return *leftResult == rightResult;
         case kind_t::NE:
-          return *result != num;
+          return *leftResult != rightResult;
         case kind_t::LE:
-          return *result <= num;
+          return *leftResult <= rightResult;
         case kind_t::LT:
-          return *result < num;
+          return *leftResult < rightResult;
       }
       return false;
     }
@@ -114,42 +116,38 @@ namespace NonSymbolic {
     }
 
     NonSymbolic::NumberConstraint<Number> operator==(Number num) {
-      NumberExpression<Number> expr{id};
-      return {expr, NonSymbolic::NumberConstraint<Number>::kind_t::EQ, num};
+      NumberExpression<Number> left{id};
+      NumberExpression<Number> right = NumberExpression<Number>::constant(num);
+      return {NonSymbolic::NumberConstraint<Number>::kind_t::EQ, left, right};
     }
 
     NonSymbolic::NumberConstraint<Number> operator==(NCMakerVar maker) {
-      auto first = std::make_shared<NumberExpression<Number>>(id);
-      auto second = std::make_shared<NumberExpression<Number>>(maker.id);
-      return {{NumberExpression<Number>::kind_t::MINUS, std::move(first), std::move(second)},
-              NonSymbolic::NumberConstraint<Number>::kind_t::EQ,
-              0};
+      auto first = NumberExpression<Number>(id);
+      auto second = NumberExpression<Number>(maker.id);
+      return {NonSymbolic::NumberConstraint<Number>::kind_t::EQ, first, second};
     }
 
     NonSymbolic::NumberConstraint<Number> operator!=(Number num) {
-      NumberExpression<Number> expr{id};
-      return {expr, NonSymbolic::NumberConstraint<Number>::kind_t::NE, num};
+      NumberExpression<Number> left{id};
+      NumberExpression<Number> right = NumberExpression<Number>::constant(num);
+      return {NonSymbolic::NumberConstraint<Number>::kind_t::NE, left, right};
     }
 
     NonSymbolic::NumberConstraint<Number> operator!=(NCMakerVar maker) {
-      auto first = std::make_shared<NumberExpression<Number>>(id);
-      auto second = std::make_shared<NumberExpression<Number>>(maker.id);
-      return {{NumberExpression<Number>::kind_t::MINUS, std::move(first), std::move(second)},
-              NonSymbolic::NumberConstraint<Number>::kind_t::NE,
-              0};
+      auto first = NumberExpression<Number>(id);
+      auto second = NumberExpression<Number>(maker.id);
+      return {NonSymbolic::NumberConstraint<Number>::kind_t::NE, first, second};
     }
 
     NonSymbolic::NumberConstraint<Number> operator>(Number num) {
       NumberExpression<Number> expr{id};
-      return {expr, NonSymbolic::NumberConstraint<Number>::kind_t::GT, num};
+      return {NonSymbolic::NumberConstraint<Number>::kind_t::GT, expr, num};
     }
 
     NonSymbolic::NumberConstraint<Number> operator>(NCMakerVar maker) {
-      auto first = std::make_shared<NumberExpression<Number>>(id);
-      auto second = std::make_shared<NumberExpression<Number>>(maker.id);
-      return {{NumberExpression<Number>::kind_t::MINUS, std::move(first), std::move(second)},
-              NonSymbolic::NumberConstraint<Number>::kind_t::GT,
-              0};
+      auto first = NumberExpression<Number>(id);
+      auto second = NumberExpression<Number>(maker.id);
+      return {NonSymbolic::NumberConstraint<Number>::kind_t::GT, first, second};
     }
 
   private:
