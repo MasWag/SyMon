@@ -139,10 +139,10 @@ struct TimedAutomaton<StringConstraint, NumberConstraint, ParametricTimingConstr
 
 template <typename Number>
 using NonParametricTA = TimedAutomaton<NonSymbolic::StringConstraint, NonSymbolic::NumberConstraint<Number>,
-                                       std::vector<TimingConstraint>, NonSymbolic::Update>;
+                                       std::vector<TimingConstraint>, NonSymbolic::Update<Number>>;
 template <typename Number>
 using NonParametricTAState = AutomatonState<NonSymbolic::StringConstraint, NonSymbolic::NumberConstraint<Number>,
-                                            std::vector<TimingConstraint>, NonSymbolic::Update>;
+                                            std::vector<TimingConstraint>, NonSymbolic::Update<Number>>;
 
 #include "symbolic_number_constraint.hh"
 #include "symbolic_string_constraint.hh"

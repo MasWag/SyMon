@@ -22,11 +22,12 @@ namespace NonSymbolic {
                        [&numEnv](const NumberConstraint<Number> &constraint) { return constraint.eval(numEnv); });
   }
 
+  template <typename Number>
   struct Update {
     std::vector<std::pair<VariableID, VariableID>> stringUpdate;
-    std::vector<std::pair<VariableID, VariableID>> numberUpdate;
+    std::vector<std::pair<VariableID, NonSymbolic::NumberExpression<Number>>> numberUpdate;
 
-    template <typename Number> void execute(StringValuation &stringEnv, NumberValuation<Number> &numEnv) const {
+    void execute(StringValuation &stringEnv, NumberValuation<Number> &numEnv) const {
       for (const auto &update: stringUpdate) {
         const auto from = update.second;
         const auto to = update.first;
@@ -35,7 +36,9 @@ namespace NonSymbolic {
       for (const auto &update: numberUpdate) {
         const auto from = update.second;
         const auto to = update.first;
-        numEnv[to] = numEnv[from];
+        std::optional<Number> result;
+        from.eval(numEnv, result);
+        numEnv[to] = result;
       }
     }
   };

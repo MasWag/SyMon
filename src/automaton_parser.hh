@@ -284,7 +284,7 @@ using BoostTimedAutomaton = boost::adjacency_list<
 
 template <typename Number>
 using NonParametricBoostTA = BoostTimedAutomaton<NonSymbolic::StringConstraint, NonSymbolic::NumberConstraint<Number>,
-                                                 TimingConstraint, NonSymbolic::Update>;
+                                                 TimingConstraint, NonSymbolic::Update<Number>>;
 using DataParametricBoostTA =
     BoostTimedAutomaton<Symbolic::StringConstraint, Symbolic::NumberConstraint, TimingConstraint, Symbolic::Update>;
 using BoostPTA = boost::adjacency_list<
