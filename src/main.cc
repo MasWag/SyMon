@@ -35,7 +35,7 @@ using ::operator<<;
  */
 template <typename TAType, typename BoostTAType, typename Number, typename Timestamp, typename Monitor,
           typename Printer, typename StringConstraint, typename NumberConstraint, typename TimingConstraintType,
-          typename UpdateType>
+          typename UpdateType, typename Time>
 int execute(const std::string &timedAutomatonFileName, const std::string &signatureFileName,
             const std::string &timedWordFileName, bool useNewSyntax = false) {
   TAType TA;
@@ -50,7 +50,7 @@ int execute(const std::string &timedAutomatonFileName, const std::string &signat
 
   if (useNewSyntax) {
     // Use the new syntax parser
-    SymonParser<StringConstraint, NumberConstraint, TimingConstraintType, UpdateType> parser;
+    SymonParser<StringConstraint, NumberConstraint, TimingConstraintType, UpdateType, Time> parser;
     try {
       parser.parse(taStream);
     } catch (const std::runtime_error &e) {
@@ -166,36 +166,36 @@ int main(int argc, char *argv[]) {
       // parametric with new syntax
       return execute<ParametricTA, BoostPTA, PPLRational, PPLRational, ParametricMonitor, ParametricPrinter,
                      Symbolic::StringConstraint, Symbolic::NumberConstraint, ParametricTimingConstraint,
-                     Symbolic::Update>(timedAutomatonFileName, signatureFileName, timedWordFileName, true);
+                     Symbolic::Update, Parma_Polyhedra_Library::NNC_Polyhedron>(timedAutomatonFileName, signatureFileName, timedWordFileName, true);
     } else if (vm.count("dataparametric")) {
       // data parametric with new syntax
-      return execute<DataParametricTA, DataParametricBoostTA, PPLRational, double, DataParametricMonitor,
+      return execute<DataParametricTA, DataParametricBoostTA<Number>, PPLRational, double, DataParametricMonitor,
                      DataParametricPrinter, Symbolic::StringConstraint, Symbolic::NumberConstraint,
-                     std::vector<TimingConstraint>, Symbolic::Update>(timedAutomatonFileName, signatureFileName,
+                     std::vector<TimingConstraint<Number>>, Symbolic::Update, Number>(timedAutomatonFileName, signatureFileName,
                                                                       timedWordFileName, true);
     } else {
       // boolean with new syntax
       return execute<NonParametricTA<Number>, NonParametricBoostTA<Number>, Number, double, BooleanMonitor<Number>,
                      BooleanPrinter<Number>, NonSymbolic::StringConstraint, NonSymbolic::NumberConstraint<Number>,
-                     std::vector<TimingConstraint>, NonSymbolic::Update<Number>>(timedAutomatonFileName, signatureFileName,
+                     std::vector<TimingConstraint<Number>>, NonSymbolic::Update<Number>, Number>(timedAutomatonFileName, signatureFileName,
                                                                          timedWordFileName, true);
     }
   } else if (vm.count("parametric")) {
     // parametric
     return execute<ParametricTA, BoostPTA, PPLRational, PPLRational, ParametricMonitor, ParametricPrinter,
                    Symbolic::StringConstraint, Symbolic::NumberConstraint, ParametricTimingConstraint,
-                   Symbolic::Update>(timedAutomatonFileName, signatureFileName, timedWordFileName, false);
+                   Symbolic::Update, Parma_Polyhedra_Library::NNC_Polyhedron>(timedAutomatonFileName, signatureFileName, timedWordFileName, false);
   } else if (vm.count("dataparametric")) {
     // data parametric
-    return execute<DataParametricTA, DataParametricBoostTA, PPLRational, double, DataParametricMonitor,
+    return execute<DataParametricTA, DataParametricBoostTA<Number>, PPLRational, double, DataParametricMonitor,
                    DataParametricPrinter, Symbolic::StringConstraint, Symbolic::NumberConstraint,
-                   std::vector<TimingConstraint>, Symbolic::Update>(timedAutomatonFileName, signatureFileName,
+                   std::vector<TimingConstraint<Number>>, Symbolic::Update, Number>(timedAutomatonFileName, signatureFileName,
                                                                     timedWordFileName, false);
   } else {
     // boolean
     return execute<NonParametricTA<Number>, NonParametricBoostTA<Number>, Number, double, BooleanMonitor<Number>,
                    BooleanPrinter<Number>, NonSymbolic::StringConstraint, NonSymbolic::NumberConstraint<Number>,
-                   std::vector<TimingConstraint>, NonSymbolic::Update<Number>>(timedAutomatonFileName, signatureFileName,
+                   std::vector<TimingConstraint<Number>>, NonSymbolic::Update<Number>, Number>(timedAutomatonFileName, signatureFileName,
                                                                        timedWordFileName, false);
   }
   return 0;
