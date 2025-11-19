@@ -158,7 +158,8 @@ static inline std::istream &operator>>(std::istream &is, PPLRational &r) {
   } else if (is.peek() == '+') {
     is >> ch; // consume the '+'
   }
-  while (is.peek() == '.' || isdigit(is.peek())) {
+  auto c = is.peek();
+  while (c == '.' || isdigit(c)) {
     is >> ch;
     if (ch == '.') {
       if (lessThanOne) {
@@ -176,8 +177,9 @@ static inline std::istream &operator>>(std::istream &is, PPLRational &r) {
     } else {
       throw std::runtime_error("Unexpected character encountered while parsing rational number.");
     }
+    c = is.peek();
   }
-
+  
   r = PPLRational(isNegative ? -numerator : numerator, denominator);
   return is;
 }
