@@ -17,11 +17,11 @@ template <class Number> struct BooleanMonitorResult {
 };
 
 namespace NonSymbolic {
-  template <typename Number>
+  template <typename Number, typename Time>
   class BooleanMonitor : public SingleSubject<BooleanMonitorResult<Number>>, public Observer<TimedWordEvent<Number>> {
   public:
     static const constexpr std::size_t unobservableActionID = 127;
-    BooleanMonitor(const NonParametricTA<Number> &automaton) : automaton(automaton) {
+    BooleanMonitor(const NonParametricTA<Number, Time> &automaton) : automaton(automaton) {
       configurations.clear();
       // configurations.reserve(automaton.initialStates.size());
       std::vector<double> initCVal(automaton.clockVariableSize);
@@ -94,9 +94,10 @@ namespace NonSymbolic {
     }
 
   private:
-    const NonParametricTA<Number> automaton;
-    using Configuration = std::tuple<std::shared_ptr<NonParametricTAState<Number>>, std::vector<double>,
-                                     StringValuation, NumberValuation<Number>, double>;
+
+    const NonParametricTA<Number, Time> automaton;
+    using Configuration = std::tuple<std::shared_ptr<NonParametricTAState<Number, Time>>, std::vector<double>,
+                                     StringValuation, NumberValuation<Number>, double>>;
     // struct Configuration {
     //   std::shared_ptr<AutomatonState<Number>> state;
     //   std::vector<double> clockValuation;
