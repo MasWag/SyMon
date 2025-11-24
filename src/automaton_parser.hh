@@ -56,19 +56,19 @@ namespace boost {
   BOOST_INSTALL_PROPERTY(edge, guard);
 } // namespace boost
 
-template <typename Time>
-static inline std::ostream &operator<<(std::ostream &os, const typename TimingConstraint<Time>::Order &odr) {
+template <typename Timestamp>
+static inline std::ostream &operator<<(std::ostream &os, const typename TimingConstraint<Timestamp>::Order &odr) {
   switch (odr) {
-    case TimingConstraint<Time>::Order::lt:
+    case TimingConstraint<Timestamp>::Order::lt:
       os << "<";
       break;
-    case TimingConstraint<Time>::Order::le:
+    case TimingConstraint<Timestamp>::Order::le:
       os << "<=";
       break;
-    case TimingConstraint<Time>::Order::ge:
+    case TimingConstraint<Timestamp>::Order::ge:
       os << ">=";
       break;
-    case TimingConstraint<Time>::Order::gt:
+    case TimingConstraint<Timestamp>::Order::gt:
       os << ">";
       break;
     case TimingConstraint::Order::eq:
@@ -96,14 +96,14 @@ static inline std::ostream &operator<<(std::ostream &os, const TimingConstraint<
   return os;
 }
 
-template <typename Time>
-static inline std::ostream &operator<<(std::ostream &os, const TimingConstraint<Time> &p) {
+template <typename Timestamp>
+static inline std::ostream &operator<<(std::ostream &os, const TimingConstraint<Timestamp> &p) {
   os << "x" << int(p.x) << " " << p.odr << " " << p.c;
   return os;
 }
 
-template <typename Time>
-static inline std::istream &operator>>(std::istream &is, TimingConstraint<Time> &p) {
+template <typename Timestamp>
+static inline std::istream &operator>>(std::istream &is, TimingConstraint<Timestamp> &p) {
   if (is.get() != 'x') {
     is.setstate(std::ios_base::failbit);
     return is;
@@ -127,13 +127,13 @@ static inline std::istream &operator>>(std::istream &is, TimingConstraint<Time> 
   switch (odr[0]) {
     case '>':
       if (odr[1] == '=') {
-        p.odr = TimingConstraint<Time>::Order::ge;
+        p.odr = TimingConstraint<Timestamp>::Order::ge;
         if (is.get() != ' ') {
           is.setstate(std::ios_base::failbit);
           return is;
         }
       } else if (odr[1] == ' ') {
-        p.odr = TimingConstraint<Time>::Order::gt;
+        p.odr = TimingConstraint<Timestamp>::Order::gt;
       } else {
         is.setstate(std::ios_base::failbit);
         return is;
@@ -141,13 +141,13 @@ static inline std::istream &operator>>(std::istream &is, TimingConstraint<Time> 
       break;
     case '<':
       if (odr[1] == '=') {
-        p.odr = TimingConstraint<Time>::Order::le;
+        p.odr = TimingConstraint<Timestamp>::Order::le;
         if (is.get() != ' ') {
           is.setstate(std::ios_base::failbit);
           return is;
         }
       } else if (odr[1] == ' ') {
-        p.odr = TimingConstraint<Time>::Order::lt;
+        p.odr = TimingConstraint<Timestamp>::Order::lt;
       } else {
         is.setstate(std::ios_base::failbit);
         return is;
@@ -324,9 +324,10 @@ using BoostTimedAutomaton = boost::adjacency_list<
 template <typename Number, typename Timestamp>
 using NonParametricBoostTA = BoostTimedAutomaton<NonSymbolic::StringConstraint, NonSymbolic::NumberConstraint<Number>,
                                                  TimingConstraint<Timestamp>, NonSymbolic::Update<Number>>;
-template <typename Time>
-                                                 using DataParametricBoostTA =
-    BoostTimedAutomaton<Symbolic::StringConstraint, Symbolic::NumberConstraint, TimingConstraint<Time>, Symbolic::Update>;
+
+template <typename Timestamp>
+using DataParametricBoostTA =
+    BoostTimedAutomaton<Symbolic::StringConstraint, Symbolic::NumberConstraint, TimingConstraint<Timestamp>, Symbolic::Update>;
 using BoostPTA = boost::adjacency_list<
     boost::listS, boost::vecS, boost::directedS, BoostTAState,
     BoostTATransition<Symbolic::StringConstraint, Symbolic::NumberConstraint, ParametricTimingConstraintHelper,

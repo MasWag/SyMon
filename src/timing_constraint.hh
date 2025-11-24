@@ -16,7 +16,7 @@ inline bool toBool(Order odr) {
 }
 
 //! @brief A constraint in a guard of transitions
-template <typename Time>
+template <typename Timestamp>
 struct TimingConstraint {
   enum class Order { lt, le, ge, gt, eq };
   using Timestamp = double;
@@ -77,24 +77,24 @@ public:
   explicit ConstraintMaker(ClockVariables x) : x(x) {
   }
 
-  template<typename Time>
-  TimingConstraint<Time> operator<(Time c) {
-    return TimingConstraint{x, TimingConstraint<Time>::Order::lt, c};
+  template<typename Timestamp>
+  TimingConstraint<Timestamp> operator<(Timestamp c) {
+    return TimingConstraint{x, TimingConstraint<Timestamp>::Order::lt, c};
   }
 
-  template<typename Time>
-  TimingConstraint<Time> operator<=(Time c) {
-    return TimingConstraint{x, TimingConstraint<Time>::Order::le, c};
+  template<typename Timestamp>
+  TimingConstraint<Timestamp> operator<=(Timestamp c) {
+    return TimingConstraint{x, TimingConstraint<Timestamp>::Order::le, c};
   }
 
-  template<typename Time>
-  TimingConstraint<Time> operator>(Time c) {
-    return TimingConstraint<Time>{x, TimingConstraint<Time>::Order::gt, c};
+  template<typename Timestamp>
+  TimingConstraint<Timestamp> operator>(Timestamp c) {
+    return TimingConstraint<Timestamp>{x, TimingConstraint<Timestamp>::Order::gt, c};
   }
 
-  template<typename Time>
-  TimingConstraint<Time> operator>=(Time c) {
-    return TimingConstraint<Time>{x, TimingConstraint<Time>::Order::ge, c};
+  template<typename Timestamp>
+  TimingConstraint<Timestamp> operator>=(Timestamp c) {
+    return TimingConstraint<Timestamp>{x, TimingConstraint<Timestamp>::Order::ge, c};
   }
 
   TimingConstraint operator==(Timestamp c) {
@@ -110,13 +110,13 @@ public:
 //         return g.odr == TimingConstraint::Order::ge || g.odr == TimingConstraint::Order::gt;
 //     }), guard.end());
 // }
-template <typename Time>
-using TimingValuation = std::vector<Time>;
+template <typename Timestamp>
+using TimingValuation = std::vector<Timestamp>;
 
-template<typename Time>
-static bool eval(const TimingValuation<Time> &clockValuation, const std::vector<TimingConstraint<Time>> &guard) {
+template<typename Timestamp>
+static bool eval(const TimingValuation<Timestamp> &clockValuation, const std::vector<TimingConstraint<Timestamp>> &guard) {
   return std::all_of(guard.begin(), guard.end(),
-                     [&clockValuation](const TimingConstraint<Time> &g) { return g.satisfy(clockValuation.at(g.x)); });
+                     [&clockValuation](const TimingConstraint<Timestamp> &g) { return g.satisfy(clockValuation.at(g.x)); });
 }
 
 /*!
@@ -154,9 +154,9 @@ static std::optional<double> diff(const TimingValuation &clockValuation, const s
  * @param width the width to shift the clock variable id
  * @return a new vector of TimingConstraint with the clock variables shifted
  */
-template<typename Time>
-static std::vector<TimingConstraint<Time>> shift(const std::vector<TimingConstraint<Time>> &guard, const ClockVariables width) {
-  std::vector<TimingConstraint<Time>> shiftedGuard;
+template<typename Timestamp>
+static std::vector<TimingConstraint<Timestamp>> shift(const std::vector<TimingConstraint<Timestamp>> &guard, const ClockVariables width) {
+  std::vector<TimingConstraint<Timestamp>> shiftedGuard;
   shiftedGuard.reserve(guard.size());
   for (const auto &g: guard) {
     shiftedGuard.push_back(g.shift(width));
@@ -172,10 +172,10 @@ static std::vector<TimingConstraint<Time>> shift(const std::vector<TimingConstra
  * @param right the second vector of TimingConstraint
  * @return a new vector containing all TimingConstraints from both vectors
  */
- template<typename Time>
-static std::vector<TimingConstraint<Time>> operator&&(const std::vector<TimingConstraint<Time>> &left,
-                                                const std::vector<TimingConstraint<Time>> &right) {
-  std::vector<TimingConstraint<Time>> result = left;
+ template<typename Timestamp>
+static std::vector<TimingConstraint<Timestamp>> operator&&(const std::vector<TimingConstraint<Timestamp>> &left,
+                                                const std::vector<TimingConstraint<Timestamp>> &right) {
+  std::vector<TimingConstraint<Timestamp>> result = left;
   result.reserve(left.size() + right.size());
   std::copy_if(right.begin(), right.end(), std::back_inserter(result),
                [&left](const auto &guard) { return std::find(left.begin(), left.end(), guard) == left.end(); });
@@ -189,8 +189,8 @@ static std::vector<TimingConstraint<Time>> operator&&(const std::vector<TimingCo
  * @param size the size to adjust the guard to
  * @return a new vector of TimingConstraint with the clock variables adjusted
  */
-template<typename Time>
-static std::vector<TimingConstraint<Time>> adjustDimension(const std::vector<TimingConstraint<Time>> &guard,
+template<typename Timestamp>
+static std::vector<TimingConstraint<Timestamp>> adjustDimension(const std::vector<TimingConstraint<Timestamp>> &guard,
                                                      const ClockVariables size) {
   return guard;
 }

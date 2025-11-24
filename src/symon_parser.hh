@@ -78,7 +78,7 @@ static inline TSNode nextNonCommentChild(const TSNode &parent, uint32_t &idx) {
   return std::nullopt;
 }
 
-template <typename StringConstraint, typename NumberConstraint, typename TimingConstraint, typename Update, typename Time>
+template <typename StringConstraint, typename NumberConstraint, typename TimingConstraint, typename Update, typename Timestamp>
 class SymonParser {
 public:
   using Automaton = TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint, Update>;
@@ -196,13 +196,13 @@ public:
 
 public:
   // Helper function to extract the upper bound from a non-parametric timing constraint
-  static std::vector<::TimingConstraint<Time>> extractUpperBound(const std::vector<::TimingConstraint<Time>> &guard) {
-    std::vector<::TimingConstraint<Time>> upperBound;
+  static std::vector<::TimingConstraint<Timestamp>> extractUpperBound(const std::vector<::TimingConstraint<Timestamp>> &guard) {
+    std::vector<::TimingConstraint<Timestamp>> upperBound;
 
     // Check each constraint in the guard
     for (const auto &constraint: guard) {
       // If the constraint is an upper bound (lt or le), add it to the result
-      if (constraint.odr == ::TimingConstraint<Time>::Order::lt || constraint.odr == ::TimingConstraint<Time>::Order::le) {
+      if (constraint.odr == ::TimingConstraint<Timestamp>::Order::lt || constraint.odr == ::TimingConstraint<Timestamp>::Order::le) {
         upperBound.push_back(constraint);
       }
     }
@@ -597,9 +597,9 @@ private:
           throw err;
         }
       } else {
-        return {boost::lexical_cast<::TimingConstraint<Time>>("x" + std::to_string(clockIndex) + " " +
+        return {boost::lexical_cast<::TimingConstraint<Timestamp>>("x" + std::to_string(clockIndex) + " " +
                                                         (isLowerInclusive ? ">=" : ">") + " " + lowerBound),
-                boost::lexical_cast<::TimingConstraint<Time>>("x" + std::to_string(clockIndex) + " " +
+                boost::lexical_cast<::TimingConstraint<Timestamp>>("x" + std::to_string(clockIndex) + " " +
                                                         (isUpperInclusive ? "<=" : "<") + " " + upperBound)};
       }
     }
@@ -629,7 +629,7 @@ private:
         return result;
       } else {
         return {
-            boost::lexical_cast<::TimingConstraint<Time>>("x" + std::to_string(clockIndex) + " " + comparator + " " + expr)};
+            boost::lexical_cast<::TimingConstraint<Timestamp>>("x" + std::to_string(clockIndex) + " " + comparator + " " + expr)};
       }
     }
     throw std::runtime_error(makeErrorMessage(
@@ -837,7 +837,7 @@ private:
       TSNode rhsNode = nextNonCommentChild(child, p);
       Automaton lhs = this->parseExpr(content, lhsNode);
       Automaton rhs = this->parseExpr(content, rhsNode);
-      return concatenate<StringConstraint, NumberConstraint, TimingConstraint, Update, Time>(std::move(lhs), std::move(rhs));
+      return concatenate<StringConstraint, NumberConstraint, TimingConstraint, Update, Timestamp>(std::move(lhs), std::move(rhs));
     } else if (kind == "conjunction") {
       uint32_t p = 0;
       TSNode lhsNode = nextNonCommentChild(child, p);
@@ -991,7 +991,7 @@ private:
       TimingConstraint guard = this->parseTimingConstraint(content, intervalNode, innerExpr.clockVariableSize);
 
       // Apply the time restriction operation
-      Automaton result = timeRestriction<StringConstraint, NumberConstraint, TimingConstraint, Update, Time>(std::move(innerExpr), guard);
+      Automaton result = timeRestriction<StringConstraint, NumberConstraint, TimingConstraint, Update, Timestamp>(std::move(innerExpr), guard);
 
       if constexpr (std::is_same_v<TimingConstraint, ParametricTimingConstraint>) {
         assert(std::all_of(result.states.begin(), result.states.end(), [&](const auto &state) {
@@ -1005,17 +1005,17 @@ private:
       }
 
       // Extract the upper bound from the timing constraint and add it to all transitions
-      if constexpr (std::is_same_v<TimingConstraint, std::vector<::TimingConstraint<Time>>>) {
+      if constexpr (std::is_same_v<TimingConstraint, std::vector<::TimingConstraint<Timestamp>>>) {
         // For non-parametric timing constraints
         auto upperBound = extractUpperBound(guard);
         if (!upperBound.empty()) {
           // It has an upper bound, add it to all transitions
-          addConstraintToAllTransitions<StringConstraint, NumberConstraint, TimingConstraint, Update, Time>(result, upperBound);
+          addConstraintToAllTransitions<StringConstraint, NumberConstraint, TimingConstraint, Update, Timestamp>(result, upperBound);
         }
       } else if constexpr (std::is_same_v<TimingConstraint, ParametricTimingConstraint>) {
         // For parametric timing constraints
         auto upperBound = extractUpperBound(guard, this->parameters.size() + innerExpr.clockVariableSize - 1);
-        addConstraintToAllTransitions<StringConstraint, NumberConstraint, TimingConstraint, Update, Time>(result, upperBound);
+        addConstraintToAllTransitions<StringConstraint, NumberConstraint, TimingConstraint, Update, Timestamp>(result, upperBound);
       }
 
       if constexpr (std::is_same_v<TimingConstraint, ParametricTimingConstraint>) {
