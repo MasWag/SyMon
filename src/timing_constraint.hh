@@ -77,22 +77,22 @@ public:
   explicit ConstraintMaker(ClockVariables x) : x(x) {
   }
 
-  template<typename Timestamp>
+  template<typename Timestamp = double>
   TimingConstraint<Timestamp> operator<(Timestamp c) {
-    return TimingConstraint{x, TimingConstraint<Timestamp>::Order::lt, c};
+    return TimingConstraint<Timestamp>{x, TimingConstraint<Timestamp>::Order::lt, c};
   }
 
-  template<typename Timestamp>
+  template<typename Timestamp = double>
   TimingConstraint<Timestamp> operator<=(Timestamp c) {
-    return TimingConstraint{x, TimingConstraint<Timestamp>::Order::le, c};
+    return TimingConstraint<Timestamp>{x, TimingConstraint<Timestamp>::Order::le, c};
   }
 
-  template<typename Timestamp>
+  template<typename Timestamp = double>
   TimingConstraint<Timestamp> operator>(Timestamp c) {
     return TimingConstraint<Timestamp>{x, TimingConstraint<Timestamp>::Order::gt, c};
   }
 
-  template<typename Timestamp>
+  template<typename Timestamp = double>
   TimingConstraint<Timestamp> operator>=(Timestamp c) {
     return TimingConstraint<Timestamp>{x, TimingConstraint<Timestamp>::Order::ge, c};
   }

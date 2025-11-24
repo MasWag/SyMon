@@ -19,13 +19,13 @@ struct DummyDataTimedWordSubject : public SingleSubject<TWEvent> {
   std::vector<TWEvent> vec;
 };
 
-struct DummyDataParametricMonitorObserver : public Observer<DataParametricMonitorResult> {
+struct DummyDataParametricMonitorObserver : public Observer<DataParametricMonitorResult<double>> {
   DummyDataParametricMonitorObserver() {}
   virtual ~DummyDataParametricMonitorObserver() {}
-  void notify(const DataParametricMonitorResult& result) {
+  void notify(const DataParametricMonitorResult<double>& result) {
     resultVec.push_back(result);
   }
-  std::vector<DataParametricMonitorResult> resultVec;
+  std::vector<DataParametricMonitorResult<double>> resultVec;
 };
 
 struct DataParametricMonitorFixture {
@@ -41,7 +41,7 @@ struct DataParametricMonitorFixture {
     monitor.reset();            // release local ownership
     resultVec = std::move(observer->resultVec);
   }
-  std::vector<DataParametricMonitorResult> resultVec;
+  std::vector<DataParametricMonitorResult<double>> resultVec;
 };
 
 BOOST_AUTO_TEST_SUITE(DataParametricMonitorTest)

@@ -21,7 +21,7 @@ struct TimeRestrictionFixture {
         // Construct automaton with 2 states
         automaton.states.resize(2);
         for (auto &state: automaton.states) {
-            state = std::make_shared<NonParametricTAState<int> >(false);
+            state = std::make_shared<NonParametricTAState<int, double> >(false);
         }
         automaton.initialStates = {automaton.states[0]};
         automaton.states[0]->isMatch = false;  // Initial state is not final
@@ -52,7 +52,7 @@ struct TimeRestrictionFixture {
         }
     }
 
-    NonParametricTA<int> automaton;
+    NonParametricTA<int, double> automaton;
     std::unique_ptr<Signature> signature;
 };
 
@@ -75,7 +75,7 @@ struct DataParametricTimeRestrictionFixture {
         // Construct automaton with 2 states
         automaton.states.resize(2);
         for (auto &state: automaton.states) {
-            state = std::make_shared<DataParametricTAState>(false);
+            state = std::make_shared<DataParametricTAState<double>>(false);
         }
         automaton.initialStates = {automaton.states[0]};
         automaton.states[0]->isMatch = false;  // Initial state is not final
@@ -106,7 +106,7 @@ struct DataParametricTimeRestrictionFixture {
         }
     }
 
-    DataParametricTA automaton;
+    DataParametricTA<double> automaton;
     std::unique_ptr<Signature> signature;
 };
 

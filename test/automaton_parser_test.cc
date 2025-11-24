@@ -178,7 +178,7 @@ BOOST_AUTO_TEST_SUITE(AutomatonParserTests)
     BOOST_AUTO_TEST_SUITE(NonParametricTimedAutomaton)
 
       BOOST_AUTO_TEST_CASE(Copy) {
-        NonParametricBoostTA<int> BoostTA;
+        NonParametricBoostTA<int, double> BoostTA;
         std::ifstream file(PROJECT_ROOT "/example/copy/copy.dot");
         parseBoostTA(file, BoostTA);
 
@@ -214,7 +214,7 @@ BOOST_AUTO_TEST_SUITE(AutomatonParserTests)
     BOOST_AUTO_TEST_SUITE(DataParametricTimedAutomaton)
 
       BOOST_AUTO_TEST_CASE(Copy) {
-        DataParametricBoostTA BoostTA;
+        DataParametricBoostTA<double> BoostTA;
         std::ifstream file(PROJECT_ROOT "/example/copy/copy_data_parametric.dot");
         parseBoostTA(file, BoostTA);
 
@@ -252,8 +252,8 @@ BOOST_AUTO_TEST_SUITE(AutomatonParserTests)
     BOOST_AUTO_TEST_SUITE(NonParametricTimedAutomaton)
 
       BOOST_AUTO_TEST_CASE(Copy) {
-        NonParametricBoostTA<int> BoostTA;
-        NonParametricTA<int> TA;
+        NonParametricBoostTA<int, double> BoostTA;
+        NonParametricTA<int, double> TA;
         // NonParametricTA<int> TA;
         std::ifstream file(PROJECT_ROOT "/example/copy/copy.dot");
         parseBoostTA(file, BoostTA);
@@ -331,7 +331,7 @@ BOOST_AUTO_TEST_SUITE(AutomatonParserTests)
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).update.numberUpdate.size(), 0);
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).guard.size(), 1);
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).guard.front().x, 0);
-        BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).guard.front().odr, TimingConstraint::Order::lt);
+        BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).guard.front().odr, TimingConstraint<double>::Order::lt);
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).guard.front().c, 3);
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).target.lock(), TA.states[1]);
 
@@ -355,8 +355,8 @@ BOOST_AUTO_TEST_SUITE(AutomatonParserTests)
 
       BOOST_AUTO_TEST_CASE(Copy) {
         using namespace Parma_Polyhedra_Library;
-        DataParametricBoostTA BoostTA;
-        DataParametricTA TA;
+        DataParametricBoostTA<double> BoostTA;
+        DataParametricTA<double> TA;
         std::ifstream file(PROJECT_ROOT "/example/copy/copy_data_parametric.dot");
         parseBoostTA(file, BoostTA);
         convBoostTA(BoostTA, TA);
@@ -416,7 +416,7 @@ BOOST_AUTO_TEST_SUITE(AutomatonParserTests)
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).update.numberUpdate.size(), 0);
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).guard.size(), 1);
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).guard.front().x, 0);
-        BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).guard.front().odr, ::TimingConstraint::Order::lt);
+        BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).guard.front().odr, ::TimingConstraint<double>::Order::lt);
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).guard.front().c, 3);
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).target.lock(), TA.states[1]);
 
@@ -441,8 +441,8 @@ BOOST_AUTO_TEST_SUITE(AutomatonParserTests)
 
       BOOST_AUTO_TEST_CASE(withdraw) {
         using namespace Parma_Polyhedra_Library;
-        DataParametricBoostTA BoostTA;
-        DataParametricTA TA;
+        DataParametricBoostTA<double> BoostTA;
+        DataParametricTA<double> TA;
         std::ifstream file(PROJECT_ROOT "/example/withdraw/withdraw.dot");
         parseBoostTA(file, BoostTA);
         convBoostTA(BoostTA, TA);
@@ -495,7 +495,7 @@ BOOST_AUTO_TEST_SUITE(AutomatonParserTests)
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).update.numberUpdate.size(), 0);
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).guard.size(), 1);
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).guard.front().x, 0);
-        BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).guard.front().odr, ::TimingConstraint::Order::le);
+        BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).guard.front().odr, ::TimingConstraint<double>::Order::le);
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).guard.front().c, 30);
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).target.lock(), TA.states[1]);
 
@@ -516,7 +516,7 @@ BOOST_AUTO_TEST_SUITE(AutomatonParserTests)
                 Variable(0) + Variable(1)));
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(1).guard.size(), 1);
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(1).guard.front().x, 0);
-        BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(1).guard.front().odr, ::TimingConstraint::Order::le);
+        BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(1).guard.front().odr, ::TimingConstraint<double>::Order::le);
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(1).guard.front().c, 30);
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(1).target.lock(), TA.states[1]);
 
@@ -528,7 +528,7 @@ BOOST_AUTO_TEST_SUITE(AutomatonParserTests)
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(2).update.numberUpdate.size(), 0);
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(2).guard.size(), 1);
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(2).guard.front().x, 0);
-        BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(2).guard.front().odr, ::TimingConstraint::Order::gt);
+        BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(2).guard.front().odr, ::TimingConstraint<double>::Order::gt);
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(2).guard.front().c, 30);
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(2).target.lock(), TA.states[2]);
 

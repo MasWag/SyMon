@@ -72,7 +72,8 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
             auto copyFinalState = copy.states[3];
             auto withdrawFinalState = withdraw.states[2];
 
-            auto result = concatenate(std::move(copy), std::move(withdraw));
+            auto result = concatenate<NonSymbolic::StringConstraint, NonSymbolic::NumberConstraint<int>,
+                                       std::vector<TimingConstraint<double>>, NonSymbolic::Update<int>, double>(std::move(copy), std::move(withdraw));
 
             // Check the total number of states (should be the sum of both automata)
             BOOST_CHECK_EQUAL(result.states.size(), 6);
@@ -255,11 +256,12 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
             auto originalFinalState = automaton_copy.states[1];
 
             // Create a timing constraint for the time restriction
-            std::vector<TimingConstraint> timeGuard;
-            timeGuard.push_back(ConstraintMaker(0) <= 10);
+            std::vector<TimingConstraint<double>> timeGuard;
+            timeGuard.push_back(ConstraintMaker(0) <= 10.);
 
             // Apply the time restriction operation
-            auto result = timeRestriction(std::move(automaton_copy), timeGuard);
+            auto result = timeRestriction<NonSymbolic::StringConstraint, NonSymbolic::NumberConstraint<int>,
+                                       std::vector<TimingConstraint<double>>, NonSymbolic::Update<int>, double>(std::move(automaton_copy), timeGuard);
 
             // Check that the clock variable size is increased by 1
             BOOST_CHECK_EQUAL(result.clockVariableSize, 2);
@@ -353,8 +355,8 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
             BOOST_CHECK_EQUAL(automaton_copy.states.size(), 4);
 
             // Create a timing constraint to add to all transitions
-            std::vector<TimingConstraint> constraint;
-            constraint.push_back(ConstraintMaker(0) <= 5);
+            std::vector<TimingConstraint<double>> constraint;
+            constraint.push_back(ConstraintMaker(0) <= 5.);
 
             // Count the number of transitions before adding the constraint
             size_t transitionCount = 0;
@@ -365,7 +367,8 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
             }
 
             // Apply the constraint to all transitions
-            addConstraintToAllTransitions(automaton_copy, constraint);
+            addConstraintToAllTransitions<NonSymbolic::StringConstraint, NonSymbolic::NumberConstraint<int>,
+                                       std::vector<TimingConstraint<double>>, NonSymbolic::Update<int>, double>(automaton_copy, constraint);
 
             // Verify that all transitions have the constraint applied
             size_t constrainedTransitionCount = 0;
@@ -375,7 +378,7 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
                         // Check that the constraint is applied to the transition
                         bool hasConstraint = false;
                         for (const auto &guard : transition.guard) {
-                            if (guard.x == 0 && guard.odr == TimingConstraint::Order::le && guard.c == 5) {
+                            if (guard.x == 0 && guard.odr == TimingConstraint<double>::Order::le && guard.c == 5) {
                                 hasConstraint = true;
                                 break;
                             }
@@ -455,7 +458,8 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
             auto copyFinalState = copy.states[3];
             auto withdrawFinalState = withdraw.states[2];
 
-            auto result = concatenate(std::move(copy), std::move(withdraw));
+            auto result = concatenate<Symbolic::StringConstraint, Symbolic::NumberConstraint,
+                                        std::vector<TimingConstraint<double>>, Symbolic::Update, double>(std::move(copy), std::move(withdraw));
 
             // Check the total number of states (should be the sum of both automata)
             BOOST_CHECK_EQUAL(result.states.size(), 6);
@@ -640,11 +644,12 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
             // Create a timing constraint for the time restriction
             using namespace Parma_Polyhedra_Library;
             using namespace Symbolic;
-            std::vector<TimingConstraint> timeGuard;
-            timeGuard.push_back(ConstraintMaker(0) <= 10);
+            std::vector<TimingConstraint<double>> timeGuard;
+            timeGuard.push_back(ConstraintMaker(0) <= 10.);
 
             // Apply the time restriction operation
-            auto result = timeRestriction(std::move(automaton_copy), timeGuard);
+            auto result = timeRestriction<Symbolic::StringConstraint, Symbolic::NumberConstraint,
+                                        std::vector<TimingConstraint<double>>, Symbolic::Update, double>(std::move(automaton_copy), timeGuard);
 
             // Check that the clock variable size is increased by 1
             BOOST_CHECK_EQUAL(result.clockVariableSize, 2);
@@ -738,8 +743,8 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
             BOOST_CHECK_EQUAL(automaton_copy.states.size(), 4);
 
             // Create a timing constraint to add to all transitions
-            std::vector<TimingConstraint> constraint;
-            constraint.push_back(ConstraintMaker(0) <= 5);
+            std::vector<TimingConstraint<double>> constraint;
+            constraint.push_back(ConstraintMaker(0) <= 5.);
 
             // Count the number of transitions before adding the constraint
             size_t transitionCount = 0;
@@ -750,7 +755,8 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
             }
 
             // Apply the constraint to all transitions
-            addConstraintToAllTransitions(automaton_copy, constraint);
+            addConstraintToAllTransitions<Symbolic::StringConstraint, Symbolic::NumberConstraint,
+                                        std::vector<TimingConstraint<double>>, Symbolic::Update, double>(automaton_copy, constraint);
 
             // Verify that all transitions have the constraint applied
             size_t constrainedTransitionCount = 0;
@@ -760,7 +766,7 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
                         // Check that the constraint is applied to the transition
                         bool hasConstraint = false;
                         for (const auto &guard : transition.guard) {
-                            if (guard.x == 0 && guard.odr == TimingConstraint::Order::le && guard.c == 5) {
+                            if (guard.x == 0 && guard.odr == TimingConstraint<double>::Order::le && guard.c == 5) {
                                 hasConstraint = true;
                                 break;
                             }
@@ -840,7 +846,8 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
             auto copyFinalState = copy.states[3];
             auto withdrawFinalState = withdraw.states[2];
 
-            auto result = concatenate(std::move(copy), std::move(withdraw));
+            auto result = concatenate<Symbolic::StringConstraint, Symbolic::NumberConstraint, ParametricTimingConstraint,
+                                    Symbolic::Update, ParametricTimingConstraint>(std::move(copy), std::move(withdraw));
 
             // Check the total number of states (should be the sum of both automata)
             BOOST_CHECK_EQUAL(result.states.size(), 6);
@@ -1029,7 +1036,8 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
             timeGuard.add_constraint(Variable(1) <= 10);
 
             // Apply the time restriction operation
-            const auto result = timeRestriction(std::move(automaton_copy), timeGuard);
+            const auto result = timeRestriction<Symbolic::StringConstraint, Symbolic::NumberConstraint, ParametricTimingConstraint,
+                                    Symbolic::Update, ParametricTimingConstraint>(std::move(automaton_copy), timeGuard);
 
             // Check that the clock variable size is increased by 1
             BOOST_CHECK_EQUAL(result.clockVariableSize, 2);
@@ -1136,7 +1144,8 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
             }
 
             // Apply the constraint to all transitions
-            addConstraintToAllTransitions(automaton_copy, constraint);
+            addConstraintToAllTransitions<Symbolic::StringConstraint, Symbolic::NumberConstraint, ParametricTimingConstraint,
+                                    Symbolic::Update, ParametricTimingConstraint>(automaton_copy, constraint);
 
             // Verify that all transitions have the constraint applied
             size_t constrainedTransitionCount = 0;
