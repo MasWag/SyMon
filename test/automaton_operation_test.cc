@@ -378,7 +378,7 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
                         // Check that the constraint is applied to the transition
                         bool hasConstraint = false;
                         for (const auto &guard : transition.guard) {
-                            if (guard.x == 0 && guard.odr == TimingConstraint<double>::Order::le && guard.c == 5) {
+                            if (guard.x == 0 && guard.odr == TimingConstraintOrder::le && guard.c == 5) {
                                 hasConstraint = true;
                                 break;
                             }
@@ -766,7 +766,7 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
                         // Check that the constraint is applied to the transition
                         bool hasConstraint = false;
                         for (const auto &guard : transition.guard) {
-                            if (guard.x == 0 && guard.odr == TimingConstraint<double>::Order::le && guard.c == 5) {
+                            if (guard.x == 0 && guard.odr == TimingConstraintOrder::le && guard.c == 5) {
                                 hasConstraint = true;
                                 break;
                             }

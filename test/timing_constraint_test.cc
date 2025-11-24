@@ -5,15 +5,15 @@
 
 BOOST_AUTO_TEST_SUITE(TimingConstraintTest)
     BOOST_AUTO_TEST_CASE(Shift) {
-        constexpr TimingConstraint<double> constraint{0, TimingConstraint<double>::Order::lt, 10};
+        constexpr TimingConstraint<double> constraint{0, TimingConstraintOrder::lt, 10};
         auto [x, odr, c] = constraint.shift(1);
         BOOST_CHECK_EQUAL(x, 1);
-        BOOST_CHECK_EQUAL(odr, TimingConstraint<double>::Order::lt);
+        BOOST_CHECK_EQUAL(odr, TimingConstraintOrder::lt);
         BOOST_CHECK_EQUAL(c, 10);
     }
 
     BOOST_AUTO_TEST_CASE(Satisfy) {
-        constexpr TimingConstraint<double> constraint{0, TimingConstraint<double>::Order::lt, 10};
+        constexpr TimingConstraint<double> constraint{0, TimingConstraintOrder::lt, 10};
         BOOST_CHECK(constraint.satisfy(5));
         BOOST_CHECK(!constraint.satisfy(10));
         BOOST_CHECK(!constraint.satisfy(15));

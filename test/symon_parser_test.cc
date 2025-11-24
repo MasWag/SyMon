@@ -139,7 +139,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().numConstraints.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.size(), 1);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().x, VariableID{0});
-            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().odr, TimingConstraint<double>::Order::lt);
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().odr, TimingConstraintOrder::lt);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().c, 5);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().update.stringUpdate.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().update.numberUpdate.size(), 0);
@@ -513,7 +513,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().numConstraints.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().guard.size(), 1);
             BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().guard.front().x, VariableID{0});
-            BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().guard.front().odr, TimingConstraint<double>::Order::gt);
+            BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().guard.front().odr, TimingConstraintOrder::gt);
             BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().guard.front().c, 5);
             BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().update.stringUpdate.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().update.numberUpdate.size(), 0);
@@ -558,7 +558,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             // The transition should have the timing constraint < 3
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.size(), 1);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().x, VariableID{0});
-            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().odr, TimingConstraint<double>::Order::lt);
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().odr, TimingConstraintOrder::lt);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().c, 3);
             
             // The final states should have no transitions
@@ -603,7 +603,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             // The transition should have timing constraint > 3
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.size(), 1);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().x, VariableID{0});
-            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().odr, TimingConstraint<double>::Order::gt);
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().odr, TimingConstraintOrder::gt);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().c, 3);
             
             // The intermediate state should have transitions for the update operation
@@ -661,7 +661,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             // The transition should have timing constraint < 3
             BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().guard.size(), 1);
             BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().guard.front().x, VariableID{0});
-            BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().guard.front().odr, TimingConstraint<double>::Order::lt);
+            BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().guard.front().odr, TimingConstraintOrder::lt);
             BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().guard.front().c, 3);
             
             // The final state should have no transitions
@@ -706,10 +706,10 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             bool hasUpperBound = false;
             
             for (const auto& constraint : automaton.states[0]->next[0].front().guard) {
-                if (constraint.odr == ::TimingConstraint<double>::Order::ge && constraint.c == 2) {
+                if (constraint.odr == ::TimingConstraintOrder::ge && constraint.c == 2) {
                     // This is the original lower bound
                     hasLowerBound = true;
-                } else if (constraint.odr == ::TimingConstraint<double>::Order::le && constraint.c == 5) {
+                } else if (constraint.odr == ::TimingConstraintOrder::le && constraint.c == 5) {
                     // This is the original upper bound
                     hasUpperBound = true;
                 }
@@ -736,10 +736,10 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             std::vector<TimingConstraint<double>> guard;
             
             // Add a lower bound: x >= 2
-            guard.push_back(TimingConstraint<double>{VariableID{0}, TimingConstraint<double>::Order::ge, 2});
+            guard.push_back(TimingConstraint<double>{VariableID{0}, TimingConstraintOrder::ge, 2});
             
             // Add an upper bound: x <= 5
-            guard.push_back(TimingConstraint<double>{VariableID{0}, TimingConstraint<double>::Order::le, 5});
+            guard.push_back(TimingConstraint<double>{VariableID{0}, TimingConstraintOrder::le, 5});
             
             // Extract the upper bound
             auto upperBound = SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update, double>::extractUpperBound(guard);
@@ -747,7 +747,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             // Verify that only the upper bound was extracted
             BOOST_CHECK_EQUAL(upperBound.size(), 1);
             BOOST_CHECK_EQUAL(upperBound[0].x, VariableID{0});
-            BOOST_CHECK_EQUAL(upperBound[0].odr, TimingConstraint<double>::Order::le);
+            BOOST_CHECK_EQUAL(upperBound[0].odr, TimingConstraintOrder::le);
             BOOST_CHECK_EQUAL(upperBound[0].c, 5);
         }
         
@@ -758,10 +758,10 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             std::vector<TimingConstraint<double>> nonParametricGuard;
             
             // Add a lower bound: x >= 2
-            nonParametricGuard.push_back(TimingConstraint<double>{VariableID{0}, TimingConstraint<double>::Order::ge, 2});
+            nonParametricGuard.push_back(TimingConstraint<double>{VariableID{0}, TimingConstraintOrder::ge, 2});
             
             // Add an upper bound: x <= 5
-            nonParametricGuard.push_back(TimingConstraint<double>{VariableID{0}, TimingConstraint<double>::Order::le, 5});
+            nonParametricGuard.push_back(TimingConstraint<double>{VariableID{0}, TimingConstraintOrder::le, 5});
             
             // Extract the upper bound from the non-parametric guard
             auto nonParametricUpperBound = SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update, double>::extractUpperBound(nonParametricGuard);
@@ -769,7 +769,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             // Verify that only the upper bound was extracted
             BOOST_CHECK_EQUAL(nonParametricUpperBound.size(), 1);
             BOOST_CHECK_EQUAL(nonParametricUpperBound[0].x, VariableID{0});
-            BOOST_CHECK_EQUAL(nonParametricUpperBound[0].odr, TimingConstraint<double>::Order::le);
+            BOOST_CHECK_EQUAL(nonParametricUpperBound[0].odr, TimingConstraintOrder::le);
             BOOST_CHECK_EQUAL(nonParametricUpperBound[0].c, 5);
             
             // Create an equivalent parametric timing constraint
@@ -841,7 +841,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             // The transition should have timing constraint <= 5
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.size(), 1);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().x, VariableID{0});
-            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().odr, TimingConstraint<double>::Order::le);
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().odr, TimingConstraintOrder::le);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().c, 5);
             
             // Transition for the first B
@@ -854,7 +854,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             // The transition should have timing constraint <= 5
             BOOST_CHECK_EQUAL(automaton.states[1]->next[1].front().guard.size(), 1);
             BOOST_CHECK_EQUAL(automaton.states[1]->next[1].front().guard.front().x, VariableID{0});
-            BOOST_CHECK_EQUAL(automaton.states[1]->next[1].front().guard.front().odr, TimingConstraint<double>::Order::le);
+            BOOST_CHECK_EQUAL(automaton.states[1]->next[1].front().guard.front().odr, TimingConstraintOrder::le);
             BOOST_CHECK_EQUAL(automaton.states[1]->next[1].front().guard.front().c, 5);
 
             // Transition for the second B
@@ -867,7 +867,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             // The transition should have timing constraint > 5
             BOOST_CHECK_EQUAL(automaton.states[2]->next[1].front().guard.size(), 1);
             BOOST_CHECK_EQUAL(automaton.states[2]->next[1].front().guard.front().x, VariableID{0});
-            BOOST_CHECK_EQUAL(automaton.states[2]->next[1].front().guard.front().odr, TimingConstraint<double>::Order::gt);
+            BOOST_CHECK_EQUAL(automaton.states[2]->next[1].front().guard.front().odr, TimingConstraintOrder::gt);
             BOOST_CHECK_EQUAL(automaton.states[2]->next[1].front().guard.front().c, 5);
         }
 

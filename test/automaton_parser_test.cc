@@ -331,7 +331,7 @@ BOOST_AUTO_TEST_SUITE(AutomatonParserTests)
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).update.numberUpdate.size(), 0);
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).guard.size(), 1);
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).guard.front().x, 0);
-        BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).guard.front().odr, TimingConstraint<double>::Order::lt);
+        BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).guard.front().odr, TimingConstraintOrder::lt);
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).guard.front().c, 3);
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).target.lock(), TA.states[1]);
 
@@ -416,7 +416,7 @@ BOOST_AUTO_TEST_SUITE(AutomatonParserTests)
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).update.numberUpdate.size(), 0);
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).guard.size(), 1);
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).guard.front().x, 0);
-        BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).guard.front().odr, ::TimingConstraint<double>::Order::lt);
+        BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).guard.front().odr, ::TimingConstraintOrder::lt);
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).guard.front().c, 3);
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).target.lock(), TA.states[1]);
 
@@ -495,7 +495,7 @@ BOOST_AUTO_TEST_SUITE(AutomatonParserTests)
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).update.numberUpdate.size(), 0);
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).guard.size(), 1);
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).guard.front().x, 0);
-        BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).guard.front().odr, ::TimingConstraint<double>::Order::le);
+        BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).guard.front().odr, ::TimingConstraintOrder::le);
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).guard.front().c, 30);
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).target.lock(), TA.states[1]);
 
@@ -516,7 +516,7 @@ BOOST_AUTO_TEST_SUITE(AutomatonParserTests)
                 Variable(0) + Variable(1)));
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(1).guard.size(), 1);
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(1).guard.front().x, 0);
-        BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(1).guard.front().odr, ::TimingConstraint<double>::Order::le);
+        BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(1).guard.front().odr, ::TimingConstraintOrder::le);
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(1).guard.front().c, 30);
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(1).target.lock(), TA.states[1]);
 
@@ -528,7 +528,7 @@ BOOST_AUTO_TEST_SUITE(AutomatonParserTests)
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(2).update.numberUpdate.size(), 0);
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(2).guard.size(), 1);
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(2).guard.front().x, 0);
-        BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(2).guard.front().odr, ::TimingConstraint<double>::Order::gt);
+        BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(2).guard.front().odr, ::TimingConstraintOrder::gt);
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(2).guard.front().c, 30);
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(2).target.lock(), TA.states[2]);
 

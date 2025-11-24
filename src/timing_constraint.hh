@@ -15,25 +15,24 @@ inline bool toBool(Order odr) {
   return odr == Order::EQ;
 }
 
+enum class TimingConstraintOrder { lt, le, ge, gt };
+
 //! @brief A constraint in a guard of transitions
 template <typename Timestamp>
 struct TimingConstraint {
-  enum class Order { lt, le, ge, gt, eq };
-  using Timestamp = double;
-
   ClockVariables x;
-  Order odr;
+  TimingConstraintOrder odr;
   Timestamp c;
 
   [[nodiscard]] bool satisfy(Timestamp d) const {
     switch (odr) {
-      case Order::lt:
+      case TimingConstraintOrder::lt:
         return d < c;
-      case Order::le:
+      case TimingConstraintOrder::le:
         return d <= c;
-      case Order::gt:
+      case TimingConstraintOrder::gt:
         return d > c;
-      case Order::ge:
+      case TimingConstraintOrder::ge:
         return d >= c;
       case Order::eq:
         return d == c;
@@ -46,7 +45,7 @@ struct TimingConstraint {
   ::Order operator()(Interpretation val) const {
     if (satisfy(val.at(x))) {
       return ::Order::EQ;
-    } else if (odr == Order::lt || odr == Order::le) {
+    } else if (odr == TimingConstraintOrder::lt || odr == TimingConstraintOrder::le) {
       return ::Order::GT;
     } else {
       return ::Order::LT;
@@ -79,22 +78,22 @@ public:
 
   template<typename Timestamp = double>
   TimingConstraint<Timestamp> operator<(Timestamp c) {
-    return TimingConstraint<Timestamp>{x, TimingConstraint<Timestamp>::Order::lt, c};
+    return TimingConstraint<Timestamp>{x, TimingConstraintOrder::lt, c};
   }
 
   template<typename Timestamp = double>
   TimingConstraint<Timestamp> operator<=(Timestamp c) {
-    return TimingConstraint<Timestamp>{x, TimingConstraint<Timestamp>::Order::le, c};
+    return TimingConstraint<Timestamp>{x, TimingConstraintOrder::le, c};
   }
 
   template<typename Timestamp = double>
   TimingConstraint<Timestamp> operator>(Timestamp c) {
-    return TimingConstraint<Timestamp>{x, TimingConstraint<Timestamp>::Order::gt, c};
+    return TimingConstraint<Timestamp>{x, TimingConstraintOrder::gt, c};
   }
 
   template<typename Timestamp = double>
   TimingConstraint<Timestamp> operator>=(Timestamp c) {
-    return TimingConstraint<Timestamp>{x, TimingConstraint<Timestamp>::Order::ge, c};
+    return TimingConstraint<Timestamp>{x, TimingConstraintOrder::ge, c};
   }
 
   TimingConstraint operator==(Timestamp c) {

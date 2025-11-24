@@ -202,7 +202,7 @@ public:
     // Check each constraint in the guard
     for (const auto &constraint: guard) {
       // If the constraint is an upper bound (lt or le), add it to the result
-      if (constraint.odr == ::TimingConstraint<Timestamp>::Order::lt || constraint.odr == ::TimingConstraint<Timestamp>::Order::le) {
+      if (constraint.odr == ::TimingConstraintOrder::le) {
         upperBound.push_back(constraint);
       }
     }
