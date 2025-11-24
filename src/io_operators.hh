@@ -112,18 +112,18 @@ namespace NonSymbolic {
   template <typename Number>
   static inline std::ostream &operator<<(std::ostream &os, const NonSymbolic::NumberExpression<Number> &numberExpression) {
     switch (numberExpression.kind) {
-      case NonSymbolic::NumberExpression<Number>::kind_t::ATOM:
+      case NonSymbolic::NumberExpressionKind::ATOM:
         os << "x" << std::get<VariableID>(numberExpression.child);
         break;
-      case NonSymbolic::NumberExpression<Number>::kind_t::CONSTANT:
+      case NonSymbolic::NumberExpressionKind::CONSTANT:
         os << std::get<Number>(numberExpression.child);
         break;
-      case NonSymbolic::NumberExpression<Number>::kind_t::PLUS:
+      case NonSymbolic::NumberExpressionKind::PLUS:
         os << std::get<1>(numberExpression.child)[0];
         os << " + ";
         os << std::get<1>(numberExpression.child)[1];
         break;
-      case NonSymbolic::NumberExpression<Number>::kind_t::MINUS:
+      case NonSymbolic::NumberExpressionKind::MINUS:
         os << std::get<1>(numberExpression.child)[0];
         os << " - ";
         os << std::get<1>(numberExpression.child)[1];
@@ -132,37 +132,16 @@ namespace NonSymbolic {
     return os;
   }
 
-  template <typename Number>
-  static inline std::ostream &operator<<(std::ostream &os, const typename NonSymbolic::NumberExpression<Number>::kind_t &kind) {
+  static inline std::ostream &operator<<(std::ostream &os, const NonSymbolic::NumberExpressionKind &kind) {
     switch (kind) {
-      case NonSymbolic::NumberExpression<Number>::kind_t::ATOM:
+      case NonSymbolic::NumberExpressionKind::ATOM:
         break;
-      case NonSymbolic::NumberExpression<Number>::kind_t::CONSTANT:
+      case NonSymbolic::NumberExpressionKind::CONSTANT:
         break;
-      case NonSymbolic::NumberExpression<Number>::kind_t::PLUS:
+      case NonSymbolic::NumberExpressionKind::PLUS:
         os << " + ";
         break;
-      case NonSymbolic::NumberExpression<Number>::kind_t::MINUS:
-        os << " - ";
-        break;
-    }
-    return os;
-  }
-
-  // Concrete overload for the common Number = int case. Boost unit tests (and other code)
-  // often stream values of type NonSymbolic::NumberExpression<int>::kind_t directly.
-  // Template argument deduction doesn't work when the parameter is a nested dependent
-  // type, so provide this non-template overload so streaming compiles cleanly.
-  static inline std::ostream &operator<<(std::ostream &os, const NonSymbolic::NumberExpression<int>::kind_t &kind) {
-    switch (kind) {
-      case NonSymbolic::NumberExpression<int>::kind_t::ATOM:
-        break;
-      case NonSymbolic::NumberExpression<int>::kind_t::CONSTANT:
-        break;
-      case NonSymbolic::NumberExpression<int>::kind_t::PLUS:
-        os << " + ";
-        break;
-      case NonSymbolic::NumberExpression<int>::kind_t::MINUS:
+      case NonSymbolic::NumberExpressionKind::MINUS:
         os << " - ";
         break;
     }
@@ -257,9 +236,9 @@ namespace NonSymbolic {
         leaf = std::make_shared<NonSymbolic::NumberExpression<Number>>(NumberExpression<Number>::constant(constant));
       }
       if (op == '+') {
-        numberExpression = {NonSymbolic::NumberExpression<Number>::kind_t::PLUS, child, leaf};
+        numberExpression = {NonSymbolic::NumberExpressionKind::PLUS, child, leaf};
       } else if (op == '-') {
-        numberExpression = {NonSymbolic::NumberExpression<Number>::kind_t::MINUS, child, leaf};
+        numberExpression = {NonSymbolic::NumberExpressionKind::MINUS, child, leaf};
       } else {
         is.setstate(std::ios_base::failbit);
         break;
@@ -270,24 +249,24 @@ namespace NonSymbolic {
 
   template <typename Number>
   static inline std::ostream &print(std::ostream &os,
-                                    const typename NonSymbolic::NumberConstraint<Number>::kind_t kind) {
+                                    const typename NonSymbolic::NumberComparatorKind kind) {
     switch (kind) {
-      case NonSymbolic::NumberConstraint<Number>::kind_t::GT:
+      case NonSymbolic::NumberComparatorKind::GT:
         os << " > ";
         break;
-      case NonSymbolic::NumberConstraint<Number>::kind_t::GE:
+      case NonSymbolic::NumberComparatorKind::GE:
         os << " >= ";
         break;
-      case NonSymbolic::NumberConstraint<Number>::kind_t::EQ:
+      case NonSymbolic::NumberComparatorKind::EQ:
         os << " == ";
         break;
-      case NonSymbolic::NumberConstraint<Number>::kind_t::NE:
+      case NonSymbolic::NumberComparatorKind::NE:
         os << " != ";
         break;
-      case NonSymbolic::NumberConstraint<Number>::kind_t::LE:
+      case NonSymbolic::NumberComparatorKind::LE:
         os << " <= ";
         break;
-      case NonSymbolic::NumberConstraint<Number>::kind_t::LT:
+      case NonSymbolic::NumberComparatorKind::LT:
         os << " < ";
         break;
     }
@@ -310,21 +289,21 @@ namespace NonSymbolic {
   }
 
   template <typename Number>
-  static inline std::istream &scan(std::istream &is, typename NonSymbolic::NumberConstraint<Number>::kind_t &kind) {
+  static inline std::istream &scan(std::istream &is, typename NonSymbolic::NumberComparatorKind &kind) {
     std::string str;
     is >> str;
     if (str == ">") {
-      kind = NonSymbolic::NumberConstraint<Number>::kind_t::GT;
+      kind = NonSymbolic::NumberComparatorKind::GT;
     } else if (str == ">=") {
-      kind = NonSymbolic::NumberConstraint<Number>::kind_t::GE;
+      kind = NonSymbolic::NumberComparatorKind::GE;
     } else if (str == "==") {
-      kind = NonSymbolic::NumberConstraint<Number>::kind_t::EQ;
+      kind = NonSymbolic::NumberComparatorKind::EQ;
     } else if (str == "!=") {
-      kind = NonSymbolic::NumberConstraint<Number>::kind_t::NE;
+      kind = NonSymbolic::NumberComparatorKind::NE;
     } else if (str == "<=") {
-      kind = NonSymbolic::NumberConstraint<Number>::kind_t::LE;
+      kind = NonSymbolic::NumberComparatorKind::LE;
     } else if (str == "<") {
-      kind = NonSymbolic::NumberConstraint<Number>::kind_t::LT;
+      kind = NonSymbolic::NumberComparatorKind::LT;
     } else {
       is.setstate(std::ios_base::failbit);
     }

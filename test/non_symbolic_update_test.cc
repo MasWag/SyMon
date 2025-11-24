@@ -28,7 +28,7 @@ BOOST_AUTO_TEST_SUITE(NonSymbolicUpdateTests)
 
     BOOST_AUTO_TEST_CASE(plus) {
       NonSymbolic::NumberValuation<int> numEnv = {std::make_optional(7)};
-      Expr expr = {Expr::kind_t::PLUS, std::make_shared<Expr>(Expr(0)), std::make_shared<Expr>(Expr::constant(5))};
+      Expr expr = {NonSymbolic::NumberExpressionKind::PLUS, std::make_shared<Expr>(Expr(0)), std::make_shared<Expr>(Expr::constant(5))};
       std::optional<int> result;
       expr.eval(numEnv, result);
       BOOST_CHECK_EQUAL(result.value(), 12);
@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_SUITE(NonSymbolicUpdateTests)
       std::vector<std::pair<VariableID, Expr>> numUpdate = {
           {0, Expr(1)},
           {1, Expr::constant(5)},
-          {2, {Expr::kind_t::PLUS, std::make_shared<Expr>(Expr(0)), std::make_shared<Expr>(Expr::constant(10))}}};
+          {2, {NonSymbolic::NumberExpressionKind::PLUS, std::make_shared<Expr>(Expr(0)), std::make_shared<Expr>(Expr::constant(10))}}};
       // x0=x1, x1=5, x2=x0+10
       NonSymbolic::NumberValuation<int> numEnv = {std::make_optional(1), std::make_optional(2), std::make_optional(4)};
 

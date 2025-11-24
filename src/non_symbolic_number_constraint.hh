@@ -17,30 +17,32 @@ namespace NonSymbolic {
   */
   template <typename Number> using NumberValuation = std::vector<std::optional<Number>>;
 
+  enum class NumberExpressionKind { ATOM, PLUS, MINUS, CONSTANT };
+  
   /*!
     @note When we need an optimization, we can make it a vector of children not a tree.
    */
   template <typename Number>
   struct NumberExpression {
-    enum class kind_t { ATOM, PLUS, MINUS, CONSTANT } kind;
+    NumberExpressionKind kind;
 
-    NumberExpression(VariableID id = 0) : kind(kind_t::ATOM), child(id) {
+    NumberExpression(VariableID id = 0) : kind(NumberExpressionKind::ATOM), child(id) {
     }
 
     /*
-    NumberExpression(Number value = 0) : kind(kind_t::CONSTANT), child(value) {
+    NumberExpression(Number value = 0) : kind(NumberExpressionKind::CONSTANT), child(value) {
     }
     */
     static NumberExpression<Number> constant(Number value) {
       NumberExpression<Number> expr;
-      expr.kind = kind_t::CONSTANT;
+      expr.kind = NumberExpressionKind::CONSTANT;
       expr.child = value;
       return expr;
     }
 
-    NumberExpression(kind_t kind, std::shared_ptr<NumberExpression> first, std::shared_ptr<NumberExpression> second)
+    NumberExpression(NumberExpressionKind kind, std::shared_ptr<NumberExpression> first, std::shared_ptr<NumberExpression> second)
         : kind(kind) {
-      assert(kind != kind_t::ATOM);
+      assert(kind != NumberExpressionKind::ATOM);
       child = std::array<std::shared_ptr<NumberExpression>, 2>();
       std::get<1>(child)[0] = std::move(first);
       std::get<1>(child)[1] = std::move(second);
@@ -50,15 +52,15 @@ namespace NonSymbolic {
 
     void eval(const NumberValuation<Number> &env, std::optional<Number> &result) const {
       switch (kind) {
-        case kind_t::ATOM:
+        case NumberExpressionKind::ATOM:
           assert(child.index() == 0);
           result = env[std::get<VariableID>(child)];
           return;
-        case kind_t::CONSTANT:
+        case NumberExpressionKind::CONSTANT:
           assert(child.index() == 2);
           result = std::get<Number>(child);
           return;
-        case kind_t::PLUS: {
+        case NumberExpressionKind::PLUS: {
           assert(child.index() == 1);
           std::array<std::optional<Number>, 2> childrenResults;
           for (int i = 0; i < 2; i++) {
@@ -67,7 +69,7 @@ namespace NonSymbolic {
           result = *childrenResults[0] + *childrenResults[1];
           return;
         }
-        case kind_t::MINUS: {
+        case NumberExpressionKind::MINUS: {
           assert(child.index() == 1);
           std::array<std::optional<Number>, 2> childrenResults;
           for (int i = 0; i < 2; i++) {
@@ -80,8 +82,9 @@ namespace NonSymbolic {
     }
   };
 
+  enum class NumberComparatorKind { GT, GE, EQ, NE, LE, LT };
   template <typename Number> struct NumberConstraint {
-    enum class kind_t { GT, GE, EQ, NE, LE, LT } kind;
+    NumberComparatorKind kind;
     NumberExpression<Number> left;
     NumberExpression<Number> right;
 
@@ -91,17 +94,17 @@ namespace NonSymbolic {
       std::optional<Number> rightResult;
       right.eval(env, rightResult);
       switch (kind) {
-        case kind_t::GT:
+        case NumberComparatorKind::GT:
           return *leftResult > rightResult;
-        case kind_t::GE:
+        case NumberComparatorKind::GE:
           return *leftResult >= rightResult;
-        case kind_t::EQ:
+        case NumberComparatorKind::EQ:
           return *leftResult == rightResult;
-        case kind_t::NE:
+        case NumberComparatorKind::NE:
           return *leftResult != rightResult;
-        case kind_t::LE:
+        case NumberComparatorKind::LE:
           return *leftResult <= rightResult;
-        case kind_t::LT:
+        case NumberComparatorKind::LT:
           return *leftResult < rightResult;
       }
       return false;
@@ -118,36 +121,36 @@ namespace NonSymbolic {
     NonSymbolic::NumberConstraint<Number> operator==(Number num) {
       NumberExpression<Number> left{id};
       NumberExpression<Number> right = NumberExpression<Number>::constant(num);
-      return {NonSymbolic::NumberConstraint<Number>::kind_t::EQ, left, right};
+      return {NonSymbolic::NumberComparatorKind::EQ, left, right};
     }
 
     NonSymbolic::NumberConstraint<Number> operator==(NCMakerVar maker) {
       auto first = NumberExpression<Number>(id);
       auto second = NumberExpression<Number>(maker.id);
-      return {NonSymbolic::NumberConstraint<Number>::kind_t::EQ, first, second};
+      return {NonSymbolic::NumberComparatorKind::EQ, first, second};
     }
 
     NonSymbolic::NumberConstraint<Number> operator!=(Number num) {
       NumberExpression<Number> left{id};
       NumberExpression<Number> right = NumberExpression<Number>::constant(num);
-      return {NonSymbolic::NumberConstraint<Number>::kind_t::NE, left, right};
+      return {NonSymbolic::NumberComparatorKind::NE, left, right};
     }
 
     NonSymbolic::NumberConstraint<Number> operator!=(NCMakerVar maker) {
       auto first = NumberExpression<Number>(id);
       auto second = NumberExpression<Number>(maker.id);
-      return {NonSymbolic::NumberConstraint<Number>::kind_t::NE, first, second};
+      return {NonSymbolic::NumberComparatorKind::NE, first, second};
     }
 
     NonSymbolic::NumberConstraint<Number> operator>(Number num) {
       NumberExpression<Number> expr{id};
-      return {NonSymbolic::NumberConstraint<Number>::kind_t::GT, expr, num};
+      return {NonSymbolic::NumberComparatorKind::GT, expr, num};
     }
 
     NonSymbolic::NumberConstraint<Number> operator>(NCMakerVar maker) {
       auto first = NumberExpression<Number>(id);
       auto second = NumberExpression<Number>(maker.id);
-      return {NonSymbolic::NumberConstraint<Number>::kind_t::GT, first, second};
+      return {NonSymbolic::NumberComparatorKind::GT, first, second};
     }
 
   private:

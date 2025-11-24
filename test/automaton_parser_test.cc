@@ -75,7 +75,7 @@ BOOST_AUTO_TEST_SUITE(AutomatonParserTests)
         std::string str = "x12";
         using type = NonSymbolic::NumberExpression<int>;
         type result = lexical_cast<type>(str);
-        BOOST_TEST((result.kind == type::kind_t::ATOM));
+        BOOST_TEST((result.kind == NonSymbolic::NumberExpressionKind::ATOM));
         BOOST_CHECK_EQUAL(result.child.index(), 0);
         BOOST_CHECK_EQUAL(std::get<VariableID>(result.child), 12ul);
       }
@@ -84,7 +84,7 @@ BOOST_AUTO_TEST_SUITE(AutomatonParserTests)
         std::string str = "x12 + x0";
         using type = NonSymbolic::NumberExpression<int>;
         type result = lexical_cast<type>(str);
-        BOOST_TEST((result.kind == type::kind_t::PLUS));
+        BOOST_TEST((result.kind == NonSymbolic::NumberExpressionKind::PLUS));
         BOOST_CHECK_EQUAL(result.child.index(), 1);
       }
 
@@ -92,7 +92,7 @@ BOOST_AUTO_TEST_SUITE(AutomatonParserTests)
         std::string str = "x12 - x0";
         using type = NonSymbolic::NumberExpression<int>;
         type result = lexical_cast<type>(str);
-        BOOST_TEST((result.kind == type::kind_t::MINUS));
+        BOOST_TEST((result.kind == NonSymbolic::NumberExpressionKind::MINUS));
         BOOST_CHECK_EQUAL(result.child.index(), 1);
       }
 
@@ -100,7 +100,7 @@ BOOST_AUTO_TEST_SUITE(AutomatonParserTests)
         std::string str = "x0 - x1 != 0";
         using type = NonSymbolic::NumberConstraint<int>;
         type result = lexical_cast<type>(str);
-        BOOST_TEST((result.kind == type::kind_t::NE));
+        BOOST_TEST((result.kind == NonSymbolic::NumberComparatorKind::NE));
         // std::array<StringAtom, 2> children;
         // enum class kind_t {EQ, NE} kind;
       }
@@ -309,12 +309,12 @@ BOOST_AUTO_TEST_SUITE(AutomatonParserTests)
                 std::get<std::string>(TA.states[1]->next.at(0).at(0).stringConstraints.front().children[1].value), "x");
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).numConstraints.size(), 1);
         BOOST_TEST((TA.states[1]->next.at(0).at(0).numConstraints.front().kind ==
-                    NonSymbolic::NumberConstraint<int>::kind_t::NE));
+                    NonSymbolic::NumberComparatorKind::NE));
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).numConstraints.front().left.kind,
-                          NonSymbolic::NumberExpression<int>::kind_t::MINUS);
+                          NonSymbolic::NumberExpressionKind::MINUS);
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).numConstraints.front().left.child.index(), 1);
         BOOST_CHECK_EQUAL(std::get<1>(TA.states[1]->next.at(0).at(0).numConstraints.front().left.child)[0]->kind,
-                          NonSymbolic::NumberExpression<int>::kind_t::ATOM);
+                          NonSymbolic::NumberExpressionKind::ATOM);
         BOOST_CHECK_EQUAL(
                 std::get<1>(TA.states[1]->next.at(0).at(0).numConstraints.front().left.child)[0]->child.index(),
                 0);
@@ -322,7 +322,7 @@ BOOST_AUTO_TEST_SUITE(AutomatonParserTests)
                 std::get<0>(std::get<1>(TA.states[1]->next.at(0).at(0).numConstraints.front().left.child)[0]->child),
                 0);
         BOOST_CHECK_EQUAL(std::get<1>(TA.states[1]->next.at(0).at(0).numConstraints.front().left.child)[1]->kind,
-                          NonSymbolic::NumberExpression<int>::kind_t::ATOM);
+                          NonSymbolic::NumberExpressionKind::ATOM);
         BOOST_CHECK_EQUAL(
                 std::get<0>(std::get<1>(TA.states[1]->next.at(0).at(0).numConstraints.front().left.child)[1]->child),
                 1);
