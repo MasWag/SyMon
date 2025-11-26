@@ -56,28 +56,6 @@ namespace boost {
   BOOST_INSTALL_PROPERTY(edge, guard);
 } // namespace boost
 
-template <typename Timestamp>
-static inline std::ostream &operator<<(std::ostream &os, const TimingConstraintOrder &odr) {
-  switch (odr) {
-    case TimingConstraintOrder::lt:
-      os << "<";
-      break;
-    case TimingConstraintOrder::le:
-      os << "<=";
-      break;
-    case TimingConstraintOrder::ge:
-      os << ">=";
-      break;
-    case TimingConstraintOrder::gt:
-      os << ">";
-      break;
-    case TimingConstraint::Order::eq:
-      os << "==";
-      break;
-  }
-  return os;
-}
-
 static inline std::ostream &operator<<(std::ostream &os, const TimingConstraintOrder &odr) {
   switch (odr) {
     case TimingConstraintOrder::lt:

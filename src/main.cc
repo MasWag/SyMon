@@ -50,7 +50,7 @@ int execute(const std::string &timedAutomatonFileName, const std::string &signat
 
   if (useNewSyntax) {
     // Use the new syntax parser
-    SymonParser<StringConstraint, NumberConstraint, TimingConstraintType, UpdateType, Timestamp> parser;
+    SymonParser<StringConstraint, NumberConstraint, TimingConstraintType, UpdateType> parser;
     try {
       parser.parse(taStream);
     } catch (const std::runtime_error &e) {
@@ -176,7 +176,7 @@ int main(int argc, char *argv[]) {
                                                                       timedWordFileName, true);
     } else {
       // boolean with new syntax
-      return execute<NonParametricTA<Number, Timestamp>, NonParametricBoostTA<Number>, Number, Timestamp, BooleanMonitor<Number, Timestamp>,
+      return execute<NonParametricTA<Number, Timestamp>, NonParametricBoostTA<Number, Timestamp>, Number, Timestamp, BooleanMonitor<Number, Timestamp>,
                      BooleanPrinter<Number, Timestamp>, NonSymbolic::StringConstraint, NonSymbolic::NumberConstraint<Number>,
                      std::vector<TimingConstraint<Timestamp>>, NonSymbolic::Update<Number>>(timedAutomatonFileName, signatureFileName,
                                                                          timedWordFileName, true);
@@ -194,7 +194,7 @@ int main(int argc, char *argv[]) {
                                                                     timedWordFileName, false);
   } else {
     // boolean
-    return execute<NonParametricTA<Number, Timestamp>, NonParametricBoostTA<Number>, Number, Timestamp, BooleanMonitor<Number, Timestamp>,
+    return execute<NonParametricTA<Number, Timestamp>, NonParametricBoostTA<Number, Timestamp>, Number, Timestamp, BooleanMonitor<Number, Timestamp>,
                    BooleanPrinter<Number, Timestamp>, NonSymbolic::StringConstraint, NonSymbolic::NumberConstraint<Number>,
                    std::vector<TimingConstraint<Timestamp>>, NonSymbolic::Update<Number>>(timedAutomatonFileName, signatureFileName,
                                                                        timedWordFileName, false);

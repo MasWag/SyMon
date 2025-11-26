@@ -26,7 +26,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
     using Update = Update<int>;
 
         struct CopyParserFixture {
-            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update, double> parser;
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update> parser;
             const std::string path = PROJECT_ROOT "/example/copy/copy.symon";
 
             CopyParserFixture() {
@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
         }
 
         BOOST_AUTO_TEST_CASE(atomic) {
-            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update, double> parser;
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update> parser;
             const std::string content = "signature update {id: string;value: number;} update(id, value)";
             parser.parse(content);
 
@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
         }
 
         BOOST_AUTO_TEST_CASE(stringConstraint) {
-            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update, double> parser;
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update> parser;
             const std::string content = "signature update {id: string;value: number;} update(id, value | id == \"y\")";
             parser.parse(content);
 
@@ -114,7 +114,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
         }
 
         BOOST_AUTO_TEST_CASE(timingConstraint) {
-            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update, double> parser;
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update> parser;
             const std::string content = "signature update {id: string;value: number;} (update(id, value))%(< 5)";
             parser.parse(content);
 
@@ -146,7 +146,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
         }
 
         BOOST_AUTO_TEST_CASE(concat) {
-            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update, double> parser;
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update> parser;
             const std::string content = "signature update {id: string;value: number;} update(id, value); update(id, value)";
             parser.parse(content);
 
@@ -194,7 +194,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
         }
 
         BOOST_AUTO_TEST_CASE(orEmpty) {
-            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update, double> parser;
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update> parser;
             const std::string content = "signature update {id: string;value: number;} (update(id, value))?";
             parser.parse(content);
 
@@ -234,7 +234,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
         }
 
         BOOST_AUTO_TEST_CASE(plus) {
-            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update, double> parser;
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update> parser;
             const std::string content = "signature update {id: string;value: number;} (update(id, value))+";
             parser.parse(content);
 
@@ -278,7 +278,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
         }
 
         BOOST_AUTO_TEST_CASE(one_or_more) {
-            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update, double> parser;
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update> parser;
             const std::string content = "signature update {id: string;value: number;} one_or_more {update(id, value)}";
             parser.parse(content);
 
@@ -322,7 +322,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
         }
 
         BOOST_AUTO_TEST_CASE(star) {
-            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update, double> parser;
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update> parser;
             const std::string content = "signature update {id: string;value: number;} (update(id, value))*";
             parser.parse(content);
 
@@ -372,7 +372,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
         }
 
         BOOST_AUTO_TEST_CASE(zero_or_more) {
-            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update, double> parser;
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update> parser;
             const std::string content = "signature update {id: string;value: number;} zero_or_more{update(id, value)}";
             parser.parse(content);
 
@@ -422,7 +422,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
         }
 
         BOOST_AUTO_TEST_CASE(orEmptyConcat) {
-            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update, double> parser;
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update> parser;
             const std::string content = "signature update {id: string;value: number;} (update(id, value))?;update(id, value)";
             parser.parse(content);
 
@@ -472,7 +472,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
         }
 
         BOOST_AUTO_TEST_CASE(timingConstraintConcat) {
-            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update, double> parser;
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update> parser;
             const std::string content = "signature update {id: string;value: number;} update(id, value); (update(id, value))%(> 5)";
             parser.parse(content);
 
@@ -522,7 +522,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
         }
 
         BOOST_AUTO_TEST_CASE(optionalWithTimingConstraintLT) {
-            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update, double> parser;
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update> parser;
             const std::string content = "signature update {id: string;value: number;} (update(id, value)?)%(< 3)";
             parser.parse(content);
 
@@ -567,7 +567,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
         }
 
         BOOST_AUTO_TEST_CASE(optionalWithTimingConstraintGT) {
-            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update, double> parser;
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update> parser;
             const std::string content = "signature update {id: string;value: number;} (update(id, value)?)%(> 3)";
             parser.parse(content);
 
@@ -611,7 +611,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
         }
 
         BOOST_AUTO_TEST_CASE(concatOptionalWithTimingConstraint) {
-            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update, double> parser;
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update> parser;
             const std::string content = "signature update {id: string;value: number;} update(id, value); (update(id, value)?)%(< 3)";
             parser.parse(content);
 
@@ -673,7 +673,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             // only the upper bound is added to all transitions
             
             // Create a parser
-            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update, double> parser;
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update> parser;
             
             // Parse a simple automaton with a timing constraint that has both upper and lower bounds
             std::string content = R"(
@@ -723,7 +723,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
         }
 
         BOOST_AUTO_TEST_CASE(inits) {
-            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update, double> parser;
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update> parser;
             std::ifstream ifs(PROJECT_ROOT "/example/inits.symon");
             // This should throw an exception because initial constraints are not supported in non-symbolic automata
             BOOST_CHECK_THROW(parser.parse(ifs), std::runtime_error);
@@ -742,7 +742,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             guard.push_back(TimingConstraint<double>{VariableID{0}, TimingConstraintOrder::le, 5});
             
             // Extract the upper bound
-            auto upperBound = SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update, double>::extractUpperBound(guard);
+            auto upperBound = SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update>::extractUpperBound(guard);
             
             // Verify that only the upper bound was extracted
             BOOST_CHECK_EQUAL(upperBound.size(), 1);
@@ -764,7 +764,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             nonParametricGuard.push_back(TimingConstraint<double>{VariableID{0}, TimingConstraintOrder::le, 5});
             
             // Extract the upper bound from the non-parametric guard
-            auto nonParametricUpperBound = SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update, double>::extractUpperBound(nonParametricGuard);
+            auto nonParametricUpperBound = SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update>::extractUpperBound(nonParametricGuard);
             
             // Verify that only the upper bound was extracted
             BOOST_CHECK_EQUAL(nonParametricUpperBound.size(), 1);
@@ -783,7 +783,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             parametricGuard.add_constraint(x <= 5);
             
             // Extract the upper bound from the parametric guard
-            auto parametricUpperBound = SymonParser<StringConstraint, NumberConstraint<int>, ParametricTimingConstraint, Update, double>::extractUpperBound(parametricGuard);
+            auto parametricUpperBound = SymonParser<StringConstraint, NumberConstraint<int>, ParametricTimingConstraint, Update>::extractUpperBound(parametricGuard);
             
             // Verify that the parametric upper bound contains only the upper bound constraint
             // We can't directly compare the constraints, but we can check that:
@@ -807,7 +807,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
         }
 
         BOOST_AUTO_TEST_CASE(case20250703_1) {
-            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update, double> parser;
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update> parser;
             const std::string content = "signature A {id: string;} signature B {id: string;} ((A( id | id != \"Bob\" ) || B( id | id != \"Bob\" ))%(<= 5);B (id | id == \"Bob\"))%(> 5)";
             parser.parse(content);
 
@@ -877,7 +877,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
         using namespace Symbolic;
 
         struct ParametricCopyParserFixture {
-            SymonParser<StringConstraint, NumberConstraint, ParametricTimingConstraint, Update, double> parser;
+            SymonParser<StringConstraint, NumberConstraint, ParametricTimingConstraint, Update> parser;
             const std::string path = PROJECT_ROOT "/example/copy/copy.symon";
 
             ParametricCopyParserFixture() {
@@ -902,7 +902,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
         }
 
         BOOST_AUTO_TEST_CASE(inits) {
-            SymonParser<StringConstraint, NumberConstraint, ParametricTimingConstraint, Update, double> parser;
+            SymonParser<StringConstraint, NumberConstraint, ParametricTimingConstraint, Update> parser;
             std::ifstream ifs(PROJECT_ROOT "/example/inits.symon");
             parser.parse(ifs);
             const auto automaton = parser.getAutomaton();
@@ -918,7 +918,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
         }
 
         BOOST_AUTO_TEST_CASE(updates) {
-            SymonParser<StringConstraint, NumberConstraint, ParametricTimingConstraint, Update, double> parser;
+            SymonParser<StringConstraint, NumberConstraint, ParametricTimingConstraint, Update> parser;
             const std::string content = "var {count: number; count2: number;} signature update {id: string;value: number;} update(id, value | | count := count + 1; count2 := count2 + 2 ; count := count + count 2)";
             parser.parse(content);
 
@@ -948,7 +948,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
         }
 
         BOOST_AUTO_TEST_CASE(timingConstraintConcat) {
-            SymonParser<StringConstraint, NumberConstraint, ParametricTimingConstraint, Update, double> parser;
+            SymonParser<StringConstraint, NumberConstraint, ParametricTimingConstraint, Update> parser;
             const std::string content = "signature update {id: string;value: number;} update(id, value); (update(id, value))%(> 5)";
             parser.parse(content);
 
@@ -1005,7 +1005,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
         }
 
         BOOST_AUTO_TEST_CASE(parametricTimingConstraint) {
-            SymonParser<StringConstraint, NumberConstraint, ParametricTimingConstraint, Update, double> parser;
+            SymonParser<StringConstraint, NumberConstraint, ParametricTimingConstraint, Update> parser;
             const std::string content = "var {p: param;} signature A {} A()%(< p)";
             parser.parse(content);
 
@@ -1042,7 +1042,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
         }
 
         BOOST_AUTO_TEST_CASE(parametricTimingConstraintStar) {
-            SymonParser<StringConstraint, NumberConstraint, ParametricTimingConstraint, Update, double> parser;
+            SymonParser<StringConstraint, NumberConstraint, ParametricTimingConstraint, Update> parser;
             const std::string content = "var {p: param;} signature A {} (A()%(< p))*";
             parser.parse(content);
 
@@ -1095,7 +1095,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
         }
 
         BOOST_AUTO_TEST_CASE(parametricTimingConstraintStarConcat) {
-            SymonParser<StringConstraint, NumberConstraint, ParametricTimingConstraint, Update, double> parser;
+            SymonParser<StringConstraint, NumberConstraint, ParametricTimingConstraint, Update> parser;
             const std::string content = "var {p: param;} signature A {} A();(A()%(< p))*";
             parser.parse(content);
 

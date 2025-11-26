@@ -193,3 +193,37 @@ static std::vector<TimingConstraint<Timestamp>> adjustDimension(const std::vecto
                                                      const ClockVariables size) {
   return guard;
 }
+
+
+// T の参照/const/volatile を除去
+template<typename T>
+using remove_cvref_t = std::remove_cv_t<std::remove_reference_t<T>>;
+
+template<typename T>
+struct is_vector_of_timingconstraint_impl : std::false_type {};
+
+template<typename Timestamp>
+struct is_vector_of_timingconstraint_impl<std::vector<TimingConstraint<Timestamp>>> : std::true_type {};
+
+// T が std::vector<TimingConstraint<Timestamp>> の形かどうか
+template<typename T>
+constexpr bool is_vector_of_timingconstraint_v =
+    is_vector_of_timingconstraint_impl< remove_cvref_t<T> >::value;
+
+template<typename T>
+struct timingconstraint_timestamp_impl;
+
+template<typename Timestamp>
+struct timingconstraint_timestamp_impl<std::vector<TimingConstraint<Timestamp>>> {
+  using type = Timestamp;
+  using timingconstraint_type = TimingConstraint<Timestamp>;
+};
+
+// std::vector<TimingConstraint<Timestamp>> の Timestamp 型を取得
+template<typename T>
+using timingconstraint_timestamp_t =
+    typename timingconstraint_timestamp_impl< remove_cvref_t<T> >::type;
+
+template<typename T>
+using timingconstraint_t =
+    typename timingconstraint_timestamp_impl< remove_cvref_t<T> >::timingconstraint_type;
