@@ -28,7 +28,7 @@ public:
   std::array<std::vector<std::pair<op_t, atom_t>>, 2> tail;
   //! @brief comparison in the constraint
   comparison_t comparison = comparison_t::EQ;
-  // head[0] tail[0][0].first tail[0][0].second ... comparison head[1] tail[1][0].first tail[1][0].second ...
+  // (head[0] tail[0][0].first tail[0][0].second ...) comparison (head[1] tail[1][0].first tail[1][0].second ...)
 
   static auto toExpr(const std::size_t parameterSize, const atom_t &atom) {
     std::pair<Parma_Polyhedra_Library::Linear_Expression, Parma_Polyhedra_Library::Coefficient> expr;
