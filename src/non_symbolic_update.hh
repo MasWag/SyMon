@@ -24,14 +24,16 @@ namespace NonSymbolic {
 
   template <typename Number>
   struct Update {
-    std::vector<std::pair<VariableID, VariableID>> stringUpdate;
+    std::vector<std::pair<VariableID, NonSymbolic::StringAtom>> stringUpdate;
     std::vector<std::pair<VariableID, NonSymbolic::NumberExpression<Number>>> numberUpdate;
 
     void execute(StringValuation &stringEnv, NumberValuation<Number> &numEnv) const {
       for (const auto &update: stringUpdate) {
         const auto from = update.second;
         const auto to = update.first;
-        stringEnv[to] = stringEnv[from];
+        std::optional<std::string> result;
+        from.eval(stringEnv, result);
+        stringEnv[to] = result;
       }
       for (const auto &update: numberUpdate) {
         const auto from = update.second;

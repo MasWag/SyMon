@@ -17,7 +17,7 @@ namespace NonSymbolic {
         os << "x" << std::get<0>(atom.value);
         break;
       case 1:
-        os << std::get<1>(atom.value);
+        os << "\"" << std::get<1>(atom.value) << "\"";
         break;
     }
     return os;
@@ -46,6 +46,38 @@ namespace NonSymbolic {
         is.setstate(std::ios_base::failbit);
     }
     return is;
+  }
+  
+  static inline std::istream &operator>>(std::istream &is, std::pair<VariableID, NonSymbolic::StringAtom> &update) {
+    if (is.get() != 'x') {
+      is.unget();
+      is.setstate(std::ios_base::failbit);
+      return is;
+    }
+    is >> update.first;
+    if (is.get() != ' ') {
+      is.setstate(std::ios_base::failbit);
+      is.unget();
+      return is;
+    }
+    std::string str;
+    is >> str;
+    if (str != ":=") {
+      is.setstate(std::ios_base::failbit);
+    }
+    if (is.get() != ' ') {
+      is.unget();
+      is.setstate(std::ios_base::failbit);
+      return is;
+    }
+    is >> update.second;
+    return is;
+  }
+
+  static inline std::ostream &operator<<(std::ostream &os,
+                                        const std::pair<VariableID, NonSymbolic::StringAtom> &update) {
+    os << "x" << update.first << " := " << update.second;
+    return os;
   }
 
   static inline std::istream &operator>>(std::istream &is, NonSymbolic::StringConstraint::kind_t &kind) {
