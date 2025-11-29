@@ -95,17 +95,17 @@ namespace NonSymbolic {
       right.eval(env, rightResult);
       switch (kind) {
         case NumberComparatorKind::GT:
-          return *leftResult > rightResult;
+          return *leftResult > *rightResult;
         case NumberComparatorKind::GE:
-          return *leftResult >= rightResult;
+          return *leftResult >= *rightResult;
         case NumberComparatorKind::EQ:
-          return *leftResult == rightResult;
+          return *leftResult == *rightResult;
         case NumberComparatorKind::NE:
-          return *leftResult != rightResult;
+          return *leftResult != *rightResult;
         case NumberComparatorKind::LE:
-          return *leftResult <= rightResult;
+          return *leftResult <= *rightResult;
         case NumberComparatorKind::LT:
-          return *leftResult < rightResult;
+          return *leftResult < *rightResult;
       }
       return false;
     }
