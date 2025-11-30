@@ -282,9 +282,9 @@ namespace NonSymbolic {
   template <typename Number>
   static inline std::ostream &operator<<(std::ostream &os,
                                          const NonSymbolic::NumberConstraint<Number> &numberConstraint) {
-    os << numberConstraint.left;
+    os << numberConstraint.children[0];
     print<Number>(os, numberConstraint.kind);
-    os << numberConstraint.right;
+    os << numberConstraint.children[1];
     return os;
   }
 
@@ -312,7 +312,7 @@ namespace NonSymbolic {
 
   template <typename Number>
   static inline std::istream &operator>>(std::istream &is, NonSymbolic::NumberConstraint<Number> &numberConstraint) {
-    is >> numberConstraint.left;
+    is >> numberConstraint.children[0];
     if (is.get() != ' ') {
       is.setstate(std::ios_base::failbit);
       is.unget();
@@ -324,7 +324,7 @@ namespace NonSymbolic {
       is.unget();
       return is;
     }
-    is >> numberConstraint.right;
+    is >> numberConstraint.children[1];
     return is;
   }
 } // namespace NonSymbolic

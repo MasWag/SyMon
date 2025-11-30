@@ -310,23 +310,23 @@ BOOST_AUTO_TEST_SUITE(AutomatonParserTests)
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).numConstraints.size(), 1);
         BOOST_TEST((TA.states[1]->next.at(0).at(0).numConstraints.front().kind ==
                     NonSymbolic::NumberComparatorKind::NE));
-        BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).numConstraints.front().left.kind,
+        BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).numConstraints.front().children[0].kind,
                           NonSymbolic::NumberExpressionKind::MINUS);
-        BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).numConstraints.front().left.child.index(), 1);
-        BOOST_CHECK_EQUAL(std::get<1>(TA.states[1]->next.at(0).at(0).numConstraints.front().left.child)[0]->kind,
+        BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).numConstraints.front().children[0].child.index(), 1);
+        BOOST_CHECK_EQUAL(std::get<1>(TA.states[1]->next.at(0).at(0).numConstraints.front().children[0].child)[0]->kind,
                           NonSymbolic::NumberExpressionKind::ATOM);
         BOOST_CHECK_EQUAL(
-                std::get<1>(TA.states[1]->next.at(0).at(0).numConstraints.front().left.child)[0]->child.index(),
+                std::get<1>(TA.states[1]->next.at(0).at(0).numConstraints.front().children[0].child)[0]->child.index(),
                 0);
         BOOST_CHECK_EQUAL(
-                std::get<0>(std::get<1>(TA.states[1]->next.at(0).at(0).numConstraints.front().left.child)[0]->child),
+                std::get<0>(std::get<1>(TA.states[1]->next.at(0).at(0).numConstraints.front().children[0].child)[0]->child),
                 0);
-        BOOST_CHECK_EQUAL(std::get<1>(TA.states[1]->next.at(0).at(0).numConstraints.front().left.child)[1]->kind,
+        BOOST_CHECK_EQUAL(std::get<1>(TA.states[1]->next.at(0).at(0).numConstraints.front().children[0].child)[1]->kind,
                           NonSymbolic::NumberExpressionKind::ATOM);
         BOOST_CHECK_EQUAL(
-                std::get<0>(std::get<1>(TA.states[1]->next.at(0).at(0).numConstraints.front().left.child)[1]->child),
+                std::get<0>(std::get<1>(TA.states[1]->next.at(0).at(0).numConstraints.front().children[0].child)[1]->child),
                 1);
-        BOOST_CHECK_EQUAL(std::get<int>(TA.states[1]->next.at(0).at(0).numConstraints.front().right.child), 0);
+        BOOST_CHECK_EQUAL(std::get<int>(TA.states[1]->next.at(0).at(0).numConstraints.front().children[1].child), 0);
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).update.stringUpdate.size(), 0);
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).update.numberUpdate.size(), 0);
         BOOST_CHECK_EQUAL(TA.states[1]->next.at(0).at(0).guard.size(), 1);
