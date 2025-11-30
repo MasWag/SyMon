@@ -29,10 +29,6 @@ namespace NonSymbolic {
     NumberExpression(VariableID id = 0) : kind(NumberExpressionKind::ATOM), child(id) {
     }
 
-    /*
-    NumberExpression(Number value = 0) : kind(NumberExpressionKind::CONSTANT), child(value) {
-    }
-    */
     static NumberExpression<Number> constant(Number value) {
       NumberExpression<Number> expr;
       expr.kind = NumberExpressionKind::CONSTANT;
@@ -110,7 +106,6 @@ namespace NonSymbolic {
     }
   };
 
-  // テストで NumberConstraint を簡単に作るためのヘルパークラスっぽい？
   //! @todo Write other operators e.g.,
   template <typename Number> class NCMakerVar {
   public:
