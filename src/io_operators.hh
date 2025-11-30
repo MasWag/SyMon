@@ -398,6 +398,38 @@ namespace Symbolic {
     return is;
   }
 
+  static inline std::istream &operator>>(std::istream &is, std::pair<VariableID, Symbolic::StringAtom> &update) {
+    if (is.get() != 'x') {
+      is.unget();
+      is.setstate(std::ios_base::failbit);
+      return is;
+    }
+    is >> update.first;
+    if (is.get() != ' ') {
+      is.setstate(std::ios_base::failbit);
+      is.unget();
+      return is;
+    }
+    std::string str;
+    is >> str;
+    if (str != ":=") {
+      is.setstate(std::ios_base::failbit);
+    }
+    if (is.get() != ' ') {
+      is.unget();
+      is.setstate(std::ios_base::failbit);
+      return is;
+    }
+    is >> update.second;
+    return is;
+  }
+
+  static inline std::ostream &operator<<(std::ostream &os,
+                                        const std::pair<VariableID, Symbolic::StringAtom> &update) {
+    os << "x" << update.first << " := " << update.second;
+    return os;
+  }
+
   static inline std::istream &operator>>(std::istream &is, Symbolic::StringConstraint::kind_t &kind) {
     std::string str;
     is >> str;
