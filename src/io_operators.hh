@@ -731,3 +731,17 @@ static inline std::ostream &operator<<(std::ostream &os, const std::vector<Symbo
   os << "}";
   return os;
 }
+
+template <class T> static inline std::ostream &operator<<(std::ostream &os, const std::vector<T> &guard) {
+  bool first = true;
+  os << "{";
+  for (const auto &g: guard) {
+    if (!first) {
+      os << ", ";
+    }
+    first = false;
+    os << g;
+  }
+  os << "}";
+  return os;
+}
