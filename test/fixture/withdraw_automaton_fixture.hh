@@ -5,7 +5,9 @@
 #include <vector>
 
 #include "automaton.hh"
+#include "common_types.hh"
 #include "signature.hh"
+#include "symbolic_string_constraint.hh"
 
 /*
   @brief This automaton accepts "withdraw" behavior.
@@ -64,7 +66,7 @@ struct WithdrawFixture {
             std::vector<NonSymbolic::NumberConstraint<int> > numConstraints;
 
             NonSymbolic::Update<int> update;
-            update.stringUpdate.emplace_back(VariableID{0}, VariableID{1});
+            update.stringUpdate.emplace_back(VariableID{0}, NonSymbolic::StringAtom{VariableID{1}});
             update.numberUpdate.emplace_back(VariableID{0}, VariableID{1});
 
             std::vector<VariableID> resetVars = {0};
@@ -206,7 +208,7 @@ struct DataParametricWithdrawFixture {
             std::vector<NumberConstraint> numConstraints;
 
             Update update;
-            update.stringUpdate.emplace_back(VariableID{0}, VariableID{1});
+            update.stringUpdate.emplace_back(VariableID{0}, StringAtom{VariableID{1}});
             update.numberUpdate.emplace_back(VariableID{0}, NumberExpression(Variable(1)));
 
             std::vector<VariableID> resetVars;
@@ -347,7 +349,7 @@ struct ParametricWithdrawFixture {
             std::vector<NumberConstraint> numConstraints;
 
             Update update;
-            update.stringUpdate.emplace_back(VariableID{0}, VariableID{1});
+            update.stringUpdate.emplace_back(VariableID{0}, StringAtom{VariableID{1}});
             update.numberUpdate.emplace_back(VariableID{0}, NumberExpression(Variable(1)));
 
             std::vector<VariableID> resetVars = {0};
