@@ -4,6 +4,7 @@
 */
 
 #include "../src/parametric_monitor.hh"
+#include "../test/fixture/non_integer_timestamp_fixture.hh"
 #include "ppl_rational.hh"
 #include "symbolic_string_constraint.hh"
 #include <ppl.hh>
@@ -160,4 +161,26 @@ BOOST_AUTO_TEST_SUITE(ParametricMonitorTest)
     BOOST_CHECK_EQUAL("foo", std::get<std::string>(resultVec.at(0).stringValuation.at(0)));
   }
 
+  BOOST_FIXTURE_TEST_CASE(non_integer_timestamp_test, ParametricMonitorFixture) {
+    auto automaton = Parametric::ParametricNonIntegerTimestampFixture().automaton;
+
+      std::vector<TWEvent> dummyTimedWord{
+        {0, {}, {0}, {0, 1}},
+        {0, {}, {0}, {100, 100}},
+        {0, {}, {0}, {210, 100}},
+        {0, {}, {0}, {325, 100}},
+        {0, {}, {0}, {445, 100}}
+      };
+      feed(automaton, std::move(dummyTimedWord));
+      //NOTE: 3.3 - 2.1 is 1.2, but this is evaluated as 1.1999999999999997 < 1.2, so the fourth event is also matched.
+      BOOST_CHECK_EQUAL(resultVec.size(), 2);
+      BOOST_CHECK_EQUAL(resultVec.front().index, 2);
+      auto t0 = PPLRational{21, 10};
+      BOOST_CHECK_EQUAL(resultVec.front().timestamp, t0);
+      BOOST_CHECK_EQUAL(resultVec[1].index, 3);
+      auto t1 = PPLRational{325, 100};
+      BOOST_CHECK_EQUAL(resultVec[1].timestamp, t1);
+  }
+
 BOOST_AUTO_TEST_SUITE_END()
+
