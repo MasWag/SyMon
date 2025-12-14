@@ -1,0 +1,24 @@
+#!/usr/bin/env symon -nf
+## BEGIN_INPUT
+# data	10	1
+# data 	20	1.2
+# data 	15	1.5
+## END_INPUT
+## BEGIN_OUTPUT
+#  @1.500000.	(time-point 2)	x0 == 20
+## END_OUTPUT
+
+var {
+    num: number;
+    str: string;
+}
+
+signature data {
+    n: number;
+}
+
+# Update by a numeric expression (n + 10)
+data( n | | num := n + 10 );
+data( n | n = num );
+# Both right hand side and left hand side can be an expression
+data( n | 3 + 5 < n - 2 )

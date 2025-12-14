@@ -19,3 +19,19 @@ setup() {
     size=$("${BUILD_DIR}/symon" -pnf "${PERIODIC_DIR}/periodic.symon" -i "${PERIODIC_DIR}/example.log" | wc -l)
     [ "$size" -eq 9 ]
 }
+
+@test "features" {
+    readonly SPEC="${EXAMPLE_DIR}/features.symon"
+    INPUT=$(mktemp)
+    awk '/END_INPUT/{f=0}f;/BEGIN_INPUT/{f=1}' "$SPEC" |
+        sed 's/^# *//;' > "$INPUT"
+    EXPECTED_OUTPUT=$(mktemp)
+    awk '/END_OUTPUT/{f=0}f;/BEGIN_OUTPUT/{f=1}' "$SPEC" |
+        sed 's/^# *//;' |
+        tr -d '[:space:]' > "$EXPECTED_OUTPUT"
+    # We ignore the difference in white spaces
+    "${BUILD_DIR}/symon" -nf "${EXAMPLE_DIR}/features.symon" -i "${INPUT}" |
+        tr -d '[:space:]' |
+        diff - "$EXPECTED_OUTPUT"
+    rm -f "$INPUT" "$EXPECTED_OUTPUT"
+}
