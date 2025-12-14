@@ -38,7 +38,7 @@ namespace NonSymbolic {
 
     NumberExpression(NumberExpressionKind kind, std::shared_ptr<NumberExpression> first, std::shared_ptr<NumberExpression> second)
         : kind(kind) {
-      assert(kind != NumberExpressionKind::ATOM);
+      assert(kind != NumberExpressionKind::ATOM && kind != NumberExpressionKind::CONSTANT);
       child = std::array<std::shared_ptr<NumberExpression>, 2>();
       std::get<1>(child)[0] = std::move(first);
       std::get<1>(child)[1] = std::move(second);
