@@ -8,10 +8,10 @@ template <class Number> struct BooleanPrinter : public Observer<BooleanMonitorRe
   virtual ~BooleanPrinter() = default;
 
   void notify(const BooleanMonitorResult<Number> &result) override {
-    printf("@%f.\t(time-point %lu)\t", result.timestamp, result.index);
+    std::cout << "@" << std::fixed << result.timestamp << std::defaultfloat << ".\t(time-point " << result.index << ")\t";
     for (std::size_t i = 0; i < result.stringValuation.size(); i++) {
       if (result.stringValuation[i]) {
-        printf("x%zu == %s\t", i, result.stringValuation[i]->c_str());
+        std::cout << 'x' << i << " == " << result.stringValuation[i]->c_str() << '\t';
       }
     }
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <memory>
 
 #include "non_symbolic_number_constraint.hh"
 #include "non_symbolic_string_constraint.hh"
@@ -107,17 +108,21 @@ namespace NonSymbolic {
     return os;
   }
 
-  static inline std::ostream &operator<<(std::ostream &os, const NonSymbolic::NumberExpression &numberExpression) {
+  template <typename Number>
+  static inline std::ostream &operator<<(std::ostream &os, const NonSymbolic::NumberExpression<Number> &numberExpression) {
     switch (numberExpression.kind) {
-      case NonSymbolic::NumberExpression::kind_t::ATOM:
+      case NonSymbolic::NumberExpressionKind::ATOM:
         os << "x" << std::get<VariableID>(numberExpression.child);
         break;
-      case NonSymbolic::NumberExpression::kind_t::PLUS:
+      case NonSymbolic::NumberExpressionKind::CONSTANT:
+        os << std::get<Number>(numberExpression.child);
+        break;
+      case NonSymbolic::NumberExpressionKind::PLUS:
         os << std::get<1>(numberExpression.child)[0];
         os << " + ";
         os << std::get<1>(numberExpression.child)[1];
         break;
-      case NonSymbolic::NumberExpression::kind_t::MINUS:
+      case NonSymbolic::NumberExpressionKind::MINUS:
         os << std::get<1>(numberExpression.child)[0];
         os << " - ";
         os << std::get<1>(numberExpression.child)[1];
@@ -126,30 +131,81 @@ namespace NonSymbolic {
     return os;
   }
 
-  static inline std::ostream &operator<<(std::ostream &os, const typename NonSymbolic::NumberExpression::kind_t &kind) {
+  static inline std::ostream &operator<<(std::ostream &os, const NonSymbolic::NumberExpressionKind &kind) {
     switch (kind) {
-      case NonSymbolic::NumberExpression::kind_t::ATOM:
+      case NonSymbolic::NumberExpressionKind::ATOM:
         break;
-      case NonSymbolic::NumberExpression::kind_t::PLUS:
+      case NonSymbolic::NumberExpressionKind::CONSTANT:
+        break;
+      case NonSymbolic::NumberExpressionKind::PLUS:
         os << " + ";
         break;
-      case NonSymbolic::NumberExpression::kind_t::MINUS:
+      case NonSymbolic::NumberExpressionKind::MINUS:
         os << " - ";
         break;
     }
     return os;
   }
 
-  static inline std::istream &operator>>(std::istream &is, NonSymbolic::NumberExpression &numberExpression) {
-    //! @note I should rewrite it by lex/yacc if I want more expressiveness.
-    if (is.get() != 'x') {
-      is.unget();
-      is.setstate(std::ios_base::failbit);
-      return is;
+  template <typename Number>
+  static inline std::ostream &operator<<(std::ostream &os,
+                                        const std::pair<VariableID, NonSymbolic::NumberExpression<Number>> &update) {
+    os << "x" << update.first << " := " << update.second;
+    return os;
+  }
+
+  template<typename Number>
+  static inline std::istream &operator>>(std::istream &is, std::pair<VariableID, NonSymbolic::NumberExpression<Number>> &update) {
+  if (is.get() != 'x') {
+    is.unget();
+    is.setstate(std::ios_base::failbit);
+    return is;
+  }
+  is >> update.first;
+  if (is.get() != ' ') {
+    is.setstate(std::ios_base::failbit);
+    is.unget();
+    return is;
+  }
+  std::string str;
+  is >> str;
+  if (str != ":=") {
+    is.setstate(std::ios_base::failbit);
+  }
+  if (is.get() != ' ') {
+    is.unget();
+    is.setstate(std::ios_base::failbit);
+    return is;
+  }
+  is >> update.second;
+  return is;
+}
+
+  template <typename Number>
+  static inline std::ostream &operator<<(std::ostream &os,
+                                        const std::vector<std::pair<VariableID, NonSymbolic::NumberExpression<Number>>> &updates) {
+    os << "{";
+    for (const auto &update: updates) {
+      os << update;
+      os << ", ";
     }
-    VariableID id;
-    is >> id;
-    numberExpression = {id};
+    os << "}";
+    return os;
+  }
+
+  template <typename Number>
+  static inline std::istream &operator>>(std::istream &is, NonSymbolic::NumberExpression<Number> &numberExpression) {
+    //! @note I should rewrite it by lex/yacc if I want more expressiveness.
+    if (is.peek() == 'x') {
+      is.get();
+      VariableID id;
+      is >> id;
+      numberExpression = NumberExpression<Number>(id);
+    } else {
+      int constant;
+      is >> constant;
+      numberExpression = NumberExpression<Number>::constant(constant);
+    }
     while (is.good()) {
       if (is.get() != ' ') {
         is.unget();
@@ -161,53 +217,55 @@ namespace NonSymbolic {
         is.putback(' ');
         return is;
       }
-      auto child = std::make_shared<NonSymbolic::NumberExpression>(numberExpression);
       if (is.get() != ' ') {
         is.setstate(std::ios_base::failbit);
         is.unget();
         return is;
       }
-      if (is.get() != 'x') {
-        is.unget();
-        is.setstate(std::ios_base::failbit);
-        break;
+      auto child = std::make_shared<NonSymbolic::NumberExpression<Number>>(numberExpression);
+      std::shared_ptr<NonSymbolic::NumberExpression<Number>> leaf;
+      if (is.peek() == 'x') {
+        is.get();
+        VariableID id;
+        is >> id;
+        leaf = std::make_shared<NonSymbolic::NumberExpression<Number>>(id);
+      } else {
+        int constant;
+        is >> constant;
+        leaf = std::make_shared<NonSymbolic::NumberExpression<Number>>(NumberExpression<Number>::constant(constant));
       }
-      is >> id;
-      auto leaf = std::make_shared<NonSymbolic::NumberExpression>(id);
       if (op == '+') {
-        numberExpression = {NonSymbolic::NumberExpression::kind_t::PLUS, child, leaf};
+        numberExpression = {NonSymbolic::NumberExpressionKind::PLUS, child, leaf};
       } else if (op == '-') {
-        numberExpression = {NonSymbolic::NumberExpression::kind_t::MINUS, child, leaf};
+        numberExpression = {NonSymbolic::NumberExpressionKind::MINUS, child, leaf};
       } else {
         is.setstate(std::ios_base::failbit);
         break;
       }
     }
-    //    std::variant<VariableID, std::array<std::shared_ptr<NonSymbolic::NumberExpression>, 2>> child;
-
     return is;
   }
 
   template <typename Number>
   static inline std::ostream &print(std::ostream &os,
-                                    const typename NonSymbolic::NumberConstraint<Number>::kind_t kind) {
+                                    const typename NonSymbolic::NumberComparatorKind kind) {
     switch (kind) {
-      case NonSymbolic::NumberConstraint<Number>::kind_t::GT:
+      case NonSymbolic::NumberComparatorKind::GT:
         os << " > ";
         break;
-      case NonSymbolic::NumberConstraint<Number>::kind_t::GE:
+      case NonSymbolic::NumberComparatorKind::GE:
         os << " >= ";
         break;
-      case NonSymbolic::NumberConstraint<Number>::kind_t::EQ:
+      case NonSymbolic::NumberComparatorKind::EQ:
         os << " == ";
         break;
-      case NonSymbolic::NumberConstraint<Number>::kind_t::NE:
+      case NonSymbolic::NumberComparatorKind::NE:
         os << " != ";
         break;
-      case NonSymbolic::NumberConstraint<Number>::kind_t::LE:
+      case NonSymbolic::NumberComparatorKind::LE:
         os << " <= ";
         break;
-      case NonSymbolic::NumberConstraint<Number>::kind_t::LT:
+      case NonSymbolic::NumberComparatorKind::LT:
         os << " < ";
         break;
     }
@@ -223,28 +281,28 @@ namespace NonSymbolic {
   template <typename Number>
   static inline std::ostream &operator<<(std::ostream &os,
                                          const NonSymbolic::NumberConstraint<Number> &numberConstraint) {
-    os << numberConstraint.expr;
+    os << numberConstraint.children[0];
     print<Number>(os, numberConstraint.kind);
-    os << numberConstraint.num;
+    os << numberConstraint.children[1];
     return os;
   }
 
   template <typename Number>
-  static inline std::istream &scan(std::istream &is, typename NonSymbolic::NumberConstraint<Number>::kind_t &kind) {
+  static inline std::istream &scan(std::istream &is, typename NonSymbolic::NumberComparatorKind &kind) {
     std::string str;
     is >> str;
     if (str == ">") {
-      kind = NonSymbolic::NumberConstraint<Number>::kind_t::GT;
+      kind = NonSymbolic::NumberComparatorKind::GT;
     } else if (str == ">=") {
-      kind = NonSymbolic::NumberConstraint<Number>::kind_t::GE;
+      kind = NonSymbolic::NumberComparatorKind::GE;
     } else if (str == "==") {
-      kind = NonSymbolic::NumberConstraint<Number>::kind_t::EQ;
+      kind = NonSymbolic::NumberComparatorKind::EQ;
     } else if (str == "!=") {
-      kind = NonSymbolic::NumberConstraint<Number>::kind_t::NE;
+      kind = NonSymbolic::NumberComparatorKind::NE;
     } else if (str == "<=") {
-      kind = NonSymbolic::NumberConstraint<Number>::kind_t::LE;
+      kind = NonSymbolic::NumberComparatorKind::LE;
     } else if (str == "<") {
-      kind = NonSymbolic::NumberConstraint<Number>::kind_t::LT;
+      kind = NonSymbolic::NumberComparatorKind::LT;
     } else {
       is.setstate(std::ios_base::failbit);
     }
@@ -253,7 +311,7 @@ namespace NonSymbolic {
 
   template <typename Number>
   static inline std::istream &operator>>(std::istream &is, NonSymbolic::NumberConstraint<Number> &numberConstraint) {
-    is >> numberConstraint.expr;
+    is >> numberConstraint.children[0];
     if (is.get() != ' ') {
       is.setstate(std::ios_base::failbit);
       is.unget();
@@ -265,7 +323,7 @@ namespace NonSymbolic {
       is.unget();
       return is;
     }
-    is >> numberConstraint.num;
+    is >> numberConstraint.children[1];
     return is;
   }
 } // namespace NonSymbolic

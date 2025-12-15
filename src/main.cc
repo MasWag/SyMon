@@ -178,7 +178,7 @@ int main(int argc, char *argv[]) {
       // boolean with new syntax
       return execute<NonParametricTA<Number>, NonParametricBoostTA<Number>, Number, double, BooleanMonitor<Number>,
                      BooleanPrinter<Number>, NonSymbolic::StringConstraint, NonSymbolic::NumberConstraint<Number>,
-                     std::vector<TimingConstraint>, NonSymbolic::Update>(timedAutomatonFileName, signatureFileName,
+                     std::vector<TimingConstraint>, NonSymbolic::Update<Number>>(timedAutomatonFileName, signatureFileName,
                                                                          timedWordFileName, true);
     }
   } else if (vm.count("parametric")) {
@@ -197,7 +197,7 @@ int main(int argc, char *argv[]) {
     // boolean
     return execute<NonParametricTA<Number>, NonParametricBoostTA<Number>, Number, double, BooleanMonitor<Number>,
                    BooleanPrinter<Number>, NonSymbolic::StringConstraint, NonSymbolic::NumberConstraint<Number>,
-                   std::vector<TimingConstraint>, NonSymbolic::Update>(timedAutomatonFileName, signatureFileName,
+                   std::vector<TimingConstraint>, NonSymbolic::Update<Number>>(timedAutomatonFileName, signatureFileName,
                                                                        timedWordFileName, false);
   }
   return 0;

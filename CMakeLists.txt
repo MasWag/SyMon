@@ -71,6 +71,7 @@ add_executable(
   test/automaton_parser_test.cc
   test/symbolic_update_test.cc
   test/non_symbolic_string_constraint_test.cc
+  test/non_symbolic_update_test.cc
   test/symbolic_string_constraint_test.cc
   test/io_operators_test.cc
   test/parametric_timing_constraint_helper_test.cc

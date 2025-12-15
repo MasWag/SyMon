@@ -22,7 +22,8 @@ using namespace Parma_Polyhedra_Library::IO_Operators;
 
 BOOST_AUTO_TEST_SUITE(SymonParserTests)
     BOOST_AUTO_TEST_SUITE(NonSymbolicTests)
-        using namespace NonSymbolic;
+    using namespace NonSymbolic;
+    using Update = Update<int>;
 
         struct CopyParserFixture {
             SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint>, Update> parser;
