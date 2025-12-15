@@ -2,15 +2,12 @@
 #include <boost/mpl/list.hpp>
 #include "../src/data_parametric_monitor.hh"
 #include "../test/fixture/copy_automaton_fixture.hh"
-//TODO: copy_automaton_fixture の automaton は NonParametricTA だが、DataParametricTA にすべきな気がする
 
 using TWEvent = TimedWordEvent<PPLRational>;
 
-//DummyTimedWordSubject だと DummyTimedWordSubject2{std::move(vec)}.addObserver(monitor);
-// でエラーになったが、名前を変えると解消した...???
-struct DummyTimedWordSubject2 : public SingleSubject<TWEvent> {
-  DummyTimedWordSubject2(std::vector<TWEvent> &&vec) :vec(std::move(vec)) {}
-  virtual ~DummyTimedWordSubject2(){}
+struct DummyDataTimedWordSubject : public SingleSubject<TWEvent> {
+  DummyDataTimedWordSubject(std::vector<TWEvent> &&vec) :vec(std::move(vec)) {}
+  virtual ~DummyDataTimedWordSubject(){}
   void notifyAll() {
     for (const auto &event: vec) {
       notifyObservers(event);
@@ -34,7 +31,7 @@ struct CopyDataParametricMonitorFixture : public DataParametricCopy {
     auto monitor = std::make_shared<DataParametricMonitor>(automaton);
     std::shared_ptr<DummyDataParametricMonitorObserver> observer = std::make_shared<DummyDataParametricMonitorObserver>();
     monitor->addObserver(observer);
-    DummyTimedWordSubject2 subject{std::move(vec)};
+    DummyDataTimedWordSubject subject{std::move(vec)};
     subject.addObserver(monitor); //&monitor, DataParametricMonitor, should be Observer<TWEvemt>
     subject.notifyAll();
     resultVec = std::move(observer->resultVec);
