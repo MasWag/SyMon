@@ -109,6 +109,23 @@ jobs:
           cmake --build build -t unit_test
           ./build/unit_test
 
+  tahoe:
+    name: macOS Tahoe (26)
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - run: |
+          brew update && brew uninstall cmake && brew install boost gmp cmake ppl tree-sitter
+          brew install --HEAD maswag/scientific/tree-sitter-symon
+      - run: |
+          mkdir -p build
+          cd build
+          cmake ..
+          make unit_test
+          ./unit_test
+
   sequoia:
     name: macOS Sequoia (15)
     runs-on: macos-15
@@ -129,23 +146,6 @@ jobs:
   sonoma:
     name: macOS Sonoma (14)
     runs-on: macos-14
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-      - run: |
-          brew update && brew uninstall cmake && brew install boost gmp cmake ppl tree-sitter
-          brew install --HEAD maswag/scientific/tree-sitter-symon
-      - run: |
-          mkdir -p build
-          cd build
-          cmake ..
-          make unit_test
-          ./unit_test
-
-  ventura:
-    name: macOS Ventura (13)
-    runs-on: macos-13
     steps:
       - uses: actions/checkout@v4
         with:
