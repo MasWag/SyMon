@@ -83,7 +83,8 @@ add_executable(
   test/timing_constraint_test.cc
   test/parametric_timing_constraint_test.cc
   test/symon_parser_test.cc
-  test/ppl_rational_test.cc)
+  test/ppl_rational_test.cc
+  test/data_parametric_monitor_test.cc)
 
 target_link_libraries(
   unit_test
