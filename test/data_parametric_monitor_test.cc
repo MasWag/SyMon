@@ -32,7 +32,7 @@ struct CopyDataParametricMonitorFixture : public DataParametricCopy {
     std::shared_ptr<DummyDataParametricMonitorObserver> observer = std::make_shared<DummyDataParametricMonitorObserver>();
     monitor->addObserver(observer);
     DummyDataTimedWordSubject subject{std::move(vec)};
-    subject.addObserver(monitor); //&monitor, DataParametricMonitor, should be Observer<TWEvemt>
+    subject.addObserver(monitor); //&monitor, DataParametricMonitor, should be Observer<TWEvent>
     subject.notifyAll();
     resultVec = std::move(observer->resultVec);
   }
