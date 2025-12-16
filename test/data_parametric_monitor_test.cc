@@ -27,7 +27,7 @@ struct DummyDataParametricMonitorObserver : public Observer<DataParametricMonito
 };
 
 struct CopyDataParametricMonitorFixture : public DataParametricCopy {
-  void feed(/*DataParametricTA automaton, */ std::vector<TWEvent> &&vec) {
+  void feed(std::vector<TWEvent> &&vec) {
     auto monitor = std::make_shared<DataParametricMonitor>(automaton);
     std::shared_ptr<DummyDataParametricMonitorObserver> observer = std::make_shared<DummyDataParametricMonitorObserver>();
     monitor->addObserver(observer);
