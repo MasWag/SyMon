@@ -16,12 +16,13 @@ inline bool toBool(Order odr) {
 //! @brief A constraint in a guard of transitions
 struct TimingConstraint {
   enum class Order { lt, le, ge, gt };
+  using Timestamp = double;
 
   ClockVariables x;
   Order odr;
-  int c;
+  Timestamp c;
 
-  [[nodiscard]] bool satisfy(double d) const {
+  [[nodiscard]] bool satisfy(Timestamp d) const {
     switch (odr) {
       case Order::lt:
         return d < c;
@@ -64,25 +65,26 @@ struct TimingConstraint {
 
 // An interface to write an inequality constrait easily
 class ConstraintMaker {
+  using Timestamp = TimingConstraint::Timestamp;
   ClockVariables x;
 
 public:
   explicit ConstraintMaker(ClockVariables x) : x(x) {
   }
 
-  TimingConstraint operator<(int c) {
+  TimingConstraint operator<(Timestamp c) {
     return TimingConstraint{x, TimingConstraint::Order::lt, c};
   }
 
-  TimingConstraint operator<=(int c) {
+  TimingConstraint operator<=(Timestamp c) {
     return TimingConstraint{x, TimingConstraint::Order::le, c};
   }
 
-  TimingConstraint operator>(int c) {
+  TimingConstraint operator>(Timestamp c) {
     return TimingConstraint{x, TimingConstraint::Order::gt, c};
   }
 
-  TimingConstraint operator>=(int c) {
+  TimingConstraint operator>=(Timestamp c) {
     return TimingConstraint{x, TimingConstraint::Order::ge, c};
   }
 };
@@ -96,7 +98,7 @@ public:
 //     }), guard.end());
 // }
 
-using TimingValuation = std::vector<double>;
+using TimingValuation = std::vector<TimingConstraint::Timestamp>;
 
 static bool eval(const TimingValuation &clockValuation, const std::vector<TimingConstraint> &guard) {
   return std::all_of(guard.begin(), guard.end(),
