@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <optional>
 #include <vector>
 
 #include "common_types.hh"
@@ -15,7 +16,7 @@ inline bool toBool(Order odr) {
 
 //! @brief A constraint in a guard of transitions
 struct TimingConstraint {
-  enum class Order { lt, le, ge, gt };
+  enum class Order { lt, le, ge, gt, eq };
 
   ClockVariables x;
   Order odr;
@@ -31,6 +32,8 @@ struct TimingConstraint {
         return d > c;
       case Order::ge:
         return d >= c;
+      case Order::eq:
+        return d == c;
     }
     return false;
   }
@@ -85,6 +88,11 @@ public:
   TimingConstraint operator>=(int c) {
     return TimingConstraint{x, TimingConstraint::Order::ge, c};
   }
+
+  template<typename Timestamp = double>
+  TimingConstraint operator==(Timestamp c) {
+    return TimingConstraint{x, TimingConstraint::Order::eq, c};
+  }
 };
 
 /*!
@@ -101,6 +109,21 @@ using TimingValuation = std::vector<double>;
 static bool eval(const TimingValuation &clockValuation, const std::vector<TimingConstraint> &guard) {
   return std::all_of(guard.begin(), guard.end(),
                      [&clockValuation](const TimingConstraint &g) { return g.satisfy(clockValuation.at(g.x)); });
+}
+
+static std::optional<double> diff(const TimingValuation &clockValuation, const std::vector<TimingConstraint> &guard) {
+  std::optional<double> result = std::nullopt;
+  for(auto&& g: guard) {
+    if(g.odr != TimingConstraint::Order::eq) return std::nullopt;
+    auto diff = g.c - clockValuation.at(g.x);
+
+    if(!result) {
+      result = diff;
+    } else if(*result != diff) {
+      return std::nullopt;
+    }
+  }
+  return result;
 }
 
 /*!
