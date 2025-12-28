@@ -23,6 +23,7 @@ static TAType parseDotTA(const std::string& timedAutomatonFileName) {
 }
 
 class EpsilonTransitionAutomatonFixture {
+    //Epsilon transition twice sequentially
     const std::string eps_dot = R"DOT(digraph G {
         graph [
             clock_variable_size = 1
@@ -52,7 +53,70 @@ class EpsilonTransitionAutomatonFixture {
 
 };
 
+class EpsilonTransitionAutomatonFixture2 {
+    //Epsilon transition with no guard
+    const std::string eps_dot = R"DOT(digraph G {
+        graph [
+            clock_variable_size = 1
+            string_variable_size = 1
+            number_variable_size = 0
+            parameter_size = 0
+        ]
+        0 [init=1][match=0]
+        1 [init=0][match=0]
+        2 [init=0][match=0]
+        3 [init=0][match=1]
+        0 -> 0 [label=0]
+        0 -> 1 [label=0][s_constraints="{x1 == 'a'}"][reset="{0}"]
+        1 -> 2 [label=127][s_constraints="{x0 == 'z'}"]
+        2 -> 3 [label=0][s_constraints="{x1 == 'b', x0 == 'z'}"][guard="{x0 > 4}"]
+    })DOT";
+
+    public:
+        auto makeDataParametricTA() {
+            using TAType = DataParametricTA;
+            using BoostTAType = DataParametricBoostTA;
+            return parseDotTA<TAType, BoostTAType>(eps_dot);
+        }
+
+};
+
+
+class EpsilonTransitionAutomatonFixture3 {
+    // 2 clock variables
+    const std::string eps_dot = R"DOT(digraph G {
+        graph [
+            clock_variable_size = 2
+            string_variable_size = 1
+            number_variable_size = 0
+            parameter_size = 0
+        ]
+        0 [init=1][match=0]
+        1 [init=0][match=0]
+        2 [init=0][match=0]
+        3 [init=0][match=0]
+        4 [init=0][match=0]
+        5 [init=0][match=1]
+        0 -> 0 [label=0]
+        0 -> 1 [label=0][s_constraints="{x1 == 'a'}"][reset="{0, 1}"]
+        1 -> 3 [label=0][s_constraints="{x1 == 'b'}"][reset="{0}"]
+        0 -> 2 [label=0][s_constraints="{x1 == 'b'}"][reset="{0, 1}"]
+        2 -> 3 [label=0][s_constraints="{x1 == 'a'}"][reset="{1}"]
+        3 -> 4 [label=127][guard="{x0 == 2, x1 == 1}"]
+        4 -> 5 [label=0][s_constraints="{x1 == 'c'}"]
+    })DOT";
+
+    public:
+        auto makeDataParametricTA() {
+            using TAType = DataParametricTA;
+            using BoostTAType = DataParametricBoostTA;
+            return parseDotTA<TAType, BoostTAType>(eps_dot);
+        }
+
+};
+
 class EpsilonTransitionToAcceptStateAutomatonFixture {
+    //Epsilon transition at last to accept state
     const std::string eps_dot = R"DOT(digraph G {
         graph [
             clock_variable_size = 1
