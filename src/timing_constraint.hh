@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <optional>
+#include <stdexcept>
 #include <vector>
 
 #include "common_types.hh"
@@ -111,10 +112,20 @@ static bool eval(const TimingValuation &clockValuation, const std::vector<Timing
                      [&clockValuation](const TimingConstraint &g) { return g.satisfy(clockValuation.at(g.x)); });
 }
 
+/*!
+  @brief Calculate the difference needed to satisfy all equality timing constraints in the guard.
+
+  This function assumes that all constraints are of the form x == c.
+  If there is a constraints that is not Order::eq, an exception is thrown.
+
+  When there is no constraints, returns 0.
+*/
 static std::optional<double> diff(const TimingValuation &clockValuation, const std::vector<TimingConstraint> &guard) {
   std::optional<double> result = std::nullopt;
   for(auto&& g: guard) {
-    if(g.odr != TimingConstraint::Order::eq) return std::nullopt;
+    if(g.odr != TimingConstraint::Order::eq) {
+      throw std::runtime_error("TimingConstraint: unsupported guard with inequality constraints on unobservable transition");
+    }
     auto diff = g.c - clockValuation.at(g.x);
 
     if(!result) {
@@ -123,6 +134,8 @@ static std::optional<double> diff(const TimingValuation &clockValuation, const s
       return std::nullopt;
     }
   }
+  if(!result)
+    result = 0.0;
   return result;
 }
 

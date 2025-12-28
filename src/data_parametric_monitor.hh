@@ -141,9 +141,7 @@ private:
           auto extendedGuard = transition.guard;
           
           auto df = diff(nextCVal, extendedGuard);
-          if(!df) {
-            throw std::runtime_error("DataParametricMonitor: unsupported guard with inequality constraints on unobservable transition");
-          }
+          if(!df) continue;
           for (double &d: nextCVal) {
             d += df.value();
           }
