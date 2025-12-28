@@ -41,68 +41,18 @@ public:
     }
   }
 
-  virtual ~DataParametricMonitor() = default;
+  virtual ~DataParametricMonitor() {
+    epsilonTransition(configurations);
+  }
 
   void notify(const TimedWordEvent<PPLRational> &event) override {
     const Action actionId = event.actionId;
     const std::vector<std::string> &strings = event.strings;
     const std::vector<PPLRational> &numbers = event.numbers;
     const double timestamp = event.timestamp;
+
     boost::unordered_set<Configuration> nextConfigurations;
-    boost::unordered_set<Configuration> currentConfigurations;
-    for (Configuration conf: configurations) {
-      // add a new dimension for time elapse.
-      currentConfigurations.insert(std::move(conf));
-    }
-    while (!currentConfigurations.empty()) {
-      nextConfigurations.clear();
-      for (const Configuration &conf: currentConfigurations) {
-        // この unobservableActionID が epsilon 遷移に対応している
-        auto transitionIt = std::get<0>(conf)->next.find(unobservableActionID);
-        if (transitionIt == std::get<0>(conf)->next.end()) {
-          continue;
-        }
-        // make the current env
-        const auto clockValuation = std::get<1>(conf);
-        const auto stringEnv = std::get<2>(conf);
-        const auto numberEnv = std::get<3>(conf);
-        auto absTime = std::get<4>(conf);
-        for (const auto &transition: transitionIt->second) {
-          // evaluate the guards
-          auto nextCVal = clockValuation;
-          auto nextSEnv = stringEnv;
-          auto nextNEnv = numberEnv;
-          auto extendedGuard = transition.guard;
-          
-          // clock の guard に, 不等式による制約がないことを仮定する
-          auto df = diff(nextCVal, extendedGuard);
-          // FIXME: when(= 1), when(=2) があると, d + 1 + 2 されて absTime になってしまう
-          if(!df) {
-            throw std::runtime_error("DataParametricMonitor: unsupported guard with inequality constraints on unobservable transition");
-          }
-          for (Timestamp &d: nextCVal) {
-            d += df.value();
-          }
-          absTime += df.value();
-
-          if (eval(nextCVal, extendedGuard) &&
-              eval(transition.stringConstraints, nextSEnv, transition.numConstraints, nextNEnv)) {
-            for (const VariableID resetVar: transition.resetVars) {
-              nextCVal[resetVar] = 0;
-            }
-            transition.update.execute(nextSEnv, nextNEnv);
-            nextConfigurations.insert({transition.target.lock(), nextCVal, nextSEnv, nextNEnv, absTime});
-            if (transition.target.lock()->isMatch) {
-              this->notifyObservers({index, absTime, nextNEnv, nextSEnv});
-            }
-            configurations.insert({transition.target.lock(), nextCVal, nextSEnv, nextNEnv, absTime});
-          }
-        }
-      }
-
-      std::swap(currentConfigurations, nextConfigurations);
-    }
-    nextConfigurations.clear();
+    configurations.merge(epsilonTransition(configurations));
 
     for (const Configuration &conf: configurations) {
       // make the current env
@@ -165,4 +115,56 @@ private:
     };*/
   boost::unordered_set<Configuration> configurations;
   std::size_t index = 0;
+
+  boost::unordered_set<Configuration> epsilonTransition(boost::unordered_set<Configuration> configurations) {
+    auto currentConfigurations = std::move(configurations);
+    boost::unordered_set<Configuration> nextConfigurations;
+    boost::unordered_set<Configuration> returnConfigurations;
+
+    while (!currentConfigurations.empty()) {
+      nextConfigurations.clear();
+      for (const Configuration &conf: currentConfigurations) {
+        auto transitionIt = std::get<0>(conf)->next.find(unobservableActionID);
+        if (transitionIt == std::get<0>(conf)->next.end()) {
+          continue;
+        }
+        // make the current env
+        const auto clockValuation = std::get<1>(conf);
+        const auto stringEnv = std::get<2>(conf);
+        const auto numberEnv = std::get<3>(conf);
+        auto absTime = std::get<4>(conf);
+        for (const auto &transition: transitionIt->second) {
+          // evaluate the guards
+          auto nextCVal = clockValuation;
+          auto nextSEnv = stringEnv;
+          auto nextNEnv = numberEnv;
+          auto extendedGuard = transition.guard;
+          
+          auto df = diff(nextCVal, extendedGuard);
+          if(!df) {
+            throw std::runtime_error("DataParametricMonitor: unsupported guard with inequality constraints on unobservable transition");
+          }
+          for (double &d: nextCVal) {
+            d += df.value();
+          }
+          absTime += df.value();
+
+          if (eval(nextCVal, extendedGuard) &&
+              eval(transition.stringConstraints, nextSEnv, transition.numConstraints, nextNEnv)) {
+            for (const VariableID resetVar: transition.resetVars) {
+              nextCVal[resetVar] = 0;
+            }
+            transition.update.execute(nextSEnv, nextNEnv);
+            nextConfigurations.insert({transition.target.lock(), nextCVal, nextSEnv, nextNEnv, absTime});
+            if (transition.target.lock()->isMatch) {
+              this->notifyObservers({index, absTime, nextNEnv, nextSEnv});
+            }
+            returnConfigurations.insert({transition.target.lock(), nextCVal, nextSEnv, nextNEnv, absTime});
+          }
+        }
+      }
+      std::swap(currentConfigurations, nextConfigurations);
+    }
+    return returnConfigurations;
+  }
 };
