@@ -35,6 +35,9 @@ struct DataParametricMonitorFixture {
     DummyDataTimedWordSubject subject{std::move(vec)};
     subject.addObserver(monitor); //&monitor, DataParametricMonitor, should be Observer<TWEvent>
     subject.notifyAll();
+    // Ensure the monitor's destructor runs now to emit epsilon-transition notifications
+    subject.addObserver(nullptr); // release subject's shared ownership
+    monitor.reset();            // release local ownership
     resultVec = std::move(observer->resultVec);
   }
   std::vector<DataParametricMonitorResult> resultVec;
@@ -90,5 +93,26 @@ BOOST_FIXTURE_TEST_CASE(epsilon_test1, DataParametricMonitorFixture)
       BOOST_CHECK_EQUAL(resultVec.size(), 1);
       BOOST_CHECK_EQUAL(resultVec.front().index, 6);
       BOOST_CHECK_EQUAL(resultVec.front().timestamp, 40);
+}
+
+BOOST_FIXTURE_TEST_CASE(epsilon_test2, DataParametricMonitorFixture)
+{
+  auto automaton = EpsilonTransitionToAcceptStateAutomatonFixture().makeDataParametricTA();
+
+  std::vector<TWEvent> timedWord{
+        {0, {"a"}, {}, 1.5},
+        {0, {"b"}, {}, 2.5},
+        {0, {"a"}, {}, 3.5},
+        {0, {"b"}, {}, 4.5},
+      };
+      feed(automaton, std::move(timedWord));
+
+      BOOST_CHECK_EQUAL(resultVec.size(), 2);
+      BOOST_CHECK_EQUAL(resultVec[0].index, 2);
+      BOOST_CHECK_EQUAL(resultVec[0].timestamp, 5.5);
+      //The last index of timed word is 3, and it matches after the epsilon transition following the last event
+      BOOST_CHECK_EQUAL(resultVec[1].index, 4);
+      //The matched timestamp is 7.5 = 4.5 + 3 (the guard of epsilon transition is x0 == 3)
+      BOOST_CHECK_EQUAL(resultVec[1].timestamp, 7.5);
 }
 BOOST_AUTO_TEST_SUITE_END()

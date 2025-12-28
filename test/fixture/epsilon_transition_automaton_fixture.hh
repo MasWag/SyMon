@@ -25,10 +25,10 @@ static TAType parseDotTA(const std::string& timedAutomatonFileName) {
 class EpsilonTransitionAutomatonFixture {
     const std::string eps_dot = R"DOT(digraph G {
         graph [
-        clock_variable_size = 1
-        string_variable_size = 1
-        number_variable_size = 0
-        parameter_size = 0
+            clock_variable_size = 1
+            string_variable_size = 1
+            number_variable_size = 0
+            parameter_size = 0
         ]
         0 [init=1][match=0]
         1 [init=0][match=0]
@@ -48,6 +48,32 @@ class EpsilonTransitionAutomatonFixture {
             using TAType = DataParametricTA;
             using BoostTAType = DataParametricBoostTA;
             return parseDotTA<TAType, BoostTAType>(eps_dot);
+        }
+
+};
+
+class EpsilonTransitionToAcceptStateAutomatonFixture {
+    const std::string eps_dot = R"DOT(digraph G {
+        graph [
+            clock_variable_size = 1
+            string_variable_size = 1
+            number_variable_size = 0
+            parameter_size = 0
+        ]
+        0 [init=1][match=0]
+        1 [init=0][match=0]
+        2 [init=0][match=1]
+        0 -> 0 [label=0]
+        0 -> 1 [label=0][s_constraints="{x1 == 'b'}"][reset="{0}"]
+        1 -> 2 [label=127][guard="{x0 == 3}"]
+
+    })DOT";
+
+    public:
+        auto makeDataParametricTA() {
+            using TAType = DataParametricTA;
+            using BoostTAType = DataParametricBoostTA;
+            return parseDotTA<TAType, BoostTAType>(eps_dot);;
         }
 
 };
