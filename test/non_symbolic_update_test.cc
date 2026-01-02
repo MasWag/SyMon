@@ -35,7 +35,7 @@ BOOST_AUTO_TEST_SUITE(NonSymbolicUpdateTests)
     }
 
     BOOST_AUTO_TEST_CASE(execute) {
-      std::vector<std::pair<VariableID, VariableID>> stringUpdate = {{0, 1}};
+      std::vector<std::pair<VariableID, NonSymbolic::StringAtom>> stringUpdate = {{0, NonSymbolic::StringAtom{VariableID{1}}}};
       NonSymbolic::StringValuation stringEnv = {std::make_optional("Alice"), std::make_optional("Bob")};
       std::vector<std::pair<VariableID, Expr>> numUpdate = {
           {0, Expr(1)},
