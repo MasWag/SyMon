@@ -137,7 +137,9 @@ private:
    *
    */
   boost::unordered_set<Configuration> epsilonTransition(boost::unordered_set<Configuration> currentConfigurations) {
+    // the next configurations to explore
     boost::unordered_set<Configuration> nextConfigurations;
+    // the configurations reachable via epsilon transitions
     boost::unordered_set<Configuration> returnConfigurations;
 
     while (!currentConfigurations.empty()) {
