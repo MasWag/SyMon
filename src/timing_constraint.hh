@@ -116,25 +116,25 @@ static bool eval(const TimingValuation &clockValuation, const std::vector<Timing
   @brief Calculate the difference needed to satisfy all equality timing constraints in the guard.
 
   This function assumes that all constraints are of the form x == c.
-  If there is a constraints that is not Order::eq, an exception is thrown.
+  If there is a constraint that is not Order::eq, an exception is thrown.
 
-  When there is no constraints, returns 0.
+  When there are no constraints, returns 0.
 */
 static std::optional<double> diff(const TimingValuation &clockValuation, const std::vector<TimingConstraint> &guard) {
   std::optional<double> result = std::nullopt;
-  for(auto&& g: guard) {
+  for (auto&& g: guard) {
     if(g.odr != TimingConstraint::Order::eq) {
       throw std::runtime_error("TimingConstraint: unsupported guard with inequality constraints on unobservable transition");
     }
-    auto diff = g.c - clockValuation.at(g.x);
+    auto timeDiff = g.c - clockValuation.at(g.x);
 
-    if(!result) {
-      result = diff;
-    } else if(*result != diff) {
+    if (!result) {
+      result = timeDiff;
+    } else if(*result != timeDiff) {
       return std::nullopt;
     }
   }
-  if(!result)
+  if (!result)
     result = 0.0;
   return result;
 }

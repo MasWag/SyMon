@@ -145,9 +145,9 @@ BOOST_FIXTURE_TEST_CASE(epsilon_test4, DataParametricMonitorFixture)
       BOOST_CHECK_EQUAL(resultVec.size(), 2);
       BOOST_CHECK_EQUAL(resultVec[0].index, 2);
       BOOST_CHECK_EQUAL(resultVec[0].timestamp, 5.5);
-      //The last index of timed word is 3, and it matches after the epsilon transition following the last event
+      // The last index of timed word is 3, and it matches after the epsilon transition following the last event
       BOOST_CHECK_EQUAL(resultVec[1].index, 4);
-      //The matched timestamp is 7.5 = 4.5 + 3 (the guard of epsilon transition is x0 == 3)
+      // The matched timestamp is 7.5 = 4.5 + 3 (the guard of epsilon transition is x0 == 3)
       BOOST_CHECK_EQUAL(resultVec[1].timestamp, 7.5);
 }
 BOOST_AUTO_TEST_SUITE_END()

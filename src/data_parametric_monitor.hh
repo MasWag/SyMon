@@ -58,7 +58,7 @@ public:
       // make the current env
       auto clockValuation = std::get<1>(conf); //.clockValuation;
       const auto absTime = std::get<4>(conf);
-      if(timestamp < absTime) {
+      if (timestamp < absTime) {
         continue;
       }
       for (double &d: clockValuation) {
@@ -141,7 +141,7 @@ private:
           auto extendedGuard = transition.guard;
           
           auto df = diff(nextCVal, extendedGuard);
-          if(!df) continue;
+          if (!df) continue;
           for (double &d: nextCVal) {
             d += df.value();
           }
@@ -154,10 +154,10 @@ private:
             }
             transition.update.execute(nextSEnv, nextNEnv);
             nextConfigurations.insert({transition.target.lock(), nextCVal, nextSEnv, nextNEnv, absTime});
+            returnConfigurations.insert({transition.target.lock(), nextCVal, nextSEnv, nextNEnv, absTime});
             if (transition.target.lock()->isMatch) {
               this->notifyObservers({index, absTime, nextNEnv, nextSEnv});
             }
-            returnConfigurations.insert({transition.target.lock(), nextCVal, nextSEnv, nextNEnv, absTime});
           }
         }
       }

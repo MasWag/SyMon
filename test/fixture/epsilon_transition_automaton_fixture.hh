@@ -137,7 +137,7 @@ class EpsilonTransitionToAcceptStateAutomatonFixture {
         auto makeDataParametricTA() {
             using TAType = DataParametricTA;
             using BoostTAType = DataParametricBoostTA;
-            return parseDotTA<TAType, BoostTAType>(eps_dot);;
+            return parseDotTA<TAType, BoostTAType>(eps_dot);
         }
 
 };
