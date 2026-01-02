@@ -7,6 +7,7 @@
 #define DATAMONITOR_NON_SYMBOLIC_UPDATE_HH
 
 #include <algorithm>
+#include <optional>
 #include <vector>
 
 #include "non_symbolic_number_constraint.hh"
@@ -31,9 +32,13 @@ namespace NonSymbolic {
       for (const auto &update: stringUpdate) {
         const auto from = update.second;
         const auto to = update.first;
-        std::optional<std::string> result;
+        std::variant<VariableID, std::string> result;
         from.eval(stringEnv, result);
-        stringEnv[to] = result;
+        std::optional<std::string> opt = std::nullopt;
+        if (std::holds_alternative<std::string>(result)) {
+          opt = std::get<std::string>(result);
+        }
+        stringEnv[to] = opt;
       }
       for (const auto &update: numberUpdate) {
         const auto from = update.second;
