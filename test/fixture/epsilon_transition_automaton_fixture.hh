@@ -1,3 +1,5 @@
+#pragma once
+
 #include <cstring>
 #include <cerrno>
 #include <iostream>
@@ -21,6 +23,13 @@ class AutomatonFixture {
 
     public:
         AutomatonFixture(std::string dotStr):dotString(dotStr) {}
+
+        auto makeBooleanTA() {
+            using TAType = NonParametricTA<int>;
+            using BoostTAType = NonParametricBoostTA<int>;
+            return parseDotTA<TAType, BoostTAType>(dotString);
+        }
+
         auto makeDataParametricTA() {
             using TAType = DataParametricTA;
             using BoostTAType = DataParametricBoostTA;
@@ -48,7 +57,7 @@ namespace EpsilonTransitionAutomatonFixture {
         3 -> 4 [label=0][s_constraints="{x1 == 'b'}"][guard="{x0 > 4}"]
 
     })DOT";
-    auto fixture1 = AutomatonFixture(dot_eps1);
+    inline AutomatonFixture fixture1{dot_eps1};
 
     //Epsilon transition with no guard
     const char dot_eps2[] = R"DOT(digraph G {
@@ -67,7 +76,7 @@ namespace EpsilonTransitionAutomatonFixture {
         1 -> 2 [label=127][s_constraints="{x0 == 'z'}"]
         2 -> 3 [label=0][s_constraints="{x1 == 'b', x0 == 'z'}"][guard="{x0 > 4}"]
     })DOT";
-    auto fixture2 = AutomatonFixture(dot_eps2);
+    inline AutomatonFixture fixture2{dot_eps2};
 
     // 2 clock variables
     const char dot_eps3[] = R"DOT(digraph G {
@@ -91,7 +100,7 @@ namespace EpsilonTransitionAutomatonFixture {
         3 -> 4 [label=127][guard="{x0 == 2, x1 == 1}"]
         4 -> 5 [label=0][s_constraints="{x1 == 'c'}"]
     })DOT";
-    auto fixture3 = AutomatonFixture(dot_eps3);
+    inline AutomatonFixture fixture3{dot_eps3};
 
     //Epsilon transition at last to accept state
     const char dot_eps4[] = R"DOT(digraph G {
@@ -109,6 +118,6 @@ namespace EpsilonTransitionAutomatonFixture {
         1 -> 2 [label=127][guard="{x0 == 3}"]
 
     })DOT";
-    auto fixture4 = AutomatonFixture(dot_eps4);
+    inline AutomatonFixture fixture4{dot_eps4};
 
 } // namespace EpsilonTransitionAutomatonFixture
