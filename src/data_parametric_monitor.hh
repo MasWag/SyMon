@@ -116,8 +116,27 @@ private:
   boost::unordered_set<Configuration> configurations;
   std::size_t index = 0;
 
-  boost::unordered_set<Configuration> epsilonTransition(boost::unordered_set<Configuration> configurations) {
-    auto currentConfigurations = std::move(configurations);
+  /**
+   * Performs epsilon (unobservable) transitions starting from the given configurations.
+   *
+   * This method repeatedly explores transitions labeled with the unobservable action
+   * from all current configurations, advancing time according to clock guards,
+   * applying clock resets and symbolic updates, and collecting all reachable
+   * configurations. Exploration continues until no further epsilon transitions
+   * are possible. Whenever a target state marked as a match is reached,
+   * it notifies registered observers using the current index, absolute time, and valuations.
+   *
+   * @param currentConfigurations
+   *        The initial set of configurations from which epsilon transitions
+   *        are taken. The set is passed by value and moved into an internal
+   *        worklist; it should not be used by the caller after this call.
+   *
+   * @return The set of configurations reachable via zero or more epsilon
+   *         transitions that cannot be further extended by additional epsilon
+   *         transitions.
+   *
+   */
+  boost::unordered_set<Configuration> epsilonTransition(boost::unordered_set<Configuration> currentConfigurations) {
     boost::unordered_set<Configuration> nextConfigurations;
     boost::unordered_set<Configuration> returnConfigurations;
 
