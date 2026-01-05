@@ -52,6 +52,7 @@ SyMon is tested on macOS 10.14.4
 * Boost (>= 1.67.0)
 * CMake
 * Parma Polyhedra Library
+* tree-sitter (>= 0.21.0)
 
 ### Instructions
 
