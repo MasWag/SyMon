@@ -153,7 +153,6 @@ private:
         const auto clockValuation = std::get<1>(conf);
         const auto stringEnv = std::get<2>(conf);
         const auto numberEnv = std::get<3>(conf);
-        auto absTime = std::get<4>(conf);
         for (const auto &transition: transitionIt->second) {
           // evaluate the guards
           auto nextCVal = clockValuation;
@@ -161,6 +160,7 @@ private:
           auto nextNEnv = numberEnv;
           auto extendedGuard = transition.guard;
           
+          auto absTime = std::get<4>(conf);
           auto df = diff(nextCVal, extendedGuard);
           if (!df) continue;
           for (double &d: nextCVal) {
@@ -173,10 +173,11 @@ private:
             for (const VariableID resetVar: transition.resetVars) {
               nextCVal[resetVar] = 0;
             }
+            auto nextState = transition.target.lock();
             transition.update.execute(nextSEnv, nextNEnv);
-            nextConfigurations.insert({transition.target.lock(), nextCVal, nextSEnv, nextNEnv, absTime});
-            returnConfigurations.insert({transition.target.lock(), nextCVal, nextSEnv, nextNEnv, absTime});
-            if (transition.target.lock()->isMatch) {
+            nextConfigurations.insert({nextState, nextCVal, nextSEnv, nextNEnv, absTime});
+            returnConfigurations.insert({nextState, nextCVal, nextSEnv, nextNEnv, absTime});
+            if (nextState->isMatch) {
               this->notifyObservers({index, absTime, nextNEnv, nextSEnv});
             }
           }

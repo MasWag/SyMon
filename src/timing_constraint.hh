@@ -90,8 +90,7 @@ public:
     return TimingConstraint{x, TimingConstraint::Order::ge, c};
   }
 
-  template<typename Timestamp = double>
-  TimingConstraint operator==(Timestamp c) {
+  TimingConstraint operator==(int c) {
     return TimingConstraint{x, TimingConstraint::Order::eq, c};
   }
 };
@@ -115,10 +114,11 @@ static bool eval(const TimingValuation &clockValuation, const std::vector<Timing
 /*!
   @brief Calculate the difference needed to satisfy all equality timing constraints in the guard.
 
-  This function assumes that all constraints are of the form x == c.
-  If there is a constraint that is not Order::eq, an exception is thrown.
+  Compute the time increment that satisfies all equality guards x == c under the given clock valuation.
+  Returns 0.0 if the guard is empty,
+  std::nullopt if equalities imply different increments,
+  and throws if any non-equality constraint is present.
 
-  When there are no constraints, returns 0.
 */
 static std::optional<double> diff(const TimingValuation &clockValuation, const std::vector<TimingConstraint> &guard) {
   std::optional<double> result = std::nullopt;

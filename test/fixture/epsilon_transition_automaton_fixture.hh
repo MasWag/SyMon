@@ -9,27 +9,22 @@
 class AutomatonFixture {
     private:
         template<typename TAType, typename BoostTAType>
-        static TAType parseDotTA(const std::string& timedAutomatonFileName) {
-            std::istringstream taStream(timedAutomatonFileName);
-            if (taStream.fail()) {
-                std::cerr << "Error: " << strerror(errno) << " " << timedAutomatonFileName.c_str() << std::endl;
-                throw std::runtime_error("Failed to read automaton from string.");
-            }
-
+        static TAType parseDotTA(const std::string& dotStr) {
+            std::istringstream taStream(dotStr);
             TAType TA;
             BoostTAType BoostTA;
             parseBoostTA(taStream, BoostTA);
             convBoostTA(BoostTA, TA);
             return TA;
         }
-        std::string dot;
+        std::string dotString;
 
     public:
-        AutomatonFixture(std::string dot_):dot(dot_) {}
+        AutomatonFixture(std::string dotStr):dotString(dotStr) {}
         auto makeDataParametricTA() {
             using TAType = DataParametricTA;
             using BoostTAType = DataParametricBoostTA;
-            return parseDotTA<TAType, BoostTAType>(dot);
+            return parseDotTA<TAType, BoostTAType>(dotString);
         }
 };
 
