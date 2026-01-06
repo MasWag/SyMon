@@ -189,5 +189,5 @@ static inline bool operator==(const PPLRational &lhs, const PPLRational &rhs) {
 }
 
 static inline bool operator==(const PPLRational &lhs, const int &rhs) {
-  return lhs.getNumerator() * rhs == lhs.getDenominator();
+  return lhs.getNumerator() == lhs.getDenominator() * rhs;
 }
