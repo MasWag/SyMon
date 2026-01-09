@@ -15,11 +15,12 @@ namespace NonSymbolic {
     std::variant<VariableID, std::string> value;
 
     void eval(const StringValuation &env, std::variant<VariableID, std::string> &result) const {
-      result = value;
-      if (result.index() == 1) {
-        return;
-      } else if (env.at(std::get<std::size_t>(result))) {
-        result = *env.at(std::get<std::size_t>(result));
+      if (std::holds_alternative<std::string>(value)) {
+        result = std::get<std::string>(value);
+      } else if (env.at(std::get<std::size_t>(value))) {
+        result = *env.at(std::get<std::size_t>(value));
+      } else {
+        result = std::get<VariableID>(value);
       }
     }
 
@@ -44,36 +45,41 @@ namespace NonSymbolic {
       }
       switch (kind) {
         case kind_t::EQ: {
-          if (evaluated[0].index() == 0 && evaluated[1].index() == 0) {
+          if (std::holds_alternative<VariableID>(evaluated[0]) &&
+              std::holds_alternative<VariableID>(evaluated[1])) {
             throw "Unimplemented case: At least one of the children must have a concrete value. "
                   "StringConstraint";
-          } else if (evaluated[0].index() == 0 && evaluated[1].index() == 1) {
-            const VariableID assignedID = std::get<VariableID>(evaluated[0]);
-            const std::string &assignedString = std::get<std::string>(evaluated[1]);
+          } else if (std::holds_alternative<std::string>(evaluated[0]) &&
+                     std::holds_alternative<VariableID>(evaluated[1])) {
+            const auto assignedID = std::get<VariableID>(evaluated[1]);
+            const auto &assignedString = std::get<std::string>(evaluated[0]);
             return assignIfPossible(env, assignedID, assignedString);
-          } else if (evaluated[0].index() == 1 && evaluated[1].index() == 0) {
-            const VariableID assignedID = std::get<VariableID>(evaluated[1]);
-            const std::string &assignedString = std::get<std::string>(evaluated[0]);
+          } else if (std::holds_alternative<VariableID>(evaluated[0]) &&
+                     std::holds_alternative<std::string>(evaluated[1])) {
+            const auto assignedID = std::get<VariableID>(evaluated[0]);
+            const auto &assignedString = std::get<std::string>(evaluated[1]);
             return assignIfPossible(env, assignedID, assignedString);
           } else {
-            return std::get<std::string>(evaluated[0]) == std::get<std::string>(evaluated[1]);
+            const auto &evaluated0 = std::get<std::string>(evaluated[0]);
+            const auto &evaluated1 = std::get<std::string>(evaluated[1]);
+            return evaluated0 == evaluated1;
           }
-          break;
         }
         case kind_t::NE: {
-          if (evaluated[0].index() == 0 && evaluated[1].index() == 0) {
+          if (std::holds_alternative<VariableID>(evaluated[0]) &&
+              std::holds_alternative<VariableID>(evaluated[1])) {
             throw "Unimplemented case: At least one of the children must have a concrete value. "
                   "StringConstraint";
-          } else if (evaluated[0].index() == 0 && evaluated[1].index() == 1) {
-            const std::string &disabledString = std::get<std::string>(evaluated[1]);
-            env[std::get<0>(evaluated[0])] = disabledString;
+          } else if (std::holds_alternative<std::string>(evaluated[0]) &&
+                     std::holds_alternative<VariableID>(evaluated[1])) {
             return true;
-          } else if (evaluated[0].index() == 1 && evaluated[1].index() == 0) {
-            const std::string &disabledString = std::get<std::string>(evaluated[0]);
-            env[std::get<0>(evaluated[1])] = disabledString;
+          } else if (std::holds_alternative<VariableID>(evaluated[0]) &&
+                     std::holds_alternative<std::string>(evaluated[1])) {
             return true;
           } else {
-            return std::get<std::string>(evaluated[0]) != std::get<std::string>(evaluated[1]);
+            const auto &evaluated0 = std::get<std::string>(evaluated[0]);
+            const auto &evaluated1 = std::get<std::string>(evaluated[1]);
+            return evaluated0 != evaluated1;
           }
         }
       }

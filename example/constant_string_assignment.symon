@@ -1,0 +1,22 @@
+#!/usr/bin/env symon -nf
+## BEGIN_INPUT
+# data beta  1.0
+# data alpha 2.0
+## END_INPUT
+## BEGIN_OUTPUT
+# @2.000000.	(time-point 1)	x0==alpha
+## END_OUTPUT
+
+var {
+    saved: string;
+}
+
+signature data {
+    id: string;
+}
+
+expr set { data(id | | saved := "alpha") }
+expr check { data(id | id == saved) }
+
+set;
+check

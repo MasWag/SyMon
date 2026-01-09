@@ -22,13 +22,11 @@ namespace Symbolic {
   struct StringAtom {
     std::variant<VariableID, std::string> value;
 
-    void eval(const StringValuation &env, std::variant<VariableID, std::string> &result) const {
-      result = value;
-      if (result.index() == 1) {
-        return;
-      }
-      if (env.at(std::get<std::size_t>(result)).index() == 1) {
-        result = std::get<std::string>(env.at(std::get<std::size_t>(result)));
+    void eval(const StringValuation &env, std::variant<std::vector<std::string>, std::string> &result) const {
+      if (value.index() == 1) {
+        result = std::get<std::string>(value);
+      } else {
+        result = env.at(std::get<std::size_t>(value));
       }
     }
   };
@@ -43,7 +41,7 @@ namespace Symbolic {
     enum class kind_t { EQ, NE } kind;
 
     bool eval(StringValuation &env) const {
-      std::array<std::variant<VariableID, std::string>, 2> evaluated;
+      std::array<std::variant<std::vector<std::string>, std::string>, 2> evaluated;
       for (int i = 0; i < 2; i++) {
         children[i].eval(env, evaluated[i]);
       }
@@ -53,11 +51,11 @@ namespace Symbolic {
             throw "Unimplemented case: At least one of the children must have a concrete value. "
                   "StringConstraint";
           } else if (evaluated[0].index() == 0 && evaluated[1].index() == 1) {
-            const VariableID assignedID = std::get<VariableID>(evaluated[0]);
+            const VariableID assignedID = std::get<VariableID>(children[0].value);
             const std::string &assignedString = std::get<std::string>(evaluated[1]);
             return assignIfPossible(env, assignedID, assignedString);
           } else if (evaluated[0].index() == 1 && evaluated[1].index() == 0) {
-            const VariableID assignedID = std::get<VariableID>(evaluated[1]);
+            const VariableID assignedID = std::get<VariableID>(children[1].value);
             const std::string &assignedString = std::get<std::string>(evaluated[0]);
             return assignIfPossible(env, assignedID, assignedString);
           } else {
@@ -71,11 +69,11 @@ namespace Symbolic {
                   "StringConstraint";
           } else if (evaluated[0].index() == 0 && evaluated[1].index() == 1) {
             const std::string &disabledString = std::get<std::string>(evaluated[1]);
-            insert_sorted(std::get<0>(env[std::get<0>(evaluated[0])]), disabledString);
+            insert_sorted(std::get<0>(env[std::get<VariableID>(children[0].value)]), disabledString);
             return true;
           } else if (evaluated[0].index() == 1 && evaluated[1].index() == 0) {
             const std::string &disabledString = std::get<std::string>(evaluated[0]);
-            insert_sorted(std::get<0>(env[std::get<0>(evaluated[1])]), disabledString);
+            insert_sorted(std::get<0>(env[std::get<VariableID>(children[1].value)]), disabledString);
             return true;
           } else {
             return std::get<std::string>(evaluated[0]) != std::get<std::string>(evaluated[1]);

@@ -467,7 +467,7 @@ BOOST_AUTO_TEST_SUITE(AutomatonParserTests)
         BOOST_CHECK_EQUAL(TA.states[0]->next.at(0).at(1).numConstraints.size(), 0);
         BOOST_CHECK_EQUAL(TA.states[0]->next.at(0).at(1).update.stringUpdate.size(), 1);
         BOOST_CHECK_EQUAL(TA.states[0]->next.at(0).at(1).update.stringUpdate.at(0).first, 0);
-        BOOST_CHECK_EQUAL(TA.states[0]->next.at(0).at(1).update.stringUpdate.at(0).second, 1);
+        BOOST_CHECK_EQUAL(std::get<VariableID>(TA.states[0]->next.at(0).at(1).update.stringUpdate.at(0).second.value), 1);
         BOOST_CHECK_EQUAL(TA.states[0]->next.at(0).at(1).update.numberUpdate.size(), 1);
         BOOST_CHECK_EQUAL(TA.states[0]->next.at(0).at(1).update.numberUpdate.front().first, 0);
         BOOST_TEST(TA.states[0]->next.at(0).at(1).update.numberUpdate.front().second.is_equal_to(Variable(1)));

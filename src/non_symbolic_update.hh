@@ -7,6 +7,7 @@
 #define DATAMONITOR_NON_SYMBOLIC_UPDATE_HH
 
 #include <algorithm>
+#include <optional>
 #include <vector>
 
 #include "non_symbolic_number_constraint.hh"
@@ -24,14 +25,20 @@ namespace NonSymbolic {
 
   template <typename Number>
   struct Update {
-    std::vector<std::pair<VariableID, VariableID>> stringUpdate;
+    std::vector<std::pair<VariableID, NonSymbolic::StringAtom>> stringUpdate;
     std::vector<std::pair<VariableID, NonSymbolic::NumberExpression<Number>>> numberUpdate;
 
     void execute(StringValuation &stringEnv, NumberValuation<Number> &numEnv) const {
       for (const auto &update: stringUpdate) {
         const auto from = update.second;
         const auto to = update.first;
-        stringEnv[to] = stringEnv[from];
+        std::variant<VariableID, std::string> result;
+        from.eval(stringEnv, result);
+        std::optional<std::string> opt = std::nullopt;
+        if (std::holds_alternative<std::string>(result)) {
+          opt = std::get<std::string>(result);
+        }
+        stringEnv[to] = opt;
       }
       for (const auto &update: numberUpdate) {
         const auto from = update.second;

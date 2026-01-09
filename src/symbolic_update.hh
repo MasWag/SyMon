@@ -10,14 +10,16 @@
 
 namespace Symbolic {
   struct Update {
-    std::vector<std::pair<VariableID, VariableID>> stringUpdate;
+    std::vector<std::pair<VariableID, Symbolic::StringAtom>> stringUpdate;
     std::vector<std::pair<VariableID, Symbolic::NumberExpression>> numberUpdate;
 
     void execute(Symbolic::StringValuation &stringEnv, Symbolic::NumberValuation &numEnv) const {
       for (const auto &update: stringUpdate) {
         const auto from = update.second;
         const auto to = update.first;
-        stringEnv[to] = stringEnv[from];
+        std::variant<std::vector<std::string>, std::string> result;
+        from.eval(stringEnv, result);
+        stringEnv[to] = result;
       }
       for (const auto &update: numberUpdate) {
         const auto from = update.second;

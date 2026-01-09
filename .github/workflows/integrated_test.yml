@@ -21,15 +21,21 @@ jobs:
           libboost-all-dev \
           cmake \
           libgmp-dev \
-          libtree-sitter-dev \
           git
 
-      - name: Install tree-sitter
+      - name: Install tree-sitter (>= 0.21.0)
         run: |
-         git clone https://github.com/maswag/tree-sitter-symon.git /tmp/tree-sitter-symon
-         cmake -B /tmp/tree-sitter-symon/build -S /tmp/tree-sitter-symon
-         cmake --build /tmp/tree-sitter-symon/build
-         sudo cmake --install /tmp/tree-sitter-symon/build
+          git clone https://github.com/tree-sitter/tree-sitter.git /tmp/tree-sitter
+          git -C /tmp/tree-sitter checkout v0.21.0
+          make -C /tmp/tree-sitter
+          sudo make -C /tmp/tree-sitter install
+
+      - name: Install tree-sitter-symon
+        run: |
+          git clone https://github.com/maswag/tree-sitter-symon.git /tmp/tree-sitter-symon
+          cmake -B /tmp/tree-sitter-symon/build -S /tmp/tree-sitter-symon
+          cmake --build /tmp/tree-sitter-symon/build
+          sudo cmake --install /tmp/tree-sitter-symon/build
 
       - name: Build SyMon
         run: |

@@ -81,20 +81,6 @@ static inline std::ostream &operator<<(std::ostream &os, const TimingConstraint 
   return os;
 }
 
-template <class T> static inline std::ostream &operator<<(std::ostream &os, const std::vector<T> &guard) {
-  bool first = true;
-  os << "{";
-  for (const auto &g: guard) {
-    if (!first) {
-      os << ", ";
-    }
-    first = false;
-    os << g;
-  }
-  os << "}";
-  return os;
-}
-
 static inline std::istream &operator>>(std::istream &is, TimingConstraint &p) {
   if (is.get() != 'x') {
     is.setstate(std::ios_base::failbit);

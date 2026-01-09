@@ -63,6 +63,21 @@ static inline TSNode nextNonCommentChild(const TSNode &parent, uint32_t &idx) {
   throw std::runtime_error("Expected a non-comment child but reached end");
 }
 
+// Recursively find the first ERROR node in a tree-sitter node. Returns std::nullopt when none.
+[[maybe_unused]] static std::optional<TSNode> find_first_error_node(const TSNode &node) {
+  // ts_node_is_error is part of the tree-sitter C API; some bindings may not expose it,
+  // so also check the node type string for "ERROR" to be robust.
+  if (ts_node_is_error(node) || std::string(ts_node_type(node)) == "ERROR") {
+    return node;
+  }
+  const uint32_t count = ts_node_child_count(node);
+  for (uint32_t i = 0; i < count; ++i) {
+    TSNode c = ts_node_child(node, i);
+    if (auto res = find_first_error_node(c)) return res;
+  }
+  return std::nullopt;
+}
+
 template <typename StringConstraint, typename NumberConstraint, typename TimingConstraint, typename Update>
 class SymonParser {
 public:
@@ -102,6 +117,10 @@ public:
     const TSTree *tree = ts_parser_parse_string(inParser, nullptr, content.c_str(), content.length());
     ts_parser_delete(inParser);
     const TSNode rootNode = ts_tree_root_node(tree);
+    // If the parse produced an ERROR node anywhere, report it with a helpful message.
+    if (auto err = find_first_error_node(rootNode)) {
+      throw std::runtime_error(makeErrorMessage("Syntax error in input", content, *err));
+    }
     const uint32_t rootSize = ts_node_child_count(rootNode);
     for (uint32_t i = 0; i < rootSize; i++) {
       TSNode child = ts_node_child(rootNode, i);
