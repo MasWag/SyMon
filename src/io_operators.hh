@@ -613,8 +613,8 @@ static inline std::ostream &operator<<(std::ostream &os,
   return os;
 }
 
-template <class T> static inline std::istream &operator>>(std::istream &is, std::vector<T> &resetVars) {
-  resetVars.clear();
+template <class T> static inline std::istream &parse_vector(std::istream &is, std::vector<T> &values) {
+  values.clear();
   if (!is) {
     is.setstate(std::ios_base::failbit);
     return is;
@@ -633,7 +633,7 @@ template <class T> static inline std::istream &operator>>(std::istream &is, std:
   while (true) {
     T x;
     is >> x;
-    resetVars.emplace_back(std::move(x));
+    values.emplace_back(std::move(x));
     if (!is) {
       is.setstate(std::ios_base::failbit);
       return is;
@@ -656,6 +656,54 @@ template <class T> static inline std::istream &operator>>(std::istream &is, std:
 
   return is;
 }
+
+template <class T> static inline std::istream &operator>>(std::istream &is, std::vector<T> &values) {
+  return parse_vector(is, values);
+}
+
+namespace NonSymbolic {
+  static inline std::istream &operator>>(std::istream &is, std::vector<NonSymbolic::StringConstraint> &constraints) {
+    return parse_vector(is, constraints);
+  }
+
+  template <typename Number>
+  static inline std::istream &operator>>(std::istream &is,
+                                         std::vector<NonSymbolic::NumberConstraint<Number>> &constraints) {
+    return parse_vector(is, constraints);
+  }
+
+  template <typename Number>
+  static inline std::istream &operator>>(std::istream &is,
+                                         std::vector<std::pair<VariableID, NonSymbolic::NumberExpression<Number>>> &updates) {
+    return parse_vector(is, updates);
+  }
+} // namespace NonSymbolic
+
+namespace Symbolic {
+  static inline std::istream &operator>>(std::istream &is, std::vector<Symbolic::StringConstraint> &constraints) {
+    return parse_vector(is, constraints);
+  }
+
+  static inline std::istream &operator>>(std::istream &is, std::vector<Symbolic::NumberConstraint> &constraints) {
+    return parse_vector(is, constraints);
+  }
+
+  static inline std::istream &operator>>(std::istream &is,
+                                         std::vector<std::pair<VariableID, Symbolic::NumberExpression>> &updates) {
+    return parse_vector(is, updates);
+  }
+} // namespace Symbolic
+
+namespace Parma_Polyhedra_Library {
+  static inline std::istream &operator>>(std::istream &is, std::vector<Parma_Polyhedra_Library::Constraint> &constraints) {
+    return parse_vector(is, constraints);
+  }
+
+  static inline std::istream &operator>>(
+      std::istream &is, std::vector<std::pair<VariableID, Parma_Polyhedra_Library::Linear_Expression>> &updates) {
+    return parse_vector(is, updates);
+  }
+} // namespace Parma_Polyhedra_Library
 
 static inline std::ostream &operator<<(std::ostream &os, const std::vector<Symbolic::NumberConstraint> &vector) {
   using Parma_Polyhedra_Library::IO_Operators::operator<<;

@@ -14,6 +14,10 @@ namespace boost {
   using ::operator>>;
   using ::operator<<;
   using namespace Parma_Polyhedra_Library::IO_Operators;
+  namespace detail {
+    using ::operator>>;
+    using ::operator<<;
+  }
 } // namespace boost
 
 namespace std {
@@ -246,6 +250,18 @@ struct ResetVars {
   std::vector<ClockVariables> resetVars;
 };
 
+template <typename T> struct VectorWrapper {
+  std::vector<T> values;
+};
+
+template <typename T> static inline std::istream &operator>>(std::istream &is, VectorWrapper<T> &wrapper) {
+  return parse_vector(is, wrapper.values);
+}
+
+template <typename T> static inline std::ostream &operator<<(std::ostream &os, const VectorWrapper<T> &wrapper) {
+  return os << wrapper.values;
+}
+
 static inline std::istream &operator>>(std::istream &is, ResetVars &resetVars) {
   is >> resetVars.resetVars;
   return is;
@@ -280,10 +296,10 @@ struct BoostTAState {
 template <typename StringConstraint, typename NumberConstraint, typename TimingConstraint, typename Update>
 struct BoostTATransition {
   Action c;
-  std::vector<StringConstraint> stringConstraints;
-  std::vector<NumberConstraint> numConstraints;
-  decltype(std::declval<Update>().stringUpdate) stringUpdate;
-  decltype(std::declval<Update>().numberUpdate) numberUpdate;
+  VectorWrapper<StringConstraint> stringConstraints;
+  VectorWrapper<NumberConstraint> numConstraints;
+  VectorWrapper<typename decltype(std::declval<Update>().stringUpdate)::value_type> stringUpdate;
+  VectorWrapper<typename decltype(std::declval<Update>().numberUpdate)::value_type> numberUpdate;
   //! @note this structure is necessary because of some problem in boost graph
   ResetVars resetVars;
   Guard<TimingConstraint> guard;
@@ -447,16 +463,20 @@ convBoostTA(const BoostTimedAutomaton<StringConstraint, NumberConstraint, Timing
               .resetVars;
       UpdateTraits<Update>::stringUpdate(transition.update) =
           boost::get(&BoostTATransition<StringConstraint, NumberConstraint, TimingConstraint, Update>::stringUpdate,
-                     BoostTA, *firstEdge);
+                     BoostTA, *firstEdge)
+              .values;
       transition.stringConstraints = boost::get(
           &BoostTATransition<StringConstraint, NumberConstraint, TimingConstraint, Update>::stringConstraints, BoostTA,
-          *firstEdge);
+          *firstEdge)
+                                        .values;
       UpdateTraits<Update>::numberUpdate(transition.update) =
           boost::get(&BoostTATransition<StringConstraint, NumberConstraint, TimingConstraint, Update>::numberUpdate,
-                     BoostTA, *firstEdge);
+                     BoostTA, *firstEdge)
+              .values;
       transition.numConstraints =
           boost::get(&BoostTATransition<StringConstraint, NumberConstraint, TimingConstraint, Update>::numConstraints,
-                     BoostTA, *firstEdge);
+                     BoostTA, *firstEdge)
+              .values;
       stateConvMap[*first]
           ->next[boost::get(&BoostTATransition<StringConstraint, NumberConstraint, TimingConstraint, Update>::c,
                             BoostTA, *firstEdge)]
@@ -513,19 +533,23 @@ static inline void convBoostTA(const BoostPTA &BoostTA, ParametricTA &TA) {
       UpdateTraits<Update>::stringUpdate(transition.update) =
           boost::get(&BoostTATransition<StringConstraint, NumberConstraint, ParametricTimingConstraintHelper,
                                         Update>::stringUpdate,
-                     BoostTA, *firstEdge);
+                     BoostTA, *firstEdge)
+              .values;
       transition.stringConstraints =
           boost::get(&BoostTATransition<StringConstraint, NumberConstraint, ParametricTimingConstraintHelper,
                                         Update>::stringConstraints,
-                     BoostTA, *firstEdge);
+                     BoostTA, *firstEdge)
+              .values;
       UpdateTraits<Update>::numberUpdate(transition.update) =
           boost::get(&BoostTATransition<StringConstraint, NumberConstraint, ParametricTimingConstraintHelper,
                                         Update>::numberUpdate,
-                     BoostTA, *firstEdge);
+                     BoostTA, *firstEdge)
+              .values;
       transition.numConstraints =
           boost::get(&BoostTATransition<StringConstraint, NumberConstraint, ParametricTimingConstraintHelper,
                                         Update>::numConstraints,
-                     BoostTA, *firstEdge);
+                     BoostTA, *firstEdge)
+              .values;
       stateConvMap[*first]
           ->next[boost::get(
               &BoostTATransition<StringConstraint, NumberConstraint, ParametricTimingConstraintHelper, Update>::c,

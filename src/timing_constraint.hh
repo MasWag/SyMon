@@ -92,7 +92,7 @@ public:
     return TimingConstraint{x, TimingConstraint::Order::ge, c};
   }
 
-  TimingConstraint operator==(int c) {
+  TimingConstraint operator==(Timestamp c) {
     return TimingConstraint{x, TimingConstraint::Order::eq, c};
   }
 };
