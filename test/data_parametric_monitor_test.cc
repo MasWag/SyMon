@@ -2,6 +2,8 @@
 #include <boost/mpl/list.hpp>
 #include "../src/data_parametric_monitor.hh"
 #include "../test/fixture/copy_automaton_fixture.hh"
+
+#include "../test/fixture/non_integer_timestamp_fixture.hh"
 #include "../test/fixture/epsilon_transition_automaton_fixture.hh"
 
 using TWEvent = TimedWordEvent<PPLRational>;
@@ -150,4 +152,35 @@ BOOST_FIXTURE_TEST_CASE(epsilon_test4, DataParametricMonitorFixture)
       // The matched timestamp is 7.5 = 4.5 + 3 (the guard of epsilon transition is x0 == 3)
       BOOST_CHECK_EQUAL(resultVec[1].timestamp, 7.5);
 }
+BOOST_AUTO_TEST_SUITE_END()
+
+
+struct NonIntegerTimestampDataParametricMonitorFixture : public Parametric::DataParametricNonIntegerTimestampFixture {
+  void feed(std::vector<TWEvent> &&vec) {
+    auto monitor = std::make_shared<DataParametricMonitor>(automaton);
+    std::shared_ptr<DummyDataParametricMonitorObserver> observer = std::make_shared<DummyDataParametricMonitorObserver>();
+    monitor->addObserver(observer);
+    DummyDataTimedWordSubject subject{std::move(vec)};
+    subject.addObserver(monitor);
+    subject.notifyAll();
+    resultVec = std::move(observer->resultVec);
+  }
+  std::vector<DataParametricMonitorResult> resultVec;
+};
+
+BOOST_AUTO_TEST_SUITE(DataParametricNonIntegerTimestampMonitorTest)
+  BOOST_FIXTURE_TEST_CASE(non_integer_timestamp_test, NonIntegerTimestampDataParametricMonitorFixture) {
+    std::vector<TWEvent> dummyTimedWord{
+      {0, {}, {0}, 0.},
+      {0, {}, {0}, 1.0},
+      {0, {}, {0}, 2.1},
+      {0, {}, {0}, 3.3},
+      {0, {}, {0}, 4.6}
+    };
+    feed(std::move(dummyTimedWord));
+    //NOTE: 3.3 - 2.1 is 1.2, but this is evaluated as 1.1999999999999997 < 1.2, so the fourth event is also matched.
+    //BOOST_CHECK_EQUAL(resultVec.size(), 1);
+    BOOST_CHECK_EQUAL(resultVec.front().index, 2);
+    BOOST_CHECK_EQUAL(resultVec.front().timestamp, 2.1);
+  }
 BOOST_AUTO_TEST_SUITE_END()

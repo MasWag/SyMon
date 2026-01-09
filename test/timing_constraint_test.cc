@@ -19,4 +19,11 @@ BOOST_AUTO_TEST_SUITE(TimingConstraintTest)
         BOOST_CHECK(!constraint.satisfy(15));
     }
 
+    BOOST_AUTO_TEST_CASE(Decimal) {
+        constexpr TimingConstraint constraint{1, TimingConstraint::Order::ge, 0.5};
+        BOOST_CHECK(!constraint.satisfy(0.4));
+        BOOST_CHECK(constraint.satisfy(0.5));
+        BOOST_CHECK(constraint.satisfy(0.6));
+    }
+
 BOOST_AUTO_TEST_SUITE_END() // TimingConstraintTest

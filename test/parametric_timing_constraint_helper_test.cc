@@ -3,11 +3,13 @@
  * @date 2019-01-28
  */
 
+#include <cstddef>
 #include <sstream>
 #include "automaton_parser.hh"
 #include <boost/lexical_cast.hpp>
 #include <boost/test/unit_test.hpp>
 #include "../src/parametric_timing_constraint_helper.hh"
+#include "ppl_rational.hh"
 
 BOOST_AUTO_TEST_SUITE(ParametricTimingConstraintHelperTest)
   BOOST_AUTO_TEST_SUITE(LexicalCastTest)
@@ -27,7 +29,7 @@ BOOST_AUTO_TEST_SUITE(ParametricTimingConstraintHelperTest)
       const std::string val = "1";
       const auto valResult = lexical_cast<ParametricTimingConstraintHelper>(val);
       BOOST_CHECK_EQUAL(valResult.head.front().second, ParametricTimingConstraintHelper::kind_t::CONSTANT);
-      BOOST_CHECK_EQUAL(std::get<Parma_Polyhedra_Library::Coefficient>(valResult.head.front().first), 1);
+      BOOST_CHECK_EQUAL(std::get<PPLRational>(valResult.head.front().first), PPLRational(1));
     }
 
     BOOST_AUTO_TEST_CASE(le) {
@@ -37,7 +39,7 @@ BOOST_AUTO_TEST_SUITE(ParametricTimingConstraintHelperTest)
       BOOST_CHECK_EQUAL(std::get<std::size_t>(result.head.front().first), 0);
       BOOST_CHECK_EQUAL(result.comparison, ParametricTimingConstraintHelper::comparison_t::LT);
       BOOST_CHECK_EQUAL(result.head.back().second, ParametricTimingConstraintHelper::kind_t::CONSTANT);
-      BOOST_CHECK_EQUAL(std::get<Parma_Polyhedra_Library::Coefficient>(result.head.back().first), 3);
+      BOOST_CHECK_EQUAL(std::get<PPLRational>(result.head.back().first), PPLRational(3));
     }
 
     BOOST_AUTO_TEST_CASE(vectorLe) {
@@ -48,7 +50,66 @@ BOOST_AUTO_TEST_SUITE(ParametricTimingConstraintHelperTest)
       BOOST_CHECK_EQUAL(std::get<std::size_t>(result.front().head.front().first), 0);
       BOOST_CHECK_EQUAL(result.front().comparison, ParametricTimingConstraintHelper::comparison_t::LT);
       BOOST_CHECK_EQUAL(result.front().head.back().second, ParametricTimingConstraintHelper::kind_t::CONSTANT);
-      BOOST_CHECK_EQUAL(std::get<Parma_Polyhedra_Library::Coefficient>(result.front().head.back().first), 3);
+      BOOST_CHECK_EQUAL(std::get<PPLRational>(result.front().head.back().first), PPLRational(3));
+    }
+
+    BOOST_AUTO_TEST_CASE(vectorDecimalComparison) {
+      const std::string str = "{x0 < 2.5, x0 >= 0.5, p0 == x0 + 1}";
+      const auto result = lexical_cast<std::vector<ParametricTimingConstraintHelper>>(str);
+      BOOST_CHECK_EQUAL(result.size(), 3);
+
+      // x0 < 2.5
+      BOOST_CHECK_EQUAL(std::get<std::size_t>(result[0].head[0].first), std::size_t(0));
+      BOOST_CHECK_EQUAL(result[0].head[0].second, ParametricTimingConstraintHelper::kind_t::VARIABLE);
+      BOOST_CHECK_EQUAL(result[0].tail[0].size(), 0);
+      BOOST_CHECK_EQUAL(std::get<PPLRational>(result[0].head[1].first), PPLRational(25, 10));
+      BOOST_CHECK_EQUAL(result[0].head[1].second, ParametricTimingConstraintHelper::kind_t::CONSTANT);
+      BOOST_CHECK_EQUAL(result[0].comparison, ParametricTimingConstraintHelper::comparison_t::LT);
+      BOOST_CHECK_EQUAL(result[0].tail[1].size(), 0);
+
+      // x0 >= 0.5
+      BOOST_CHECK_EQUAL(std::get<std::size_t>(result[1].head[0].first), std::size_t(0));
+      BOOST_CHECK_EQUAL(result[1].head[0].second, ParametricTimingConstraintHelper::kind_t::VARIABLE);
+      BOOST_CHECK_EQUAL(result[1].tail[0].size(), 0);
+      BOOST_CHECK_EQUAL(std::get<PPLRational>(result[1].head[1].first), PPLRational(5, 10));
+      BOOST_CHECK_EQUAL(result[1].head[1].second, ParametricTimingConstraintHelper::kind_t::CONSTANT);
+      BOOST_CHECK_EQUAL(result[1].comparison, ParametricTimingConstraintHelper::comparison_t::GE);
+      BOOST_CHECK_EQUAL(result[1].tail[1].size(), 0);
+
+      // p0 == x0 + 1
+      BOOST_CHECK_EQUAL(std::get<std::size_t>(result[2].head[0].first), std::size_t(0));
+      BOOST_CHECK_EQUAL(result[2].head[0].second, ParametricTimingConstraintHelper::kind_t::PARAMETER);
+      BOOST_CHECK_EQUAL(result[2].tail[0].size(), 0);
+      BOOST_CHECK_EQUAL(std::get<std::size_t>(result[2].head[1].first), std::size_t(0));
+      BOOST_CHECK_EQUAL(result[2].head[1].second, ParametricTimingConstraintHelper::kind_t::VARIABLE);
+      BOOST_CHECK_EQUAL(result[2].tail[1].size(), 1);
+      BOOST_CHECK_EQUAL(result[2].tail[1].front().first, ParametricTimingConstraintHelper::op_t::PLUS);
+      BOOST_CHECK_EQUAL(std::get<PPLRational>(result[2].tail[1].front().second.first), PPLRational(1));
+      BOOST_CHECK_EQUAL(result[2].tail[1].front().second.second, ParametricTimingConstraintHelper::kind_t::CONSTANT);
+      BOOST_CHECK_EQUAL(result[2].comparison, ParametricTimingConstraintHelper::comparison_t::EQ);
+    }
+
+    BOOST_AUTO_TEST_CASE(decimalCalculation) {
+      const std::string str = "{1.5 + 2 - 3.25 == 1.25 - x0}";
+      const auto result = lexical_cast<std::vector<ParametricTimingConstraintHelper>>(str);
+      BOOST_CHECK_EQUAL(result.size(), 1);
+      BOOST_CHECK_EQUAL(std::get<PPLRational>(result[0].head[0].first), PPLRational(15, 10));
+      BOOST_CHECK_EQUAL(result[0].head[0].second, ParametricTimingConstraintHelper::kind_t::CONSTANT);
+      BOOST_CHECK_EQUAL(result[0].tail[0].size(), 2);
+      BOOST_CHECK_EQUAL(result[0].tail[0][0].first, ParametricTimingConstraintHelper::op_t::PLUS);
+      BOOST_CHECK_EQUAL(std::get<PPLRational>(result[0].tail[0][0].second.first), PPLRational(2));
+      BOOST_CHECK_EQUAL(result[0].tail[0][0].second.second, ParametricTimingConstraintHelper::kind_t::CONSTANT);
+      BOOST_CHECK_EQUAL(result[0].tail[0][1].first, ParametricTimingConstraintHelper::op_t::MINUS);
+      BOOST_CHECK_EQUAL(std::get<PPLRational>(result[0].tail[0][1].second.first), PPLRational(13, 4));
+      BOOST_CHECK_EQUAL(result[0].tail[0][1].second.second, ParametricTimingConstraintHelper::kind_t::CONSTANT);
+
+      BOOST_CHECK_EQUAL(std::get<PPLRational>(result[0].head[1].first), PPLRational(5, 4));
+      BOOST_CHECK_EQUAL(result[0].head[1].second, ParametricTimingConstraintHelper::kind_t::CONSTANT);
+      BOOST_CHECK_EQUAL(result[0].tail[1].size(), 1);
+      BOOST_CHECK_EQUAL(result[0].tail[1][0].first, ParametricTimingConstraintHelper::op_t::MINUS);
+      BOOST_CHECK_EQUAL(std::get<std::size_t>(result[0].tail[1][0].second.first), std::size_t(0));
+      BOOST_CHECK_EQUAL(result[0].tail[1][0].second.second, ParametricTimingConstraintHelper::kind_t::VARIABLE);
+      BOOST_CHECK_EQUAL(result[0].comparison, ParametricTimingConstraintHelper::comparison_t::EQ);
     }
 
   BOOST_AUTO_TEST_SUITE_END()
@@ -75,7 +136,7 @@ BOOST_AUTO_TEST_SUITE(ParametricTimingConstraintHelperTest)
       BOOST_CHECK_EQUAL(helper.tail.back().front().first, ParametricTimingConstraintHelper::op_t::MINUS);
       BOOST_CHECK_EQUAL(helper.tail.back().front().second.second,
                         ParametricTimingConstraintHelper::kind_t::CONSTANT);
-      BOOST_CHECK_EQUAL(std::get<Parma_Polyhedra_Library::Coefficient>(helper.tail.back().front().second.first), 10);
+      BOOST_CHECK_EQUAL(std::get<PPLRational>(helper.tail.back().front().second.first), PPLRational(10));
       BOOST_CHECK_EQUAL(helper.tail.back().back().first, ParametricTimingConstraintHelper::op_t::PLUS);
       BOOST_CHECK_EQUAL(helper.tail.back().back().second.second,
                         ParametricTimingConstraintHelper::kind_t::PARAMETER);

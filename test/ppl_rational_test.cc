@@ -147,3 +147,16 @@ BOOST_DATA_TEST_CASE(random_decimal, bdata::xrange(100) ^ bdata::random( bdata::
 }
 BOOST_AUTO_TEST_SUITE_END()
 
+BOOST_AUTO_TEST_SUITE(PPLRationalComparisonTests)
+
+  BOOST_AUTO_TEST_CASE(compare_equal_with_rationals) {
+    PPLRational twoFourths(2, 4);
+    PPLRational threeSixths(3, 6);
+    BOOST_CHECK_EQUAL(twoFourths, threeSixths);
+  }
+
+  BOOST_AUTO_TEST_CASE(compare_equal_with_integer) {
+    PPLRational fourHalves(4, 2);
+    BOOST_CHECK_EQUAL(fourHalves, 2);
+  }
+BOOST_AUTO_TEST_SUITE_END()

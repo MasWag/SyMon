@@ -1,0 +1,19 @@
+#!/usr/bin/env symon -bnf
+## BEGIN_INPUT
+# ping 12 0.25
+# ping 12 0.75
+## END_INPUT
+## BEGIN_OUTPUT
+# @0.750000.	(time-point 1)	x0 == 12
+## END_OUTPUT
+
+var {
+    last: number;
+}
+
+signature ping {
+    n: number;
+}
+
+ping( n | | last := n );
+ping( n | n = last )
