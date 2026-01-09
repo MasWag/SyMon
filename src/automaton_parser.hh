@@ -65,6 +65,9 @@ static inline std::ostream &operator<<(std::ostream &os, const TimingConstraint:
     case TimingConstraint::Order::gt:
       os << ">";
       break;
+    case TimingConstraint::Order::eq:
+      os << "==";
+      break;
   }
   return os;
 }
@@ -133,6 +136,18 @@ static inline std::istream &operator>>(std::istream &is, TimingConstraint &p) {
         }
       } else if (odr[1] == ' ') {
         p.odr = TimingConstraint::Order::lt;
+      } else {
+        is.setstate(std::ios_base::failbit);
+        return is;
+      }
+      break;
+    case '=':
+      if (odr[1] == '=') {
+        p.odr = TimingConstraint::Order::eq;
+        if (is.get() != ' ') {
+          is.setstate(std::ios_base::failbit);
+          return is;
+        }
       } else {
         is.setstate(std::ios_base::failbit);
         return is;

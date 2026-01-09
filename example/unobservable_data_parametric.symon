@@ -1,0 +1,34 @@
+#!/usr/bin/env symon -dnf
+## BEGIN_INPUT
+# data 10 1
+# data 10 2
+# data 20 4
+## END_INPUT
+## BEGIN_OUTPUT
+# @4.000000.	(time-point 2)	A = 10
+## END_OUTPUT
+
+var {
+    saved: number;
+}
+
+signature data {
+    n: number;
+}
+
+expr save { data(n | | saved := n) }
+expr skip { unobservable( | | saved := saved ) }
+expr check { data(n | n = saved) }
+
+expr main {
+    save;
+    within (= 1) {
+        skip
+    };
+    check;
+    within (= 2) {
+        unobservable( | | saved := saved )
+    }
+}
+
+main

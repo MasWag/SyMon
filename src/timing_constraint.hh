@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <optional>
+#include <stdexcept>
 #include <vector>
 
 #include "common_types.hh"
@@ -15,7 +17,7 @@ inline bool toBool(Order odr) {
 
 //! @brief A constraint in a guard of transitions
 struct TimingConstraint {
-  enum class Order { lt, le, ge, gt };
+  enum class Order { lt, le, ge, gt, eq };
   using Timestamp = double;
 
   ClockVariables x;
@@ -32,6 +34,8 @@ struct TimingConstraint {
         return d > c;
       case Order::ge:
         return d >= c;
+      case Order::eq:
+        return d == c;
     }
     return false;
   }
@@ -87,6 +91,10 @@ public:
   TimingConstraint operator>=(Timestamp c) {
     return TimingConstraint{x, TimingConstraint::Order::ge, c};
   }
+
+  TimingConstraint operator==(int c) {
+    return TimingConstraint{x, TimingConstraint::Order::eq, c};
+  }
 };
 
 /*!
@@ -103,6 +111,34 @@ using TimingValuation = std::vector<TimingConstraint::Timestamp>;
 static bool eval(const TimingValuation &clockValuation, const std::vector<TimingConstraint> &guard) {
   return std::all_of(guard.begin(), guard.end(),
                      [&clockValuation](const TimingConstraint &g) { return g.satisfy(clockValuation.at(g.x)); });
+}
+
+/*!
+  @brief Calculate the difference needed to satisfy all equality timing constraints in the guard.
+
+  Compute the time increment that satisfies all equality guards x == c under the given clock valuation.
+  Returns 0.0 if the guard is empty,
+  std::nullopt if equalities imply different increments,
+  and throws if any non-equality constraint is present.
+
+*/
+static std::optional<double> diff(const TimingValuation &clockValuation, const std::vector<TimingConstraint> &guard) {
+  std::optional<double> result = std::nullopt;
+  for (auto&& g: guard) {
+    if(g.odr != TimingConstraint::Order::eq) {
+      throw std::runtime_error("TimingConstraint: unsupported guard with inequality constraints on unobservable transition");
+    }
+    auto timeDiff = g.c - clockValuation.at(g.x);
+
+    if (!result) {
+      result = timeDiff;
+    } else if(*result != timeDiff) {
+      return std::nullopt;
+    }
+  }
+  if (!result)
+    result = 0.0;
+  return result;
 }
 
 /*!
