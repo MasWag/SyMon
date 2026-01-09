@@ -27,8 +27,8 @@ struct DataParametricMonitorResult {
 class DataParametricMonitor : public SingleSubject<DataParametricMonitorResult>,
                               public Observer<TimedWordEvent<PPLRational>> {
 public:
+  static const constexpr std::size_t unobservableActionID = 127;
   explicit DataParametricMonitor(const DataParametricTA &automaton) : automaton(automaton) {
-    absTime = 0;
     configurations.clear();
     // configurations.reserve(automaton.initialStates.size());
     std::vector<double> initCVal(automaton.clockVariableSize);
@@ -37,22 +37,30 @@ public:
     // by default, initNEnv is the universe of dimension automaton.numberVariableSize
     Symbolic::NumberValuation initNEnv(automaton.numberVariableSize);
     for (const auto &initialState: automaton.initialStates) {
-      configurations.insert({initialState, initCVal, initSEnv, initNEnv});
+      configurations.insert({initialState, initCVal, initSEnv, initNEnv, 0});
     }
   }
 
-  virtual ~DataParametricMonitor() = default;
+  virtual ~DataParametricMonitor() {
+    epsilonTransition(configurations);
+  }
 
   void notify(const TimedWordEvent<PPLRational> &event) override {
     const Action actionId = event.actionId;
     const std::vector<std::string> &strings = event.strings;
     const std::vector<PPLRational> &numbers = event.numbers;
     const double timestamp = event.timestamp;
+
     boost::unordered_set<Configuration> nextConfigurations;
+    configurations.merge(epsilonTransition(configurations));
 
     for (const Configuration &conf: configurations) {
       // make the current env
       auto clockValuation = std::get<1>(conf); //.clockValuation;
+      const auto absTime = std::get<4>(conf);
+      if (timestamp < absTime) {
+        continue;
+      }
       for (double &d: clockValuation) {
         d += timestamp - absTime;
       }
@@ -83,14 +91,13 @@ public:
           transition.update.execute(nextSEnv, nextNEnv);
           nextSEnv.resize(automaton.stringVariableSize);
           nextNEnv.remove_higher_space_dimensions(automaton.numberVariableSize);
-          nextConfigurations.insert({transition.target.lock(), std::move(nextCVal), nextSEnv, nextNEnv});
+          nextConfigurations.insert({transition.target.lock(), std::move(nextCVal), nextSEnv, nextNEnv, timestamp});
           if (transition.target.lock()->isMatch) {
             notifyObservers({index, timestamp, nextNEnv, nextSEnv});
           }
         }
       }
     }
-    absTime = timestamp;
     index++;
     configurations = std::move(nextConfigurations);
   }
@@ -98,7 +105,7 @@ public:
 private:
   const DataParametricTA automaton;
   using Configuration = std::tuple<std::shared_ptr<DataParametricTAState>, std::vector<double>,
-                                   Symbolic::StringValuation, Symbolic::NumberValuation>;
+                                   Symbolic::StringValuation, Symbolic::NumberValuation, double>;
   // Symbolic::NumberValuation>;
   /*  struct Configuration {
       std::shared_ptr<DataParametricTAState> state;
@@ -107,6 +114,77 @@ private:
       Symbolic::NumberValuation numberEnv;
     };*/
   boost::unordered_set<Configuration> configurations;
-  double absTime;
   std::size_t index = 0;
+
+  /**
+   * Performs epsilon (unobservable) transitions starting from the given configurations.
+   *
+   * This method repeatedly explores transitions labeled with the unobservable action
+   * from all current configurations, advancing time according to clock guards,
+   * applying clock resets and symbolic updates, and collecting all reachable
+   * configurations. Exploration continues until no further epsilon transitions
+   * are possible. Whenever a target state marked as a match is reached,
+   * it notifies registered observers using the current index, absolute time, and valuations.
+   *
+   * @param currentConfigurations
+   *        The initial set of configurations from which epsilon transitions
+   *        are taken. The set is passed by value and moved into an internal
+   *        worklist; it should not be used by the caller after this call.
+   *
+   * @return The set of configurations reachable via zero or more epsilon
+   *         transitions that cannot be further extended by additional epsilon
+   *         transitions.
+   *
+   */
+  boost::unordered_set<Configuration> epsilonTransition(boost::unordered_set<Configuration> currentConfigurations) {
+    // the next configurations to explore
+    boost::unordered_set<Configuration> nextConfigurations;
+    // the configurations reachable via epsilon transitions
+    boost::unordered_set<Configuration> returnConfigurations;
+
+    while (!currentConfigurations.empty()) {
+      nextConfigurations.clear();
+      for (const Configuration &conf: currentConfigurations) {
+        auto transitionIt = std::get<0>(conf)->next.find(unobservableActionID);
+        if (transitionIt == std::get<0>(conf)->next.end()) {
+          continue;
+        }
+        // make the current env
+        const auto clockValuation = std::get<1>(conf);
+        const auto stringEnv = std::get<2>(conf);
+        const auto numberEnv = std::get<3>(conf);
+        for (const auto &transition: transitionIt->second) {
+          // evaluate the guards
+          auto nextCVal = clockValuation;
+          auto nextSEnv = stringEnv;
+          auto nextNEnv = numberEnv;
+          auto extendedGuard = transition.guard;
+          
+          auto absTime = std::get<4>(conf);
+          auto df = diff(nextCVal, extendedGuard);
+          if (!df) continue;
+          for (double &d: nextCVal) {
+            d += df.value();
+          }
+          absTime += df.value();
+
+          if (eval(nextCVal, extendedGuard) &&
+              eval(transition.stringConstraints, nextSEnv, transition.numConstraints, nextNEnv)) {
+            for (const VariableID resetVar: transition.resetVars) {
+              nextCVal[resetVar] = 0;
+            }
+            auto nextState = transition.target.lock();
+            transition.update.execute(nextSEnv, nextNEnv);
+            nextConfigurations.insert({nextState, nextCVal, nextSEnv, nextNEnv, absTime});
+            returnConfigurations.insert({nextState, nextCVal, nextSEnv, nextNEnv, absTime});
+            if (nextState->isMatch) {
+              this->notifyObservers({index, absTime, nextNEnv, nextSEnv});
+            }
+          }
+        }
+      }
+      std::swap(currentConfigurations, nextConfigurations);
+    }
+    return returnConfigurations;
+  }
 };
