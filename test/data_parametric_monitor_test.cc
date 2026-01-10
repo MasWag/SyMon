@@ -2,7 +2,6 @@
 #include <boost/mpl/list.hpp>
 #include "../src/data_parametric_monitor.hh"
 #include "../test/fixture/copy_automaton_fixture.hh"
-
 #include "../test/fixture/non_integer_timestamp_fixture.hh"
 #include "../test/fixture/epsilon_transition_automaton_fixture.hh"
 
@@ -73,7 +72,7 @@ BOOST_FIXTURE_TEST_CASE(test2, DataParametricMonitorFixture)
 
 BOOST_FIXTURE_TEST_CASE(epsilon_test1, DataParametricMonitorFixture)
 {
-  auto automaton = EpsilonTransitionAutomatonFixture::fixture1.makeDataParametricTA();
+  auto automaton = EpsilonTransitionAutomatonFixture::FIXTURE1.makeDataParametricTA();
 
   std::vector<TWEvent> timedWord{
         {0, {"c"}, {}, 1},
@@ -99,7 +98,7 @@ BOOST_FIXTURE_TEST_CASE(epsilon_test1, DataParametricMonitorFixture)
 
 BOOST_FIXTURE_TEST_CASE(epsilon_test2, DataParametricMonitorFixture)
 {
-  auto automaton = EpsilonTransitionAutomatonFixture::fixture2.makeDataParametricTA();
+  auto automaton = EpsilonTransitionAutomatonFixture::FIXTURE2.makeDataParametricTA();
 
   std::vector<TWEvent> timedWord{
         {0, {"a"}, {}, 0},
@@ -116,7 +115,7 @@ BOOST_FIXTURE_TEST_CASE(epsilon_test2, DataParametricMonitorFixture)
 
 BOOST_FIXTURE_TEST_CASE(epsilon_test3, DataParametricMonitorFixture)
 {
-  auto automaton = EpsilonTransitionAutomatonFixture::fixture3.makeDataParametricTA();
+  auto automaton = EpsilonTransitionAutomatonFixture::FIXTURE3.makeDataParametricTA();
 
   std::vector<TWEvent> timedWord{
         {0, {"a"}, {}, 0},
@@ -134,7 +133,7 @@ BOOST_FIXTURE_TEST_CASE(epsilon_test3, DataParametricMonitorFixture)
 
 BOOST_FIXTURE_TEST_CASE(epsilon_test4, DataParametricMonitorFixture)
 {
-  auto automaton = EpsilonTransitionAutomatonFixture::fixture4.makeDataParametricTA();
+  auto automaton = EpsilonTransitionAutomatonFixture::FIXTURE4.makeDataParametricTA();
 
   std::vector<TWEvent> timedWord{
         {0, {"a"}, {}, 1.5},

@@ -78,7 +78,7 @@ namespace IntTest {
 
     BOOST_FIXTURE_TEST_CASE(epsilon_test1, BooleanMonitorFixture)
     {
-      auto automaton = EpsilonTransitionAutomatonFixture::fixture1.makeBooleanTA();
+      auto automaton = EpsilonTransitionAutomatonFixture::FIXTURE1.makeBooleanTA();
 
       std::vector<TimedWordEvent> timedWord{
             {0, {"c"}, {}, 1},
@@ -104,7 +104,7 @@ namespace IntTest {
 
     BOOST_FIXTURE_TEST_CASE(epsilon_test2, BooleanMonitorFixture)
     {
-      auto automaton = EpsilonTransitionAutomatonFixture::fixture2.makeBooleanTA();
+      auto automaton = EpsilonTransitionAutomatonFixture::FIXTURE2.makeBooleanTA();
 
       std::vector<TimedWordEvent> timedWord{
             {0, {"a"}, {}, 0},
@@ -121,7 +121,7 @@ namespace IntTest {
 
     BOOST_FIXTURE_TEST_CASE(epsilon_test3, BooleanMonitorFixture)
     {
-      auto automaton = EpsilonTransitionAutomatonFixture::fixture3.makeBooleanTA();
+      auto automaton = EpsilonTransitionAutomatonFixture::FIXTURE3.makeBooleanTA();
 
       std::vector<TimedWordEvent> timedWord{
             {0, {"a"}, {}, 0},
@@ -139,7 +139,7 @@ namespace IntTest {
 
     BOOST_FIXTURE_TEST_CASE(epsilon_test4, BooleanMonitorFixture)
     {
-      auto automaton = EpsilonTransitionAutomatonFixture::fixture4.makeBooleanTA();
+      auto automaton = EpsilonTransitionAutomatonFixture::FIXTURE4.makeBooleanTA();
 
       std::vector<TimedWordEvent> timedWord{
             {0, {"a"}, {}, 1.5},
