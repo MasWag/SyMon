@@ -7,50 +7,54 @@
 #include <boost/mpl/list.hpp>
 #include <boost/test/unit_test.hpp>
 
+template<typename TimedWordEvent>
+struct DummyTimedWordSubject : public SingleSubject<TimedWordEvent> {
+  DummyTimedWordSubject(std::vector<TimedWordEvent> &&vec) : vec(std::move(vec)) {
+  }
+  virtual ~DummyTimedWordSubject() {
+  }
+  void notifyAll() {
+    for (const auto &event: vec) {
+      this->notifyObservers(event);
+    }
+    vec.clear();
+  }
+  std::vector<TimedWordEvent> vec;
+};
+
+template<typename Number>
+struct DummyBooleanMonitorObserver : public Observer<BooleanMonitorResult<Number>> {
+  DummyBooleanMonitorObserver() {
+  }
+  virtual ~DummyBooleanMonitorObserver() {
+  }
+  void notify(const BooleanMonitorResult<Number> &result) {
+    resultVec.push_back(result);
+  }
+  std::vector<BooleanMonitorResult<Number>> resultVec;
+};
+
+template<typename Number, typename TimedWordEvent>
+struct BooleanMonitorFixture {
+  void feed(const NonParametricTA<Number> &automaton, std::vector<TimedWordEvent> &&vec) {
+    auto monitor = std::make_shared<NonSymbolic::BooleanMonitor<Number>>(automaton);
+    std::shared_ptr<DummyBooleanMonitorObserver<Number>> observer = std::make_shared<DummyBooleanMonitorObserver<Number>>();
+    monitor->addObserver(observer);
+    DummyTimedWordSubject<TimedWordEvent> subject{std::move(vec)};
+    subject.addObserver(monitor);
+    subject.notifyAll();
+    // Ensure the monitor's destructor runs now to emit epsilon-transition notifications
+    subject.addObserver(nullptr); // release subject's shared ownership
+    monitor.reset();            // release local ownership
+    resultVec = std::move(observer->resultVec);
+  }
+  std::vector<BooleanMonitorResult<Number>> resultVec;
+};
+
 namespace IntTest {
   using Number = int;
   using TimedWordEvent = TimedWordEvent<Number, double>;
-
-  struct DummyTimedWordSubject : public SingleSubject<TimedWordEvent> {
-    DummyTimedWordSubject(std::vector<TimedWordEvent> &&vec) : vec(std::move(vec)) {
-    }
-    virtual ~DummyTimedWordSubject() {
-    }
-    void notifyAll() {
-      for (const auto &event: vec) {
-        notifyObservers(event);
-      }
-      vec.clear();
-    }
-    std::vector<TimedWordEvent> vec;
-  };
-
-  struct DummyBooleanMonitorObserver : public Observer<BooleanMonitorResult<Number>> {
-    DummyBooleanMonitorObserver() {
-    }
-    virtual ~DummyBooleanMonitorObserver() {
-    }
-    void notify(const BooleanMonitorResult<Number> &result) {
-      resultVec.push_back(result);
-    }
-    std::vector<BooleanMonitorResult<Number>> resultVec;
-  };
-
-  struct BooleanMonitorFixture {
-    void feed(const NonParametricTA<int> &automaton, std::vector<TimedWordEvent> &&vec) {
-      auto monitor = std::make_shared<NonSymbolic::BooleanMonitor<int>>(automaton);
-      std::shared_ptr<DummyBooleanMonitorObserver> observer = std::make_shared<DummyBooleanMonitorObserver>();
-      monitor->addObserver(observer);
-      DummyTimedWordSubject subject{std::move(vec)};
-      subject.addObserver(monitor);
-      subject.notifyAll();
-      // Ensure the monitor's destructor runs now to emit epsilon-transition notifications
-      subject.addObserver(nullptr); // release subject's shared ownership
-      monitor.reset();            // release local ownership
-      resultVec = std::move(observer->resultVec);
-    }
-    std::vector<BooleanMonitorResult<int>> resultVec;
-  };
+  using BooleanMonitorFixture = BooleanMonitorFixture<Number, TimedWordEvent>;
 
   BOOST_AUTO_TEST_SUITE(BooleanMonitorTest)
     BOOST_FIXTURE_TEST_CASE(test1, BooleanMonitorFixture)
@@ -164,47 +168,10 @@ namespace IntTest {
 namespace DoubleTest {
   using Number = double;
   using TimedWordEvent = TimedWordEvent<Number, double>;
-
-  struct DummyTimedWordSubject : public SingleSubject<TimedWordEvent> {
-    DummyTimedWordSubject(std::vector<TimedWordEvent> &&vec) : vec(std::move(vec)) {
-    }
-    virtual ~DummyTimedWordSubject() {
-    }
-    void notifyAll() {
-      for (const auto &event: vec) {
-        notifyObservers(event);
-      }
-      vec.clear();
-    }
-    std::vector<TimedWordEvent> vec;
-  };
-
-  struct DummyBooleanMonitorObserver : public Observer<BooleanMonitorResult<Number>> {
-    DummyBooleanMonitorObserver() {
-    }
-    virtual ~DummyBooleanMonitorObserver() {
-    }
-    void notify(const BooleanMonitorResult<Number> &result) {
-      resultVec.push_back(result);
-    }
-    std::vector<BooleanMonitorResult<Number>> resultVec;
-  };
-  
-  struct NonIntegerTimestampBooleanMonitorFixture : public NonParametric::NonIntegerTimestampFixture {
-    void feed(std::vector<TimedWordEvent> &&vec) {
-      auto monitor = std::make_shared<NonSymbolic::BooleanMonitor<Number>>(automaton);
-      std::shared_ptr<DummyBooleanMonitorObserver> observer = std::make_shared<DummyBooleanMonitorObserver>();
-      monitor->addObserver(observer);
-      DummyTimedWordSubject subject{std::move(vec)};
-      subject.addObserver(monitor);
-      subject.notifyAll();
-      resultVec = std::move(observer->resultVec);
-    }
-    std::vector<BooleanMonitorResult<Number>> resultVec;
-  };
+  using BooleanMonitorFixture = BooleanMonitorFixture<Number, TimedWordEvent>;
 
   BOOST_AUTO_TEST_SUITE(BooleanMonitorTest)
-    BOOST_FIXTURE_TEST_CASE(non_integer_timestamp_test, NonIntegerTimestampBooleanMonitorFixture) {
+    BOOST_FIXTURE_TEST_CASE(non_integer_timestamp_test, BooleanMonitorFixture) {
       std::vector<TimedWordEvent> dummyTimedWord{
         {0, {}, {0}, 0.},
         {0, {}, {0}, 1.0},
@@ -212,7 +179,7 @@ namespace DoubleTest {
         {0, {}, {0}, 3.3},
         {0, {}, {0}, 4.6}
       };
-      feed(std::move(dummyTimedWord));
+      feed(NonParametric::NonIntegerTimestampFixture().automaton, std::move(dummyTimedWord));
       //NOTE: 3.3 - 2.1 is 1.2, but this is evaluated as 1.1999999999999997 < 1.2, so the fourth event is also matched.
       //BOOST_CHECK_EQUAL(resultVec.size(), 1);
       BOOST_CHECK_EQUAL(resultVec.front().index, 2);
