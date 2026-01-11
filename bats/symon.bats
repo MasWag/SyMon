@@ -96,3 +96,7 @@ assert_example_output() {
         diff - "$EXPECTED_OUTPUT"
     rm -f "$INPUT" "$EXPECTED_OUTPUT"
 }
+
+@test "boolean unobservable" {
+    assert_example_output "-bnf" "${EXAMPLE_DIR}/unobservable_boolean.symon"
+}

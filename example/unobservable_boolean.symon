@@ -1,0 +1,28 @@
+#!/usr/bin/env symon -bnf
+## BEGIN_INPUT
+# ping 5 1
+# ping 5 3
+## END_INPUT
+## BEGIN_OUTPUT
+# @3.000000.	(time-point 1)	x0 == 5
+## END_OUTPUT
+
+var {
+    last: number;
+}
+
+signature ping {
+    n: number;
+}
+
+expr save { ping(n | | last := n) }
+expr delay { within (= 2) { unobservable( | | last := last ) } }
+expr check { ping(n | n = last) }
+
+expr main {
+    save;
+    delay;
+    check
+}
+
+main

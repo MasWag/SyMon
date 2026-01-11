@@ -2,7 +2,6 @@
 #include <boost/mpl/list.hpp>
 #include "../src/data_parametric_monitor.hh"
 #include "../test/fixture/copy_automaton_fixture.hh"
-
 #include "../test/fixture/non_integer_timestamp_fixture.hh"
 #include "../test/fixture/epsilon_transition_automaton_fixture.hh"
 
@@ -73,7 +72,7 @@ BOOST_FIXTURE_TEST_CASE(test2, DataParametricMonitorFixture)
 
 BOOST_FIXTURE_TEST_CASE(epsilon_test1, DataParametricMonitorFixture)
 {
-  auto automaton = EpsilonTransitionAutomatonFixture::fixture1.makeDataParametricTA();
+  auto automaton = EpsilonTransitionAutomatonFixture::FIXTURE1.makeDataParametricTA();
 
   std::vector<TWEvent> timedWord{
         {0, {"c"}, {}, 1},
@@ -99,7 +98,7 @@ BOOST_FIXTURE_TEST_CASE(epsilon_test1, DataParametricMonitorFixture)
 
 BOOST_FIXTURE_TEST_CASE(epsilon_test2, DataParametricMonitorFixture)
 {
-  auto automaton = EpsilonTransitionAutomatonFixture::fixture2.makeDataParametricTA();
+  auto automaton = EpsilonTransitionAutomatonFixture::FIXTURE2.makeDataParametricTA();
 
   std::vector<TWEvent> timedWord{
         {0, {"a"}, {}, 0},
@@ -116,7 +115,7 @@ BOOST_FIXTURE_TEST_CASE(epsilon_test2, DataParametricMonitorFixture)
 
 BOOST_FIXTURE_TEST_CASE(epsilon_test3, DataParametricMonitorFixture)
 {
-  auto automaton = EpsilonTransitionAutomatonFixture::fixture3.makeDataParametricTA();
+  auto automaton = EpsilonTransitionAutomatonFixture::FIXTURE3.makeDataParametricTA();
 
   std::vector<TWEvent> timedWord{
         {0, {"a"}, {}, 0},
@@ -134,7 +133,7 @@ BOOST_FIXTURE_TEST_CASE(epsilon_test3, DataParametricMonitorFixture)
 
 BOOST_FIXTURE_TEST_CASE(epsilon_test4, DataParametricMonitorFixture)
 {
-  auto automaton = EpsilonTransitionAutomatonFixture::fixture4.makeDataParametricTA();
+  auto automaton = EpsilonTransitionAutomatonFixture::FIXTURE4.makeDataParametricTA();
 
   std::vector<TWEvent> timedWord{
         {0, {"a"}, {}, 1.5},
@@ -155,21 +154,8 @@ BOOST_FIXTURE_TEST_CASE(epsilon_test4, DataParametricMonitorFixture)
 BOOST_AUTO_TEST_SUITE_END()
 
 
-struct NonIntegerTimestampDataParametricMonitorFixture : public Parametric::DataParametricNonIntegerTimestampFixture {
-  void feed(std::vector<TWEvent> &&vec) {
-    auto monitor = std::make_shared<DataParametricMonitor>(automaton);
-    std::shared_ptr<DummyDataParametricMonitorObserver> observer = std::make_shared<DummyDataParametricMonitorObserver>();
-    monitor->addObserver(observer);
-    DummyDataTimedWordSubject subject{std::move(vec)};
-    subject.addObserver(monitor);
-    subject.notifyAll();
-    resultVec = std::move(observer->resultVec);
-  }
-  std::vector<DataParametricMonitorResult> resultVec;
-};
-
 BOOST_AUTO_TEST_SUITE(DataParametricNonIntegerTimestampMonitorTest)
-  BOOST_FIXTURE_TEST_CASE(non_integer_timestamp_test, NonIntegerTimestampDataParametricMonitorFixture) {
+  BOOST_FIXTURE_TEST_CASE(non_integer_timestamp_test, DataParametricMonitorFixture) {
     std::vector<TWEvent> dummyTimedWord{
       {0, {}, {0}, 0.},
       {0, {}, {0}, 1.0},
@@ -177,7 +163,7 @@ BOOST_AUTO_TEST_SUITE(DataParametricNonIntegerTimestampMonitorTest)
       {0, {}, {0}, 3.3},
       {0, {}, {0}, 4.6}
     };
-    feed(std::move(dummyTimedWord));
+    feed(Parametric::DataParametricNonIntegerTimestampFixture().automaton, std::move(dummyTimedWord));
     //NOTE: 3.3 - 2.1 is 1.2, but this is evaluated as 1.1999999999999997 < 1.2, so the fourth event is also matched.
     //BOOST_CHECK_EQUAL(resultVec.size(), 1);
     BOOST_CHECK_EQUAL(resultVec.front().index, 2);
