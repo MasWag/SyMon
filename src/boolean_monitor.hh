@@ -78,8 +78,12 @@ namespace NonSymbolic {
             transition.update.execute(nextSEnv, nextNEnv);
             nextSEnv.resize(automaton.stringVariableSize);
             nextNEnv.resize(automaton.numberVariableSize);
-            nextConfigurations.insert({transition.target.lock(), std::move(nextCVal), nextSEnv, nextNEnv, timestamp});
-            if (transition.target.lock()->isMatch) {
+            auto target = transition.target.lock();
+            if (!target) {
+              continue;
+            }
+            nextConfigurations.insert({target, std::move(nextCVal), nextSEnv, nextNEnv, timestamp});
+            if (target->isMatch) {
               this->notifyObservers({index, timestamp, nextNEnv, nextSEnv});
             }
           }
