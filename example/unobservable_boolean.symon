@@ -4,7 +4,7 @@
 # ping 5 3
 ## END_INPUT
 ## BEGIN_OUTPUT
-# @3.000000.	(time-point 1)	x0 == 5
+# @5.000000.	(time-point 2)	x0 == 5
 ## END_OUTPUT
 
 var {
@@ -22,7 +22,8 @@ expr check { ping(n | n = last) }
 expr main {
     save;
     delay;
-    check
+    check;
+    delay
 }
 
 main

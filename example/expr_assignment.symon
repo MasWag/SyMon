@@ -4,19 +4,20 @@
 # data alpha 2.0
 ## END_INPUT
 ## BEGIN_OUTPUT
-# @2.000000.	(time-point 1)	x0==alpha
+# @2.000000.	(time-point 1)	x0==alpha	x0==20
 ## END_OUTPUT
 
 var {
     saved: string;
+    value: number;
 }
 
 signature data {
     id: string;
 }
 
-expr set { data(id | | saved := "alpha") }
-expr check { data(id | id == saved) }
+expr set { data(id | | saved := "alpha"; value := 10 + 5 + 3 + 2) }
+expr check { data(id | id == saved && value = 20) }
 
 set;
 check
