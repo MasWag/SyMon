@@ -100,3 +100,7 @@ assert_example_output() {
 @test "boolean unobservable" {
     assert_example_output "-bnf" "${EXAMPLE_DIR}/unobservable_boolean.symon"
 }
+
+@test "decimal_inputs" {
+    assert_example_output "-dnf" "${EXAMPLE_DIR}/decimal_inputs.symon"
+}

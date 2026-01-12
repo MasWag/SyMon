@@ -1,0 +1,19 @@
+#!/usr/bin/env symon -dnf
+## BEGIN_INPUT
+# ping 2.5 1.5
+# ping 4.5 1.75
+## END_INPUT
+## BEGIN_OUTPUT
+# @1.750000.	(time-point 1)	A = 7
+## END_OUTPUT
+
+var {
+    total: number;
+}
+
+signature ping {
+    n: number;
+}
+
+ping( n | | total := n );
+ping( n | | total := total + n )
