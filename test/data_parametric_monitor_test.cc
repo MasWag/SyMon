@@ -6,6 +6,7 @@
 #include "../test/fixture/epsilon_transition_automaton_fixture.hh"
 
 using TWEvent = TimedWordEvent<PPLRational>;
+using Timestamp = double;
 
 struct DummyDataTimedWordSubject : public SingleSubject<TWEvent> {
   DummyDataTimedWordSubject(std::vector<TWEvent> &&vec) :vec(std::move(vec)) {}
@@ -29,8 +30,8 @@ struct DummyDataParametricMonitorObserver : public Observer<DataParametricMonito
 };
 
 struct DataParametricMonitorFixture {
-  void feed(DataParametricTA automaton, std::vector<TWEvent> &&vec) {
-    auto monitor = std::make_shared<DataParametricMonitor>(automaton);
+  void feed(DataParametricTA<Timestamp> automaton, std::vector<TWEvent> &&vec) {
+    auto monitor = std::make_shared<DataParametricMonitor<Timestamp>>(automaton);
     std::shared_ptr<DummyDataParametricMonitorObserver> observer = std::make_shared<DummyDataParametricMonitorObserver>();
     monitor->addObserver(observer);
     DummyDataTimedWordSubject subject{std::move(vec)};
