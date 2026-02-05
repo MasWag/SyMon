@@ -15,7 +15,7 @@ inline bool toBool(Order odr) {
   return odr == Order::EQ;
 }
 
-enum class TimingConstraintOrder { lt, le, ge, gt };
+enum class TimingConstraintOrder { lt, le, ge, gt, eq };
 
 //! @brief A constraint in a guard of transitions
 template <typename Timestamp>
@@ -34,7 +34,7 @@ struct TimingConstraint {
         return d > c;
       case TimingConstraintOrder::ge:
         return d >= c;
-      case Order::eq:
+      case TimingConstraintOrder::eq:
         return d == c;
     }
     return false;
@@ -69,7 +69,6 @@ struct TimingConstraint {
 
 // An interface to write an inequality constrait easily
 class ConstraintMaker {
-  using Timestamp = TimingConstraint::Timestamp;
   ClockVariables x;
 
 public:
@@ -96,8 +95,9 @@ public:
     return TimingConstraint<Timestamp>{x, TimingConstraintOrder::ge, c};
   }
 
-  TimingConstraint operator==(Timestamp c) {
-    return TimingConstraint{x, TimingConstraint::Order::eq, c};
+  template<typename Timestamp = double>
+  TimingConstraint<Timestamp> operator==(Timestamp c) {
+    return TimingConstraint<Timestamp>{x, TimingConstraintOrder::eq, c};
   }
 };
 
@@ -127,10 +127,11 @@ static bool eval(const TimingValuation<Timestamp> &clockValuation, const std::ve
   and throws if any non-equality constraint is present.
 
 */
-static std::optional<double> diff(const TimingValuation &clockValuation, const std::vector<TimingConstraint> &guard) {
+template<typename Timestamp>
+static std::optional<double> diff(const TimingValuation<Timestamp> &clockValuation, const std::vector<TimingConstraint<Timestamp>> &guard) {
   std::optional<double> result = std::nullopt;
   for (auto&& g: guard) {
-    if(g.odr != TimingConstraint::Order::eq) {
+    if(g.odr != TimingConstraintOrder::eq) {
       throw std::runtime_error("TimingConstraint: unsupported guard with inequality constraints on unobservable transition");
     }
     auto timeDiff = g.c - clockValuation.at(g.x);
