@@ -96,7 +96,7 @@ namespace NonSymbolic {
   private:
     const NonParametricTA<Number, Timestamp> automaton;
     using Configuration = std::tuple<std::shared_ptr<NonParametricTAState<Number, Timestamp>>, std::vector<Timestamp>,
-                                     StringValuation, NumberValuation<Number>, double>>;
+                                     StringValuation, NumberValuation<Number>, double>;
     // struct Configuration {
     //   std::shared_ptr<AutomatonState<Number>> state;
     //   std::vector<Timestamp> clockValuation;

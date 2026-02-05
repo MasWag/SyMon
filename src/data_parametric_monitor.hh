@@ -32,7 +32,6 @@ class DataParametricMonitor : public SingleSubject<DataParametricMonitorResult<T
 public:
   static const constexpr std::size_t unobservableActionID = 127;
   explicit DataParametricMonitor(const DataParametricTA<Timestamp> &automaton) : automaton(automaton) {
-    absTime = 0;
     configurations.clear();
     // configurations.reserve(automaton.initialStates.size());
     std::vector<Timestamp> initCVal(automaton.clockVariableSize);
@@ -54,7 +53,7 @@ public:
     const std::vector<std::string> &strings = event.strings;
     const std::vector<PPLRational> &numbers = event.numbers;
     const Timestamp timestamp = event.timestamp;
-    
+
     boost::unordered_set<Configuration> nextConfigurations;
     configurations.merge(epsilonTransition(configurations));
 
@@ -109,7 +108,7 @@ public:
 private:
   const DataParametricTA<Timestamp> automaton;
   using Configuration = std::tuple<std::shared_ptr<DataParametricTAState<Timestamp>>, std::vector<Timestamp>,
-                                   Symbolic::StringValuation, Symbolic::NumberValuation, double>>;
+                                   Symbolic::StringValuation, Symbolic::NumberValuation, double>;
   // Symbolic::NumberValuation>;
   /*  struct Configuration {
       std::shared_ptr<DataParametricTAState> state;
