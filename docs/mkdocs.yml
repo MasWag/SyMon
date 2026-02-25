@@ -10,10 +10,11 @@ theme:
     primary: light blue
 
 nav:
-  - Home: .
+  - Home: index.md
   - Getting Started: getting_started.md
   - Installation: install.md
   - Examples: examples.md
+  - Publications: publications.md
   - Syntax: syntax.md
   - Tools: tools.md
 
