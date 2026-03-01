@@ -6,6 +6,7 @@
 #include "../test/fixture/epsilon_transition_automaton_fixture.hh"
 
 using TWEvent = TimedWordEvent<PPLRational>;
+using Timestamp = double;
 
 struct DummyDataTimedWordSubject : public SingleSubject<TWEvent> {
   DummyDataTimedWordSubject(std::vector<TWEvent> &&vec) :vec(std::move(vec)) {}
@@ -19,18 +20,18 @@ struct DummyDataTimedWordSubject : public SingleSubject<TWEvent> {
   std::vector<TWEvent> vec;
 };
 
-struct DummyDataParametricMonitorObserver : public Observer<DataParametricMonitorResult> {
+struct DummyDataParametricMonitorObserver : public Observer<DataParametricMonitorResult<double>> {
   DummyDataParametricMonitorObserver() {}
   virtual ~DummyDataParametricMonitorObserver() {}
-  void notify(const DataParametricMonitorResult& result) {
+  void notify(const DataParametricMonitorResult<double>& result) {
     resultVec.push_back(result);
   }
-  std::vector<DataParametricMonitorResult> resultVec;
+  std::vector<DataParametricMonitorResult<double>> resultVec;
 };
 
 struct DataParametricMonitorFixture {
-  void feed(DataParametricTA automaton, std::vector<TWEvent> &&vec) {
-    auto monitor = std::make_shared<DataParametricMonitor>(automaton);
+  void feed(DataParametricTA<Timestamp> automaton, std::vector<TWEvent> &&vec) {
+    auto monitor = std::make_shared<DataParametricMonitor<Timestamp>>(automaton);
     std::shared_ptr<DummyDataParametricMonitorObserver> observer = std::make_shared<DummyDataParametricMonitorObserver>();
     monitor->addObserver(observer);
     DummyDataTimedWordSubject subject{std::move(vec)};
@@ -41,7 +42,7 @@ struct DataParametricMonitorFixture {
     monitor.reset();            // release local ownership
     resultVec = std::move(observer->resultVec);
   }
-  std::vector<DataParametricMonitorResult> resultVec;
+  std::vector<DataParametricMonitorResult<double>> resultVec;
 };
 
 BOOST_AUTO_TEST_SUITE(DataParametricMonitorTest)
