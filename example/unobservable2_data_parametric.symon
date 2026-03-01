@@ -1,0 +1,25 @@
+#!/usr/bin/env symon -dnf
+## BEGIN_INPUT
+# event   a   0
+# event   b   2
+# event   a   10
+# event   b   11
+## END_INPUT
+## BEGIN_OUTPUT
+# @2.000000.	(time-point 1)	x0 == z	true
+## END_OUTPUT
+
+var {
+    value: string;
+}
+
+signature event {
+    id: string;
+}
+
+(event(id))*;
+event( id | id == "a" | value := "x");
+within (= 2) {
+        unobservable(| |  value := "z")
+};
+event( id | id == "b" && value == "z")
