@@ -44,15 +44,15 @@ The examples used in our CAV 2019 paper is [here](example/cav2019/README.md).
 Installation
 ------------
 
-SyMon is tested on macOS 10.14.4
+SyMon is tested on macOS 26.4.1, Debian 13, and Ubuntu 26.04.
 
 ### Requirements
 
 * C++ compiler supporting C++17 and the corresponding libraries.
 * Boost (>= 1.67.0)
-* CMake
+* CMake (>= 3.25)
 * Parma Polyhedra Library
-* tree-sitter (>= 0.21.0)
+* Tree Sitter (>= 0.21.1)
 
 ### Instructions
 

@@ -44,9 +44,9 @@ To build SyMon from scratch, you need to install the following dependencies.
 - Boost (>= 1.67.0)
 - CMake (>= 3.25)
 - Parma Polyhedra Library
-- Tree Sitter
+- Tree Sitter (>= 0.21.1)
 
-On Ubuntu, the above can be installed as follows.
+On Debian >= 13 and Ubuntu >= 26.04, the above can be installed as follows. In older versions of Debian and Ubuntu, you may need to manually install some dependencies.
 
 ```sh
 sudo apt-get install libppl-dev \
