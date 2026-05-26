@@ -632,27 +632,19 @@ private:
     if (ts_node_type(parent) != std::string("constraint_list")) {
       throw std::runtime_error(makeErrorMessage("Expected constraint_list node", content, parent));
     }
-    uint32_t nodeSize = ts_node_child_count(parent);
-    while (true) {
-      if (nodeSize == 0) {
-        break;
-      }
-      const TSNode child = ts_node_child(parent, 0);
-      if (ts_node_type(child) != std::string("constraint")) {
-        throw std::runtime_error(
-            makeErrorMessage("Expected constraint node as first child of constraint_list", content, child));
-      }
-      if (TSNode constraint = ts_node_child(child, 0); ts_node_type(constraint) == std::string("string_constraint")) {
-        stringConstraints.push_back(this->parseStringConstraint(content, constraint));
-      } else if (ts_node_type(constraint) == std::string("numeric_constraint")) {
-        numberConstraints.push_back(this->parseNumericConstraint(content, constraint));
-      }
-
-      if (nodeSize == 3) {
-        parent = ts_node_child(parent, 2);
-        nodeSize = ts_node_child_count(parent);
-      } else {
-        break;
+    const uint32_t nodeSize = ts_node_child_count(parent);
+    for (uint32_t i = 0; i < nodeSize; ++i) {
+      const TSNode child = ts_node_child(parent, i);
+      const std::string childType = ts_node_type(child);
+      if (childType == "constraint") {
+        const TSNode constraint = ts_node_child(child, 0);
+        if (ts_node_type(constraint) == std::string("string_constraint")) {
+          stringConstraints.push_back(this->parseStringConstraint(content, constraint));
+        } else if (ts_node_type(constraint) == std::string("numeric_constraint")) {
+          numberConstraints.push_back(this->parseNumericConstraint(content, constraint));
+        }
+      } else if (childType == "constraint_list") {
+        this->parseConstraintList(content, child, stringConstraints, numberConstraints);
       }
     }
   }
