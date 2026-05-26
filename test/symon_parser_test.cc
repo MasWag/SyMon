@@ -113,6 +113,88 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().update.numberUpdate.size(), 0);
         }
 
+        BOOST_AUTO_TEST_CASE(validStringVariableEquality) {
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint>, Update> parser;
+            const std::string content =
+                "var {seenSrc: string;} signature send_CON {src: string;mid: number;} "
+                "send_CON(src, mid | src == seenSrc)";
+            parser.parse(content);
+
+            const NonParametricTA<int> automaton = parser.getAutomaton();
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().stringConstraints.size(), 1);
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().numConstraints.size(), 0);
+        }
+
+        BOOST_AUTO_TEST_CASE(validNumericExpressionEquality) {
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint>, Update> parser;
+            const std::string content =
+                "var {seenMid: number;} signature send_CON {src: string;mid: number;} "
+                "send_CON(src, mid | mid - seenMid = 0)";
+            parser.parse(content);
+
+            const NonParametricTA<int> automaton = parser.getAutomaton();
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().stringConstraints.size(), 0);
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().numConstraints.size(), 1);
+        }
+
+        BOOST_AUTO_TEST_CASE(stringEqualityWithNumericOperatorReportsSuggestion) {
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint>, Update> parser;
+            const std::string content =
+                "var {seenSrc: string;} signature send_CON {src: string;mid: number;} "
+                "send_CON(src, mid | src = seenSrc)";
+
+            try {
+                parser.parse(content);
+                BOOST_FAIL("Expected parser error");
+            } catch (const std::runtime_error &error) {
+                BOOST_TEST(std::string(error.what()).find("use '=='") != std::string::npos);
+            }
+        }
+
+        BOOST_AUTO_TEST_CASE(stringInequalityWithNumericOperatorReportsSuggestion) {
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint>, Update> parser;
+            const std::string content =
+                "var {seenSrc: string;} signature send_CON {src: string;mid: number;} "
+                "send_CON(src, mid | src <> seenSrc)";
+
+            try {
+                parser.parse(content);
+                BOOST_FAIL("Expected parser error");
+            } catch (const std::runtime_error &error) {
+                BOOST_TEST(std::string(error.what()).find("use '!='") != std::string::npos);
+            }
+        }
+
+        BOOST_AUTO_TEST_CASE(numericEqualityWithStringOperatorReportsSuggestion) {
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint>, Update> parser;
+            const std::string content =
+                "var {seenMid: number;} signature send_CON {src: string;mid: number;} "
+                "send_CON(src, mid | mid - seenMid == 0)";
+
+            try {
+                parser.parse(content);
+                BOOST_FAIL("Expected parser error");
+            } catch (const std::runtime_error &error) {
+                const std::string message = error.what();
+                BOOST_TEST((message.find("use '='") != std::string::npos ||
+                            message.find("Syntax error") != std::string::npos));
+            }
+        }
+
+        BOOST_AUTO_TEST_CASE(numericInequalityWithStringOperatorReportsSuggestion) {
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint>, Update> parser;
+            const std::string content =
+                "var {seenMid: number;} signature send_CON {src: string;mid: number;} "
+                "send_CON(src, mid | mid != seenMid)";
+
+            try {
+                parser.parse(content);
+                BOOST_FAIL("Expected parser error");
+            } catch (const std::runtime_error &error) {
+                BOOST_TEST(std::string(error.what()).find("use '<>'") != std::string::npos);
+            }
+        }
+
         BOOST_AUTO_TEST_CASE(timingConstraint) {
             SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint>, Update> parser;
             const std::string content = "signature update {id: string;value: number;} (update(id, value))%(< 5)";

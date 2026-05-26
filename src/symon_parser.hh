@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cctype>
 #include <iostream>
 #include <istream>
 #include <sstream>
@@ -336,6 +337,90 @@ private:
     return std::nullopt;
   }
 
+  enum class OperandKind { Unknown, String, Number };
+
+  static std::string nodeText(const std::string &content, const TSNode &node) {
+    return std::string(content.begin() + ts_node_start_byte(node), content.begin() + ts_node_end_byte(node));
+  }
+
+  static bool isStringLiteralText(const std::string &text) {
+    return text.size() >= 2 && text.front() == '"' && text.back() == '"';
+  }
+
+  static bool isNumberLiteralText(const std::string &text) {
+    if (text.empty()) {
+      return false;
+    }
+    bool hasDigit = false;
+    bool hasDot = false;
+    std::size_t i = text.front() == '-' || text.front() == '+' ? 1 : 0;
+    for (; i < text.size(); ++i) {
+      const char c = text[i];
+      if (std::isdigit(static_cast<unsigned char>(c))) {
+        hasDigit = true;
+      } else if (c == '.' && !hasDot) {
+        hasDot = true;
+      } else {
+        return false;
+      }
+    }
+    return hasDigit;
+  }
+
+  bool isKnownStringIdentifier(const std::string &identifier) const {
+    if (std::find(this->globalStringVariables.begin(), this->globalStringVariables.end(), identifier) !=
+        this->globalStringVariables.end()) {
+      return true;
+    }
+    return this->localStringVariables &&
+           std::find(this->localStringVariables->begin(), this->localStringVariables->end(), identifier) !=
+               this->localStringVariables->end();
+  }
+
+  bool isKnownNumberIdentifier(const std::string &identifier) const {
+    if (std::find(this->globalNumberVariables.begin(), this->globalNumberVariables.end(), identifier) !=
+        this->globalNumberVariables.end()) {
+      return true;
+    }
+    return this->localNumberVariables &&
+           std::find(this->localNumberVariables->begin(), this->localNumberVariables->end(), identifier) !=
+               this->localNumberVariables->end();
+  }
+
+  OperandKind classifyOperand(const std::string &content, const TSNode &node) const {
+    const std::string type = ts_node_type(node);
+    const std::string text = nodeText(content, node);
+    if (type == "identifier") {
+      const bool knownString = this->isKnownStringIdentifier(text);
+      const bool knownNumber = this->isKnownNumberIdentifier(text);
+      if (knownString && !knownNumber) {
+        return OperandKind::String;
+      }
+      if (knownNumber && !knownString) {
+        return OperandKind::Number;
+      }
+      return OperandKind::Unknown;
+    }
+    if (isStringLiteralText(text)) {
+      return OperandKind::String;
+    }
+    if (isNumberLiteralText(text)) {
+      return OperandKind::Number;
+    }
+
+    bool sawNumber = false;
+    const uint32_t nodeSize = ts_node_child_count(node);
+    for (uint32_t i = 0; i < nodeSize; ++i) {
+      const TSNode child = ts_node_child(node, i);
+      const OperandKind childKind = this->classifyOperand(content, child);
+      if (childKind == OperandKind::String) {
+        return OperandKind::String;
+      }
+      sawNumber = sawNumber || childKind == OperandKind::Number;
+    }
+    return sawNumber ? OperandKind::Number : OperandKind::Unknown;
+  }
+
   void processStringAtomic(std::string &atomic, const std::string &type) const {
     if (type == "identifier") {
       auto it = std::find(this->globalStringVariables.begin(), globalStringVariables.end(), atomic);
@@ -427,15 +512,24 @@ private:
     const TSNode opNode = ts_node_child(constraintNode, 1);
     const TSNode rhsNode = ts_node_child(constraintNode, 2);
 
-    std::string lhs =
-        std::string(content.begin() + ts_node_start_byte(lhsNode), content.begin() + ts_node_end_byte(lhsNode));
-    this->processStringAtomic(lhs, ts_node_type(lhsNode));
     std::string op =
         std::string(content.begin() + ts_node_start_byte(opNode), content.begin() + ts_node_end_byte(opNode));
+    if ((op == "==" || op == "!=") &&
+        (this->classifyOperand(content, lhsNode) == OperandKind::Number ||
+         this->classifyOperand(content, rhsNode) == OperandKind::Number)) {
+      throw std::runtime_error(makeErrorMessage(
+          ("Operator '" + op + "' is for string " + (op == "==" ? "equality" : "inequality") + "; use '" +
+           (op == "==" ? "=" : "<>") + "' for numeric " + (op == "==" ? "equality" : "inequality"))
+              .c_str(),
+          content, opNode));
+    }
     if (op != "==" && op != "!=") {
       throw std::runtime_error(
           makeErrorMessage(("Expected operator to be '==' or '!=' but got: " + op).c_str(), content, opNode));
     }
+    std::string lhs =
+        std::string(content.begin() + ts_node_start_byte(lhsNode), content.begin() + ts_node_end_byte(lhsNode));
+    this->processStringAtomic(lhs, ts_node_type(lhsNode));
     std::string rhs =
         std::string(content.begin() + ts_node_start_byte(rhsNode), content.begin() + ts_node_end_byte(rhsNode));
     this->processStringAtomic(rhs, ts_node_type(rhsNode));
@@ -456,12 +550,28 @@ private:
     const TSNode opNode = ts_node_child(constraintNode, 1);
     const TSNode rhsNode = ts_node_child(constraintNode, 2);
 
-    const std::string lhs = this->parseNumericExpr(content, lhsNode);
     auto op = std::string(content.begin() + ts_node_start_byte(opNode), content.begin() + ts_node_end_byte(opNode));
+    const OperandKind lhsKind = this->classifyOperand(content, lhsNode);
+    const OperandKind rhsKind = this->classifyOperand(content, rhsNode);
+    if ((op == "=" || op == "<>") && (lhsKind == OperandKind::String || rhsKind == OperandKind::String)) {
+      throw std::runtime_error(makeErrorMessage(
+          ("Operator '" + op + "' is for numeric " + (op == "=" ? "equality" : "inequality") + "; use '" +
+           (op == "=" ? "==" : "!=") + "' for string " + (op == "=" ? "equality" : "inequality"))
+              .c_str(),
+          content, opNode));
+    }
+    if ((op == "==" || op == "!=") && (lhsKind == OperandKind::Number || rhsKind == OperandKind::Number)) {
+      throw std::runtime_error(makeErrorMessage(
+          ("Operator '" + op + "' is for string " + (op == "==" ? "equality" : "inequality") + "; use '" +
+           (op == "==" ? "=" : "<>") + "' for numeric " + (op == "==" ? "equality" : "inequality"))
+              .c_str(),
+          content, opNode));
+    }
     if (op != "=" && op != "<>" && op != "<" && op != "<=" && op != ">" && op != ">=") {
       throw std::runtime_error(makeErrorMessage(
           ("Expected operator to be '=', '<>', '<', '<=', '>', or '>=' but got: " + op).c_str(), content, opNode));
     }
+    const std::string lhs = this->parseNumericExpr(content, lhsNode);
     if (op == "=") {
       op = "==";
     } else if (op == "<>") {
