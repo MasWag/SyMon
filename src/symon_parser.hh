@@ -66,10 +66,13 @@ static inline TSNode nextNonCommentChild(const TSNode &parent, uint32_t &idx) {
 
 // Recursively find the first ERROR node in a tree-sitter node. Returns std::nullopt when none.
 [[maybe_unused]] static std::optional<TSNode> find_first_error_node(const TSNode &node) {
-  // ts_node_is_error is part of the tree-sitter C API; some bindings may not expose it,
-  // so also check the node type string for "ERROR" to be robust.
-  if (ts_node_is_error(node) || std::string(ts_node_type(node)) == "ERROR") {
+  // Some Tree-sitter C API versions do not expose ts_node_is_error, so use
+  // the node type string for the current node and ts_node_has_error for pruning.
+  if (std::string(ts_node_type(node)) == "ERROR") {
     return node;
+  }
+  if (!ts_node_has_error(node)) {
+    return std::nullopt;
   }
   const uint32_t count = ts_node_child_count(node);
   for (uint32_t i = 0; i < count; ++i) {
@@ -155,14 +158,20 @@ public:
 
     // Handle initial constraints by creating a new initial state and unobservable transitions
     if ((!this->initialStringConstraints.empty() || !this->initialNumberConstraints.empty()) && this->expr) {
+      this->setGlobalData(*this->expr);
       auto newInitialState = std::make_shared<State>(false);
       std::vector<AutomatonTransition<StringConstraint, NumberConstraint, TimingConstraint, Update>> newTransitions;
-      newTransitions.reserve(this->initialStringConstraints.size());
+      newTransitions.reserve(this->expr->initialStates.size());
       for (const auto &initialState: this->expr->initialStates) {
         AutomatonTransition<StringConstraint, NumberConstraint, TimingConstraint, Update> newTransition;
         newTransition.target = initialState;
         newTransition.stringConstraints = this->initialStringConstraints;
         newTransition.numConstraints = this->initialNumberConstraints;
+        if constexpr (std::is_same_v<TimingConstraint, ParametricTimingConstraint>) {
+          const std::size_t dimension = this->expr->parameterSize + this->expr->clockVariableSize;
+          newTransition.guard =
+              ParametricTimingConstraint(dimension, Parma_Polyhedra_Library::UNIVERSE);
+        }
         newTransitions.push_back(std::move(newTransition));
       }
       this->expr->states.push_back(newInitialState);

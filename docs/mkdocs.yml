@@ -15,7 +15,14 @@ nav:
   - Installation: install.md
   - Examples: examples.md
   - Publications: publications.md
-  - Syntax: syntax.md
+  - Syntax:
+      - Overview: syntax.md
+      - File structure: syntax/file-structure.md
+      - Expressions: syntax/expressions.md
+      - Constraints and updates: syntax/constraints.md
+      - Examples: syntax/examples.md
+      - Common mistakes: syntax/common-mistakes.md
+  - Modes: modes.md
   - Tools: tools.md
 
 markdown_extensions:

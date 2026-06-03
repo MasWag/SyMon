@@ -1,7 +1,7 @@
 Getting Started
 ===============
 
-Let's look at some examples of SyMon usage. See also [this document](./syntax.md) for the details of the specification language supported by SyMon. In this document, we assume that SyMon can be executed by `symon`. Replace `symon` with the actual executable path if your environment differs. Installation instructions are available [here](./install.md).
+Let's look at some examples of SyMon usage. For a compact overview of the specification language, see [Syntax](./syntax.md). For details, follow the links from that page. In this document, we assume that SyMon can be executed by `symon`. Replace `symon` with the actual executable path if your environment differs. Installation instructions are available [here](./install.md).
 
 Consider the following as the monitored log. It is also in `example/exim4/frequent/example.log`.
 

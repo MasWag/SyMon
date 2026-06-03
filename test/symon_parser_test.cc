@@ -1027,6 +1027,25 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             BOOST_CHECK_EQUAL(automaton.clockVariableSize, 0);
         }
 
+        BOOST_AUTO_TEST_CASE(initWithTimingParameter) {
+            SymonParser<StringConstraint, NumberConstraint, ParametricTimingConstraint, Update> parser;
+            const std::string content = "var {period: param; threshold: number;} init {threshold > 0} signature update {value: number;} within (<= period) {update(value | value >= threshold)}";
+            parser.parse(content);
+
+            const auto automaton = parser.getAutomaton();
+            BOOST_CHECK_EQUAL(automaton.parameterSize, 1);
+            BOOST_CHECK_EQUAL(automaton.numberVariableSize, 1);
+            BOOST_CHECK_EQUAL(automaton.stringVariableSize, 0);
+            BOOST_CHECK_EQUAL(automaton.clockVariableSize, 1);
+            BOOST_CHECK_EQUAL(automaton.initialStates.size(), 1);
+            BOOST_CHECK_EQUAL(automaton.initialStates[0]->next.size(), 1);
+            BOOST_TEST((automaton.initialStates[0]->next.find(127) != automaton.initialStates[0]->next.end()));
+            const auto &initTransitions = automaton.initialStates[0]->next.at(127);
+            BOOST_CHECK_EQUAL(initTransitions.size(), 1);
+            BOOST_CHECK_EQUAL(initTransitions.front().guard.space_dimension(), 2);
+            BOOST_CHECK_EQUAL(initTransitions.front().numConstraints.size(), 1);
+        }
+
         BOOST_AUTO_TEST_CASE(updates) {
             SymonParser<StringConstraint, NumberConstraint, ParametricTimingConstraint, Update> parser;
             const std::string content = "var {count: number; count2: number;} signature update {id: string;value: number;} update(id, value | | count := count + 1; count2 := count2 + 2 ; count := count + count2)";

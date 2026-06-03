@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+  pull_request:
 
 jobs:
   deploy:
@@ -16,8 +17,9 @@ jobs:
       - name: Install dependencies
         run: pip install -r docs/requirements.txt
       - name: Build docs
-        run: mkdocs build --config-file docs/mkdocs.yml --site-dir generated
+        run: mkdocs build --strict --config-file docs/mkdocs.yml --site-dir generated
       - name: Deploy
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
