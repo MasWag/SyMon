@@ -1,0 +1,91 @@
+# Property #9 — OSCORE Sender Sequence Number monotonicity
+# (RFC 8613 §3.2.2, §7.2.1).
+#
+# Within an OSCORE Security Context — identified here by
+# (client, server, kid) — the Sender Sequence Number MUST be strictly
+# increasing. A receiver that observes a non-increasing SSN with the
+# same tuple is seeing either:
+#   - a replay attack, or
+#   - a loss-of-mutable-state (§7.5) where the sender resumed without
+#     re-establishing a new Security Context — itself a spec violation.
+#
+# Encoding — "immediately-preceding-msg check":
+#   saveMsg    — pin the (client, server, kid, ssn) of some oscore_msg.
+#   tupleNoise — same as the global noise expression EXCEPT it refuses
+#                to skip past another oscore_msg with the same tuple.
+#   ssnReplay  — the very next same-tuple oscore_msg has ssn <= seenSsn.
+#
+# tupleNoise is what stops the over-matching. With unrestricted noise,
+# every earlier msg for the same context anchored an independent check
+# against the same replay (24 matches for 4 real replays). By blocking
+# noise from swallowing same-tuple msgs, each anchor's check has to
+# fire on the very next same-tuple msg — so the only anchor that can
+# accept a replay is the one immediately before it.
+#
+# Trade-off: this catches non-monotonic transitions between adjacent
+# msgs, not "any replay ever". Two back-to-back replays in the same
+# context would only surface once. In practice — chaos injects a
+# single replay per context, and the strict-monotonicity contract is
+# only ever broken one step at a time — so this is the right shape.
+# Legitimate renewals are absorbed by the kid mismatch (new context ⇒
+# new KID), so session_renew followed by fresh traffic never fires.
+
+var {
+    seenClient: string;
+    seenServer: string;
+    seenKid:    string;
+    seenSsn:    number;
+}
+
+signature send_CON      { src: string; dest: string; mid: number; }
+signature send_NON      { src: string; dest: string; mid: number; }
+signature recv_ACK      { src: string; dest: string; mid: number; }
+signature send_req      { src: string; dest: string; token: string; mid: number; }
+signature send_resp     { src: string; dest: string; token: string; mid: number; status: number; }
+signature session_start { client: string; server: string; kid: string; }
+signature session_renew { client: string; server: string; old_kid: string; new_kid: string; }
+signature oscore_msg    { client: string; server: string; kid: string; ssn: number; }
+
+expr saveMsg {
+    oscore_msg(client, server, kid, ssn | |
+               seenClient := client; seenServer := server;
+               seenKid := kid; seenSsn := ssn)
+}
+
+expr ssnReplay {
+    oscore_msg(client, server, kid, ssn |
+               client == seenClient && server == seenServer &&
+               kid == seenKid && ssn <= seenSsn)
+}
+
+expr noise {
+    (send_CON(src, dest, mid)                        ||
+     send_NON(src, dest, mid)                        ||
+     recv_ACK(src, dest, mid)                        ||
+     send_req(src, dest, token, mid)                 ||
+     send_resp(src, dest, token, mid, status)        ||
+     session_start(client, server, kid)              ||
+     session_renew(client, server, old_kid, new_kid) ||
+     oscore_msg(client, server, kid, ssn))*
+}
+
+# Same as noise, but oscore_msg only matches when the tuple DIFFERS
+# from the saved (seenClient, seenServer, seenKid). This forces
+# ssnReplay to fire on the next same-tuple oscore_msg — no skipping.
+expr tupleNoise {
+    (send_CON(src, dest, mid)                                     ||
+     send_NON(src, dest, mid)                                     ||
+     recv_ACK(src, dest, mid)                                     ||
+     send_req(src, dest, token, mid)                              ||
+     send_resp(src, dest, token, mid, status)                     ||
+     session_start(client, server, kid)                           ||
+     session_renew(client, server, old_kid, new_kid)              ||
+     oscore_msg(client, server, kid, ssn | client != seenClient)  ||
+     oscore_msg(client, server, kid, ssn | server != seenServer)  ||
+     oscore_msg(client, server, kid, ssn | kid    != seenKid))*
+}
+
+# 1-day within bound is a SyMon-syntactic finite window; OSCORE has
+# no spec-level "OK to replay after T" cutoff — strict monotonicity
+# holds for the entire context lifetime.
+noise; saveMsg; within (< 86400) { tupleNoise; ssnReplay }
