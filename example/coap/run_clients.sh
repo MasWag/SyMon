@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
-# run_clients.sh — reset state, run the multi-agent chaos, then show
-# that the trace grew and that agents interleave (different client
-# ports on the first few events). Convenience wrapper around
-# run_chaos.sh for demo runs.
+# Reset state, run multi-agent chaos, peek at the interleaved trace.
 set -eo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"
 

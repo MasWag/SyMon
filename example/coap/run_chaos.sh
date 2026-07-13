@@ -1,9 +1,5 @@
 #!/usr/bin/env bash
-# run_chaos.sh — launch session_server + N parallel session_chaos agents.
-# Each agent gets its own truth log; trace.txt is the single shared trace
-# the server writes (each event tagged with the agent's ephemeral port
-# via remote.hostinfo). The session_ssn / session_order monitors key on
-# (client, server, kid), so interleaved per-agent streams stay disjoint.
+# N parallel chaos agents against one server; per-agent truth.i.log.
 
 set -eo pipefail
 

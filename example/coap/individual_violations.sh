@@ -1,9 +1,5 @@
 #!/usr/bin/env bash
-# individual_violations.sh — cross-agent isolation proof. Show which
-# agent injected which violation classes, then find ANY (agent, monitor)
-# pair where the agent did NOT inject the violation that monitor
-# catches, and prove zero matches for that agent's KIDs in that
-# monitor's output. Run after run_chaos.sh.
+# Cross-agent isolation proof. Run after run_chaos.sh.
 set -eo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"
 

@@ -1,11 +1,7 @@
 # Property #4 — Message ID non-reuse (RFC 7252 §4.5).
 #
 # For a given (src, dest) pair, the same MID must not be sent in a
-# second send_CON within EXCHANGE_LIFETIME (247 s). The encoding here
-# is slightly stronger than "any two same-MID sends": it requires a
-# completed exchange in between (saveCON → matchingACK → reuseCON),
-# so genuine retransmissions before the ACK are absorbed by
-# retransmit_count.symon rather than double-flagged here.
+# second send_CON within EXCHANGE_LIFETIME (247 s).
 
 var {
     seenSrc:  string;

@@ -4,12 +4,6 @@
 # send_req and use the flipped endpoints. Catches wrong-token
 # responses, misrouted replies, and multiplexing bugs where the
 # server correlates a response to the wrong outstanding request.
-#
-# The badResp checks bind on the SAVED mid so we only inspect the
-# response that belongs to this saveReq. Without the mid constraint,
-# intervening noise lets the matcher pair unrelated req/resp pairs
-# and flag every clean send_resp whose token differs from the last
-# saveReq's (produced ~38k false positives in an early run).
 
 var {
     currToken: string;
@@ -49,7 +43,4 @@ expr noise {
      oscore_msg(client, server, kid, ssn))*
 }
 
-# Internal noise between saveReq and badResp lets the matcher skip past
-# session-layer events (session_start, oscore_msg, ...) that
-# session_server.py emits between send_req and send_resp.
 noise; saveReq; noise; badResp

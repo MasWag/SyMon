@@ -5,17 +5,6 @@
 # (src, dest, mid) are legal. The 6th send_CON for the same triple
 # within MAX_TRANSMIT_SPAN (~45 s) is a violation.
 #
-# Encoding (mirrors example/withdraw/withdraw.symon):
-#   start          — first send_CON; pin (src, dest, mid), set total := 1
-#   ignoreOther    — any event that is not a matching retransmit
-#   addRetransmit  — send_CON with matching tuple; total := total + 1
-#   violation      — send_CON with matching tuple AND total >= 5
-#                    (this is the 6th send overall)
-#
-# A successful recv_ACK for the saved tuple is NOT consumed by any rule.
-# When it arrives the branch dies silently, which is what we want: the
-# exchange completed legally so there is no violation to report.
-#
 # Time window is EXCHANGE_LIFETIME (~247 s, RFC 7252 §4.8.2): within
 # that span every same-(src, dest, mid) belongs to the same exchange;
 # beyond it, the MID may be reused legitimately (property #4's concern).

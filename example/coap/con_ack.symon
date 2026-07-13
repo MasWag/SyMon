@@ -5,10 +5,6 @@
 # recv_ACK(dest, src, mid) within the ACK window; absence of the
 # matching ACK indicates a dropped ACK, an unresponsive server, or a
 # response arriving too late.
-#
-# Requires parametric timing mode (-p) because of `p: param`.
-# `p` anchors each match to the timestamp of the saveCON event; the
-# within (< 5) block then checks for a matching ACK relative to p.
 
 var {
     seenSrc:  string;

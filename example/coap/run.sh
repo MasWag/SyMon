@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# run.sh — launch session_server + session_driver for one scenario,
-# then leave trace.txt for SyMon to run against.
+# One-scenario end-to-end: server + driver + trace.txt.
 
 set -eo pipefail
 

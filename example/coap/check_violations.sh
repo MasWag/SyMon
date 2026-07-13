@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
-# check_violations.sh — show what got injected, then show what the
-# monitors caught. Run after run_chaos.sh has produced trace.txt and
-# truth.*.log.
+# Injected (truth) vs caught (monitors). Run after run_chaos.sh.
 set -eo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")"
 

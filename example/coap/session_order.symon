@@ -8,14 +8,6 @@
 #     is producing fresh messages under the rotated-out KID.
 #
 # Either way it is a violation: post-renewal, the old KID is dead.
-#
-# Encoding mirrors mid_reuse.symon: save the renew, then look for any
-# oscore_msg using the now-stale old_kid within the window.
-#
-# Note (future work): the related "no oscore_msg with kid=K before its
-# session_start(K)" property requires checking absence of a past event,
-# which SyMon's forward-matching model can't easily express. Parametric
-# encoding (or an off-line trace pre-pass) is the likely path.
 
 var {
     seenClient: string;
