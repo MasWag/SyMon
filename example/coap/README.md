@@ -60,7 +60,6 @@ Multi-agent chaos, then post-hoc analysis:
 ```sh
 bash run_chaos.sh                 # writes trace.txt + truth.*.log
 bash check_violations.sh          # injected vs caught
-bash individual_violations.sh     # cross-agent isolation proof
 ```
 
 Chaos tunables via env vars: `N_AGENTS`, `STAGGER_STEP`, `DURATION`,

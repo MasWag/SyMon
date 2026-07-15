@@ -81,4 +81,3 @@ for ((i=0; i<N_AGENTS; i++)); do
 done
 echo "[chaos] trace.txt: $TRACE_LINES lines, $N_AGENTS truth logs, $TRUTH_TOTAL total injection records"
 echo "[chaos] check: bash check_violations.sh    # injected vs caught"
-echo "               bash individual_violations.sh  # cross-agent isolation"
