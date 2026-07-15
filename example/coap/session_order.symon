@@ -1,0 +1,49 @@
+# Stale-KID use after session_renew (RFC 8613 App. B).
+#
+# After session_renew(client, server, old_kid, new_kid) completes, the
+# old Security Context is rotated out. Any subsequent
+# oscore_msg(client, server, old_kid, _) is either:
+#   - a replay of pre-renewal messages, or
+#   - a sender bug: the peer still holds a stale Security Context and
+#     is producing fresh messages under the rotated-out KID.
+#
+# Either way it is a violation: post-renewal, the old KID is dead.
+
+var {
+    seenClient: string;
+    seenServer: string;
+    seenOldKid: string;
+}
+
+signature send_CON      { src: string; dest: string; mid: number; }
+signature send_NON      { src: string; dest: string; mid: number; }
+signature recv_ACK      { src: string; dest: string; mid: number; }
+signature send_req      { src: string; dest: string; token: string; mid: number; }
+signature send_resp     { src: string; dest: string; token: string; mid: number; status: number; }
+signature session_start { client: string; server: string; kid: string; }
+signature session_renew { client: string; server: string; old_kid: string; new_kid: string; }
+signature oscore_msg    { client: string; server: string; kid: string; ssn: number; }
+
+expr saveRenew {
+    session_renew(client, server, old_kid, new_kid | |
+                  seenClient := client; seenServer := server; seenOldKid := old_kid)
+}
+
+expr staleKidUse {
+    oscore_msg(client, server, kid, ssn |
+               client == seenClient && server == seenServer &&
+               kid == seenOldKid)
+}
+
+expr noise {
+    (send_CON(src, dest, mid)                        ||
+     send_NON(src, dest, mid)                        ||
+     recv_ACK(src, dest, mid)                        ||
+     send_req(src, dest, token, mid)                 ||
+     send_resp(src, dest, token, mid, status)        ||
+     session_start(client, server, kid)              ||
+     session_renew(client, server, old_kid, new_kid) ||
+     oscore_msg(client, server, kid, ssn))*
+}
+
+noise; saveRenew; within (< 86400) { noise; staleKidUse }

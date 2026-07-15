@@ -1,0 +1,64 @@
+# Property #9 — OSCORE Sender Sequence Number monotonicity
+# (RFC 8613 §3.2.2, §7.2.1).
+#
+# Within an OSCORE Security Context — identified here by
+# (client, server, kid) — the Sender Sequence Number MUST be strictly
+# increasing. A receiver that observes a non-increasing SSN with the
+# same tuple is seeing either:
+#   - a replay attack, or
+#   - a loss-of-mutable-state (§7.5) where the sender resumed without
+#     re-establishing a new Security Context — itself a spec violation.
+
+var {
+    seenClient: string;
+    seenServer: string;
+    seenKid:    string;
+    seenSsn:    number;
+}
+
+signature send_CON      { src: string; dest: string; mid: number; }
+signature send_NON      { src: string; dest: string; mid: number; }
+signature recv_ACK      { src: string; dest: string; mid: number; }
+signature send_req      { src: string; dest: string; token: string; mid: number; }
+signature send_resp     { src: string; dest: string; token: string; mid: number; status: number; }
+signature session_start { client: string; server: string; kid: string; }
+signature session_renew { client: string; server: string; old_kid: string; new_kid: string; }
+signature oscore_msg    { client: string; server: string; kid: string; ssn: number; }
+
+expr saveMsg {
+    oscore_msg(client, server, kid, ssn | |
+               seenClient := client; seenServer := server;
+               seenKid := kid; seenSsn := ssn)
+}
+
+expr ssnReplay {
+    oscore_msg(client, server, kid, ssn |
+               client == seenClient && server == seenServer &&
+               kid == seenKid && ssn <= seenSsn)
+}
+
+expr noise {
+    (send_CON(src, dest, mid)                        ||
+     send_NON(src, dest, mid)                        ||
+     recv_ACK(src, dest, mid)                        ||
+     send_req(src, dest, token, mid)                 ||
+     send_resp(src, dest, token, mid, status)        ||
+     session_start(client, server, kid)              ||
+     session_renew(client, server, old_kid, new_kid) ||
+     oscore_msg(client, server, kid, ssn))*
+}
+
+expr tupleNoise {
+    (send_CON(src, dest, mid)                                     ||
+     send_NON(src, dest, mid)                                     ||
+     recv_ACK(src, dest, mid)                                     ||
+     send_req(src, dest, token, mid)                              ||
+     send_resp(src, dest, token, mid, status)                     ||
+     session_start(client, server, kid)                           ||
+     session_renew(client, server, old_kid, new_kid)              ||
+     oscore_msg(client, server, kid, ssn | client != seenClient)  ||
+     oscore_msg(client, server, kid, ssn | server != seenServer)  ||
+     oscore_msg(client, server, kid, ssn | kid    != seenKid))*
+}
+
+noise; saveMsg; within (< 86400) { tupleNoise; ssnReplay }

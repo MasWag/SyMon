@@ -1,0 +1,46 @@
+# Property #5 — Token echo (RFC 7252 §5.3.1).
+#
+# Every send_resp must carry the same token as its originating
+# send_req and use the flipped endpoints. Catches wrong-token
+# responses, misrouted replies, and multiplexing bugs where the
+# server correlates a response to the wrong outstanding request.
+
+var {
+    currToken: string;
+    exptSrc:   string;
+    exptDest:  string;
+    seenMid:   number;
+}
+
+signature send_CON      { src: string; dest: string; mid: number; }
+signature send_NON      { src: string; dest: string; mid: number; }
+signature recv_ACK      { src: string; dest: string; mid: number; }
+signature send_req      { src: string; dest: string; token: string; mid: number; }
+signature send_resp     { src: string; dest: string; token: string; mid: number; status: number; }
+signature session_start { client: string; server: string; kid: string; }
+signature session_renew { client: string; server: string; old_kid: string; new_kid: string; }
+signature oscore_msg    { client: string; server: string; kid: string; ssn: number; }
+
+expr saveReq {
+    send_req(src, dest, token, mid | |
+             currToken := token; exptSrc := dest; exptDest := src; seenMid := mid)
+}
+
+expr badResp {
+    send_resp(src, dest, token, mid, status | mid = seenMid && token != currToken) ||
+    send_resp(src, dest, token, mid, status | mid = seenMid && dest  != exptDest)  ||
+    send_resp(src, dest, token, mid, status | mid = seenMid && src   != exptSrc)
+}
+
+expr noise {
+    (send_CON(src, dest, mid)                        ||
+     send_NON(src, dest, mid)                        ||
+     recv_ACK(src, dest, mid)                        ||
+     send_req(src, dest, token, mid)                 ||
+     send_resp(src, dest, token, mid, status)        ||
+     session_start(client, server, kid)              ||
+     session_renew(client, server, old_kid, new_kid) ||
+     oscore_msg(client, server, kid, ssn))*
+}
+
+noise; saveReq; noise; badResp

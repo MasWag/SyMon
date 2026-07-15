@@ -1,0 +1,8 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Regenerated on every run_chaos.sh / run.sh
+trace.txt
+truth.*.log
