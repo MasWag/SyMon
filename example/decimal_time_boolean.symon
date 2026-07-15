@@ -1,0 +1,29 @@
+#!/usr/bin/env symon -bnf
+## BEGIN_INPUT
+# event a 0
+# event b 1.25
+# event c 2.6
+# event a 10
+# event b 10.85
+# event c 11.625
+## END_INPUT
+## BEGIN_OUTPUT
+# @11.625000.	(time-point 5)
+## END_OUTPUT
+
+signature event {
+    id: string;
+}
+
+event()*;
+event( id | id == "a");
+within (> 1.5) {
+    within (< 2.5) {
+        within (> 0.5) {
+            within (< 1.5) {
+                event( id | id == "b" )
+            }
+        };
+        event( id | id == "c" )
+    }
+}

@@ -51,6 +51,7 @@ assert_example_output() {
 @test "features" {
     readonly SPEC="${EXAMPLE_DIR}/features.symon"
     assert_example_output "-nf" "$SPEC"
+    assert_example_output "-bnf" "${EXAMPLE_DIR}/features2.symon"
 }
 
 @test "non-integer boolean" {
@@ -67,6 +68,7 @@ assert_example_output() {
 
 @test "expr_assignment" {
     assert_example_output "-bnf" "${EXAMPLE_DIR}/expr_assignment.symon"
+    assert_example_output "-bnf" "${EXAMPLE_DIR}/expr_assignment2.symon"
 }
 
 @test "data parametric unobservable" {
@@ -87,8 +89,17 @@ assert_example_output() {
 
 @test "boolean unobservable" {
     assert_example_output "-bnf" "${EXAMPLE_DIR}/unobservable_boolean.symon"
+    assert_example_output "-bnf" "${EXAMPLE_DIR}/unobservable2_boolean.symon"
+    assert_example_output "-dnf" "${EXAMPLE_DIR}/unobservable2_data_parametric.symon"
 }
 
 @test "decimal_inputs" {
     assert_example_output "-dnf" "${EXAMPLE_DIR}/decimal_inputs.symon"
+    assert_example_output "-dnf" "${EXAMPLE_DIR}/decimal_inputs2.symon"
+}
+
+@test "decimal_time" {
+    assert_example_output "-bnf" "${EXAMPLE_DIR}/decimal_time_boolean.symon"
+    assert_example_output "-dnf" "${EXAMPLE_DIR}/decimal_time_data_parametric.symon"
+    assert_example_output "-pnf" "${EXAMPLE_DIR}/decimal_time_parametric.symon"
 }

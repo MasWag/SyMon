@@ -1,0 +1,13 @@
+#!/usr/bin/env symon -nf
+## BEGIN_INPUT
+# event	10	0.5
+## END_INPUT
+## BEGIN_OUTPUT
+#  @0.500000.	(time-point 0)
+## END_OUTPUT
+
+signature event {
+    n: number;
+}
+
+event( n | -1 + n < 0 + n + 1 )
