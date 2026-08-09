@@ -25,14 +25,14 @@ class AutomatonFixture {
         AutomatonFixture(std::string dotStr):dotString(dotStr) {}
 
         auto makeBooleanTA() const {
-            using TAType = NonParametricTA<int>;
-            using BoostTAType = NonParametricBoostTA<int>;
+            using TAType = NonParametricTA<int, double>;
+            using BoostTAType = NonParametricBoostTA<int, double>;
             return parseDotTA<TAType, BoostTAType>(dotString);
         }
 
         auto makeDataParametricTA() const {
-            using TAType = DataParametricTA;
-            using BoostTAType = DataParametricBoostTA;
+            using TAType = DataParametricTA<double>;
+            using BoostTAType = DataParametricBoostTA<double>;
             return parseDotTA<TAType, BoostTAType>(dotString);
         }
 };

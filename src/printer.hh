@@ -2,12 +2,13 @@
 
 #include "boolean_monitor.hh"
 
-template <class Number> struct BooleanPrinter : public Observer<BooleanMonitorResult<Number>> {
+template <class Number, typename Timestamp> struct BooleanPrinter
+    : public Observer<BooleanMonitorResult<Number, Timestamp>> {
   BooleanPrinter() = default;
 
   virtual ~BooleanPrinter() = default;
 
-  void notify(const BooleanMonitorResult<Number> &result) override {
+  void notify(const BooleanMonitorResult<Number, Timestamp> &result) override {
     std::cout << "@" << std::fixed << result.timestamp << std::defaultfloat << ".\t(time-point " << result.index << ")\t";
     for (std::size_t i = 0; i < result.stringValuation.size(); i++) {
       if (result.stringValuation[i]) {
@@ -24,12 +25,13 @@ template <class Number> struct BooleanPrinter : public Observer<BooleanMonitorRe
 
 #include "data_parametric_monitor.hh"
 
-struct DataParametricPrinter : public Observer<DataParametricMonitorResult> {
+template <typename Timestamp>
+struct DataParametricPrinter : public Observer<DataParametricMonitorResult<Timestamp>> {
   DataParametricPrinter() = default;
 
   virtual ~DataParametricPrinter() = default;
 
-  void notify(const DataParametricMonitorResult &result) override {
+  void notify(const DataParametricMonitorResult<Timestamp> &result) override {
     using Parma_Polyhedra_Library::IO_Operators::operator<<;
     std::cout << "@" << std::fixed << result.timestamp << ".\t(time-point " << result.index << ")\t";
     for (std::size_t i = 0; i < result.stringValuation.size(); i++) {

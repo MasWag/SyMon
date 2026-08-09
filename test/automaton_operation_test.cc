@@ -255,8 +255,8 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
             auto originalFinalState = automaton_copy.states[1];
 
             // Create a timing constraint for the time restriction
-            std::vector<TimingConstraint> timeGuard;
-            timeGuard.push_back(ConstraintMaker(0) <= 10);
+            std::vector<TimingConstraint<double>> timeGuard;
+            timeGuard.push_back(ConstraintMaker(0) <= 10.);
 
             // Apply the time restriction operation
             auto result = timeRestriction(std::move(automaton_copy), timeGuard);
@@ -353,8 +353,8 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
             BOOST_CHECK_EQUAL(automaton_copy.states.size(), 4);
 
             // Create a timing constraint to add to all transitions
-            std::vector<TimingConstraint> constraint;
-            constraint.push_back(ConstraintMaker(0) <= 5);
+            std::vector<TimingConstraint<double>> constraint;
+            constraint.push_back(ConstraintMaker(0) <= 5.);
 
             // Count the number of transitions before adding the constraint
             size_t transitionCount = 0;
@@ -375,7 +375,7 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
                         // Check that the constraint is applied to the transition
                         bool hasConstraint = false;
                         for (const auto &guard : transition.guard) {
-                            if (guard.x == 0 && guard.odr == TimingConstraint::Order::le && guard.c == 5) {
+                            if (guard.x == 0 && guard.odr == TimingConstraintOrder::le && guard.c == 5) {
                                 hasConstraint = true;
                                 break;
                             }
@@ -640,8 +640,8 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
             // Create a timing constraint for the time restriction
             using namespace Parma_Polyhedra_Library;
             using namespace Symbolic;
-            std::vector<TimingConstraint> timeGuard;
-            timeGuard.push_back(ConstraintMaker(0) <= 10);
+            std::vector<TimingConstraint<double>> timeGuard;
+            timeGuard.push_back(ConstraintMaker(0) <= 10.);
 
             // Apply the time restriction operation
             auto result = timeRestriction(std::move(automaton_copy), timeGuard);
@@ -738,8 +738,8 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
             BOOST_CHECK_EQUAL(automaton_copy.states.size(), 4);
 
             // Create a timing constraint to add to all transitions
-            std::vector<TimingConstraint> constraint;
-            constraint.push_back(ConstraintMaker(0) <= 5);
+            std::vector<TimingConstraint<double>> constraint;
+            constraint.push_back(ConstraintMaker(0) <= 5.);
 
             // Count the number of transitions before adding the constraint
             size_t transitionCount = 0;
@@ -760,7 +760,7 @@ BOOST_AUTO_TEST_SUITE(AutomatonOperationTest)
                         // Check that the constraint is applied to the transition
                         bool hasConstraint = false;
                         for (const auto &guard : transition.guard) {
-                            if (guard.x == 0 && guard.odr == TimingConstraint::Order::le && guard.c == 5) {
+                            if (guard.x == 0 && guard.odr == TimingConstraintOrder::le && guard.c == 5) {
                                 hasConstraint = true;
                                 break;
                             }

@@ -26,7 +26,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
     using Update = Update<int>;
 
         struct CopyParserFixture {
-            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint>, Update> parser;
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update> parser;
             const std::string path = PROJECT_ROOT "/example/copy/copy.symon";
 
             CopyParserFixture() {
@@ -44,18 +44,18 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
         }
 
         BOOST_FIXTURE_TEST_CASE(declarations, CopyParserFixture) {
-            const NonParametricTA<int> automaton = parser.getAutomaton();
+            const NonParametricTA<int, double> automaton = parser.getAutomaton();
             BOOST_CHECK_EQUAL(automaton.numberVariableSize, 1);
             BOOST_CHECK_EQUAL(automaton.stringVariableSize, 0);
             BOOST_CHECK_EQUAL(automaton.clockVariableSize, 1);
         }
 
         BOOST_AUTO_TEST_CASE(atomic) {
-            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint>, Update> parser;
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update> parser;
             const std::string content = "signature update {id: string;value: number;} update(id, value)";
             parser.parse(content);
 
-            const NonParametricTA<int> automaton = parser.getAutomaton();
+            const NonParametricTA<int, double> automaton = parser.getAutomaton();
             BOOST_CHECK_EQUAL(automaton.numberVariableSize, 0);
             BOOST_CHECK_EQUAL(automaton.stringVariableSize, 0);
             BOOST_CHECK_EQUAL(automaton.clockVariableSize, 0);
@@ -81,11 +81,11 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
         }
 
         BOOST_AUTO_TEST_CASE(stringConstraint) {
-            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint>, Update> parser;
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update> parser;
             const std::string content = "signature update {id: string;value: number;} update(id, value | id == \"y\")";
             parser.parse(content);
 
-            const NonParametricTA<int> automaton = parser.getAutomaton();
+            const NonParametricTA<int, double> automaton = parser.getAutomaton();
             BOOST_CHECK_EQUAL(automaton.numberVariableSize, 0);
             BOOST_CHECK_EQUAL(automaton.stringVariableSize, 0);
             BOOST_CHECK_EQUAL(automaton.clockVariableSize, 0);
@@ -224,11 +224,11 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
         }
 
         BOOST_AUTO_TEST_CASE(timingConstraint) {
-            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint>, Update> parser;
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update> parser;
             const std::string content = "signature update {id: string;value: number;} (update(id, value))%(< 5)";
             parser.parse(content);
 
-            const NonParametricTA<int> automaton = parser.getAutomaton();
+            const NonParametricTA<int, double> automaton = parser.getAutomaton();
             BOOST_CHECK_EQUAL(automaton.numberVariableSize, 0);
             BOOST_CHECK_EQUAL(automaton.stringVariableSize, 0);
             BOOST_CHECK_EQUAL(automaton.clockVariableSize, 1);
@@ -249,18 +249,18 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().numConstraints.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.size(), 1);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().x, VariableID{0});
-            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().odr, TimingConstraint::Order::lt);
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().odr, TimingConstraintOrder::lt);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().c, 5);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().update.stringUpdate.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().update.numberUpdate.size(), 0);
         }
 
         BOOST_AUTO_TEST_CASE(concat) {
-            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint>, Update> parser;
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update> parser;
             const std::string content = "signature update {id: string;value: number;} update(id, value); update(id, value)";
             parser.parse(content);
 
-            const NonParametricTA<int> automaton = parser.getAutomaton();
+            const NonParametricTA<int, double> automaton = parser.getAutomaton();
             BOOST_CHECK_EQUAL(automaton.numberVariableSize, 0);
             BOOST_CHECK_EQUAL(automaton.stringVariableSize, 0);
             BOOST_CHECK_EQUAL(automaton.clockVariableSize, 0);
@@ -304,11 +304,11 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
         }
 
         BOOST_AUTO_TEST_CASE(orEmpty) {
-            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint>, Update> parser;
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update> parser;
             const std::string content = "signature update {id: string;value: number;} (update(id, value))?";
             parser.parse(content);
 
-            const NonParametricTA<int> automaton = parser.getAutomaton();
+            const NonParametricTA<int, double> automaton = parser.getAutomaton();
             BOOST_CHECK_EQUAL(automaton.numberVariableSize, 0);
             BOOST_CHECK_EQUAL(automaton.stringVariableSize, 0);
             BOOST_CHECK_EQUAL(automaton.clockVariableSize, 0);
@@ -344,11 +344,11 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
         }
 
         BOOST_AUTO_TEST_CASE(plus) {
-            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint>, Update> parser;
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update> parser;
             const std::string content = "signature update {id: string;value: number;} (update(id, value))+";
             parser.parse(content);
 
-            const NonParametricTA<int> automaton = parser.getAutomaton();
+            const NonParametricTA<int, double> automaton = parser.getAutomaton();
             BOOST_CHECK_EQUAL(automaton.numberVariableSize, 0);
             BOOST_CHECK_EQUAL(automaton.stringVariableSize, 0);
             BOOST_CHECK_EQUAL(automaton.clockVariableSize, 0);
@@ -388,11 +388,11 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
         }
 
         BOOST_AUTO_TEST_CASE(one_or_more) {
-            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint>, Update> parser;
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update> parser;
             const std::string content = "signature update {id: string;value: number;} one_or_more {update(id, value)}";
             parser.parse(content);
 
-            const NonParametricTA<int> automaton = parser.getAutomaton();
+            const NonParametricTA<int, double> automaton = parser.getAutomaton();
             BOOST_CHECK_EQUAL(automaton.numberVariableSize, 0);
             BOOST_CHECK_EQUAL(automaton.stringVariableSize, 0);
             BOOST_CHECK_EQUAL(automaton.clockVariableSize, 0);
@@ -432,11 +432,11 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
         }
 
         BOOST_AUTO_TEST_CASE(star) {
-            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint>, Update> parser;
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update> parser;
             const std::string content = "signature update {id: string;value: number;} (update(id, value))*";
             parser.parse(content);
 
-            const NonParametricTA<int> automaton = parser.getAutomaton();
+            const NonParametricTA<int, double> automaton = parser.getAutomaton();
             BOOST_CHECK_EQUAL(automaton.numberVariableSize, 0);
             BOOST_CHECK_EQUAL(automaton.stringVariableSize, 0);
             BOOST_CHECK_EQUAL(automaton.clockVariableSize, 0);
@@ -482,11 +482,11 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
         }
 
         BOOST_AUTO_TEST_CASE(zero_or_more) {
-            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint>, Update> parser;
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update> parser;
             const std::string content = "signature update {id: string;value: number;} zero_or_more{update(id, value)}";
             parser.parse(content);
 
-            const NonParametricTA<int> automaton = parser.getAutomaton();
+            const NonParametricTA<int, double> automaton = parser.getAutomaton();
             BOOST_CHECK_EQUAL(automaton.numberVariableSize, 0);
             BOOST_CHECK_EQUAL(automaton.stringVariableSize, 0);
             BOOST_CHECK_EQUAL(automaton.clockVariableSize, 0);
@@ -532,11 +532,11 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
         }
 
         BOOST_AUTO_TEST_CASE(orEmptyConcat) {
-            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint>, Update> parser;
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update> parser;
             const std::string content = "signature update {id: string;value: number;} (update(id, value))?;update(id, value)";
             parser.parse(content);
 
-            const NonParametricTA<int> automaton = parser.getAutomaton();
+            const NonParametricTA<int, double> automaton = parser.getAutomaton();
             BOOST_CHECK_EQUAL(automaton.numberVariableSize, 0);
             BOOST_CHECK_EQUAL(automaton.stringVariableSize, 0);
             BOOST_CHECK_EQUAL(automaton.clockVariableSize, 0);
@@ -582,11 +582,11 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
         }
 
         BOOST_AUTO_TEST_CASE(timingConstraintConcat) {
-            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint>, Update> parser;
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update> parser;
             const std::string content = "signature update {id: string;value: number;} update(id, value); (update(id, value))%(> 5)";
             parser.parse(content);
 
-            const NonParametricTA<int> automaton = parser.getAutomaton();
+            const NonParametricTA<int, double> automaton = parser.getAutomaton();
             BOOST_CHECK_EQUAL(automaton.numberVariableSize, 0);
             BOOST_CHECK_EQUAL(automaton.stringVariableSize, 0);
             BOOST_CHECK_EQUAL(automaton.clockVariableSize, 1);
@@ -623,7 +623,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().numConstraints.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().guard.size(), 1);
             BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().guard.front().x, VariableID{0});
-            BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().guard.front().odr, TimingConstraint::Order::gt);
+            BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().guard.front().odr, TimingConstraintOrder::gt);
             BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().guard.front().c, 5);
             BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().update.stringUpdate.size(), 0);
             BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().update.numberUpdate.size(), 0);
@@ -632,11 +632,11 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
         }
 
         BOOST_AUTO_TEST_CASE(optionalWithTimingConstraintLT) {
-            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint>, Update> parser;
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update> parser;
             const std::string content = "signature update {id: string;value: number;} (update(id, value)?)%(< 3)";
             parser.parse(content);
 
-            const NonParametricTA<int> automaton = parser.getAutomaton();
+            const NonParametricTA<int, double> automaton = parser.getAutomaton();
             BOOST_CHECK_EQUAL(automaton.numberVariableSize, 0);
             BOOST_CHECK_EQUAL(automaton.stringVariableSize, 0);
             BOOST_CHECK_EQUAL(automaton.clockVariableSize, 1);
@@ -668,7 +668,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             // The transition should have the timing constraint < 3
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.size(), 1);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().x, VariableID{0});
-            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().odr, TimingConstraint::Order::lt);
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().odr, TimingConstraintOrder::lt);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().c, 3);
             
             // The final states should have no transitions
@@ -677,11 +677,11 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
         }
 
         BOOST_AUTO_TEST_CASE(optionalWithTimingConstraintGT) {
-            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint>, Update> parser;
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update> parser;
             const std::string content = "signature update {id: string;value: number;} (update(id, value)?)%(> 3)";
             parser.parse(content);
 
-            const NonParametricTA<int> automaton = parser.getAutomaton();
+            const NonParametricTA<int, double> automaton = parser.getAutomaton();
             BOOST_CHECK_EQUAL(automaton.numberVariableSize, 0);
             BOOST_CHECK_EQUAL(automaton.stringVariableSize, 0);
             BOOST_CHECK_EQUAL(automaton.clockVariableSize, 1);
@@ -713,7 +713,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             // The transition should have timing constraint > 3
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.size(), 1);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().x, VariableID{0});
-            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().odr, TimingConstraint::Order::gt);
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().odr, TimingConstraintOrder::gt);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().c, 3);
             
             // The intermediate state should have transitions for the update operation
@@ -721,11 +721,11 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
         }
 
         BOOST_AUTO_TEST_CASE(concatOptionalWithTimingConstraint) {
-            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint>, Update> parser;
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update> parser;
             const std::string content = "signature update {id: string;value: number;} update(id, value); (update(id, value)?)%(< 3)";
             parser.parse(content);
 
-            const NonParametricTA<int> automaton = parser.getAutomaton();
+            const NonParametricTA<int, double> automaton = parser.getAutomaton();
             BOOST_CHECK_EQUAL(automaton.numberVariableSize, 0);
             BOOST_CHECK_EQUAL(automaton.stringVariableSize, 0);
             BOOST_CHECK_EQUAL(automaton.clockVariableSize, 1);
@@ -771,7 +771,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             // The transition should have timing constraint < 3
             BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().guard.size(), 1);
             BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().guard.front().x, VariableID{0});
-            BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().guard.front().odr, TimingConstraint::Order::lt);
+            BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().guard.front().odr, TimingConstraintOrder::lt);
             BOOST_CHECK_EQUAL(automaton.states[1]->next[0].front().guard.front().c, 3);
             
             // The final state should have no transitions
@@ -783,7 +783,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             // only the upper bound is added to all transitions
             
             // Create a parser
-            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint>, Update> parser;
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update> parser;
             
             // Parse a simple automaton with a timing constraint that has both upper and lower bounds
             std::string content = R"(
@@ -816,10 +816,10 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             bool hasUpperBound = false;
             
             for (const auto& constraint : automaton.states[0]->next[0].front().guard) {
-                if (constraint.odr == ::TimingConstraint::Order::ge && constraint.c == 2) {
+                if (constraint.odr == ::TimingConstraintOrder::ge && constraint.c == 2) {
                     // This is the original lower bound
                     hasLowerBound = true;
-                } else if (constraint.odr == ::TimingConstraint::Order::le && constraint.c == 5) {
+                } else if (constraint.odr == ::TimingConstraintOrder::le && constraint.c == 5) {
                     // This is the original upper bound
                     hasUpperBound = true;
                 }
@@ -833,7 +833,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
         }
 
         BOOST_AUTO_TEST_CASE(inits) {
-            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint>, Update> parser;
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update> parser;
             std::ifstream ifs(PROJECT_ROOT "/example/inits.symon");
             // This should throw an exception because initial constraints are not supported in non-symbolic automata
             BOOST_CHECK_THROW(parser.parse(ifs), std::runtime_error);
@@ -843,21 +843,21 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             // Test that the extractUpperBound function correctly extracts the upper bound from a timing constraint
             
             // Create a timing constraint with both upper and lower bounds
-            std::vector<TimingConstraint> guard;
+            std::vector<TimingConstraint<double>> guard;
             
             // Add a lower bound: x >= 2
-            guard.push_back(TimingConstraint{VariableID{0}, TimingConstraint::Order::ge, 2});
+            guard.push_back(TimingConstraint<double>{VariableID{0}, TimingConstraintOrder::ge, 2});
             
             // Add an upper bound: x <= 5
-            guard.push_back(TimingConstraint{VariableID{0}, TimingConstraint::Order::le, 5});
+            guard.push_back(TimingConstraint<double>{VariableID{0}, TimingConstraintOrder::le, 5});
             
             // Extract the upper bound
-            auto upperBound = SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint>, Update>::extractUpperBound(guard);
+            auto upperBound = SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update>::extractUpperBound(guard);
             
             // Verify that only the upper bound was extracted
             BOOST_CHECK_EQUAL(upperBound.size(), 1);
             BOOST_CHECK_EQUAL(upperBound[0].x, VariableID{0});
-            BOOST_CHECK_EQUAL(upperBound[0].odr, TimingConstraint::Order::le);
+            BOOST_CHECK_EQUAL(upperBound[0].odr, TimingConstraintOrder::le);
             BOOST_CHECK_EQUAL(upperBound[0].c, 5);
         }
         
@@ -865,21 +865,21 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             // Test that extractUpperBound for parametric and non-parametric cases are equivalent
             
             // Create a non-parametric timing constraint with both upper and lower bounds
-            std::vector<TimingConstraint> nonParametricGuard;
+            std::vector<TimingConstraint<double>> nonParametricGuard;
             
             // Add a lower bound: x >= 2
-            nonParametricGuard.push_back(TimingConstraint{VariableID{0}, TimingConstraint::Order::ge, 2});
+            nonParametricGuard.push_back(TimingConstraint<double>{VariableID{0}, TimingConstraintOrder::ge, 2});
             
             // Add an upper bound: x <= 5
-            nonParametricGuard.push_back(TimingConstraint{VariableID{0}, TimingConstraint::Order::le, 5});
+            nonParametricGuard.push_back(TimingConstraint<double>{VariableID{0}, TimingConstraintOrder::le, 5});
             
             // Extract the upper bound from the non-parametric guard
-            auto nonParametricUpperBound = SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint>, Update>::extractUpperBound(nonParametricGuard);
+            auto nonParametricUpperBound = SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update>::extractUpperBound(nonParametricGuard);
             
             // Verify that only the upper bound was extracted
             BOOST_CHECK_EQUAL(nonParametricUpperBound.size(), 1);
             BOOST_CHECK_EQUAL(nonParametricUpperBound[0].x, VariableID{0});
-            BOOST_CHECK_EQUAL(nonParametricUpperBound[0].odr, TimingConstraint::Order::le);
+            BOOST_CHECK_EQUAL(nonParametricUpperBound[0].odr, TimingConstraintOrder::le);
             BOOST_CHECK_EQUAL(nonParametricUpperBound[0].c, 5);
             
             // Create an equivalent parametric timing constraint
@@ -917,11 +917,11 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
         }
 
         BOOST_AUTO_TEST_CASE(case20250703_1) {
-            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint>, Update> parser;
+            SymonParser<StringConstraint, NumberConstraint<int>, std::vector<TimingConstraint<double>>, Update> parser;
             const std::string content = "signature A {id: string;} signature B {id: string;} ((A( id | id != \"Bob\" ) || B( id | id != \"Bob\" ))%(<= 5);B (id | id == \"Bob\"))%(> 5)";
             parser.parse(content);
 
-            const NonParametricTA<int> automaton = parser.getAutomaton();
+            const NonParametricTA<int, double> automaton = parser.getAutomaton();
             BOOST_CHECK_EQUAL(automaton.numberVariableSize, 0);
             BOOST_CHECK_EQUAL(automaton.stringVariableSize, 0);
             BOOST_CHECK_EQUAL(automaton.clockVariableSize, 1);
@@ -951,7 +951,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             // The transition should have timing constraint <= 5
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.size(), 1);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().x, VariableID{0});
-            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().odr, TimingConstraint::Order::le);
+            BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().odr, TimingConstraintOrder::le);
             BOOST_CHECK_EQUAL(automaton.states[0]->next[0].front().guard.front().c, 5);
             
             // Transition for the first B
@@ -964,7 +964,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             // The transition should have timing constraint <= 5
             BOOST_CHECK_EQUAL(automaton.states[1]->next[1].front().guard.size(), 1);
             BOOST_CHECK_EQUAL(automaton.states[1]->next[1].front().guard.front().x, VariableID{0});
-            BOOST_CHECK_EQUAL(automaton.states[1]->next[1].front().guard.front().odr, TimingConstraint::Order::le);
+            BOOST_CHECK_EQUAL(automaton.states[1]->next[1].front().guard.front().odr, TimingConstraintOrder::le);
             BOOST_CHECK_EQUAL(automaton.states[1]->next[1].front().guard.front().c, 5);
 
             // Transition for the second B
@@ -977,7 +977,7 @@ BOOST_AUTO_TEST_SUITE(SymonParserTests)
             // The transition should have timing constraint > 5
             BOOST_CHECK_EQUAL(automaton.states[2]->next[1].front().guard.size(), 1);
             BOOST_CHECK_EQUAL(automaton.states[2]->next[1].front().guard.front().x, VariableID{0});
-            BOOST_CHECK_EQUAL(automaton.states[2]->next[1].front().guard.front().odr, TimingConstraint::Order::gt);
+            BOOST_CHECK_EQUAL(automaton.states[2]->next[1].front().guard.front().odr, TimingConstraintOrder::gt);
             BOOST_CHECK_EQUAL(automaton.states[2]->next[1].front().guard.front().c, 5);
         }
 

@@ -18,7 +18,7 @@ struct CopyFixture {
         // Construct automaton
         automaton.states.resize(4);
         for (auto &state: automaton.states) {
-            state = std::make_shared<NonParametricTAState<int> >(false);
+            state = std::make_shared<NonParametricTAState<int, double> >(false);
         }
         automaton.initialStates = {automaton.states.front()};
         automaton.states[0]->isMatch = false;
@@ -86,8 +86,8 @@ struct CopyFixture {
             NonSymbolic::Update<int> update;
             std::vector<VariableID> resetVars;
 
-            std::vector<TimingConstraint> guard;
-            guard.push_back(ConstraintMaker(0) < 3);
+            std::vector<TimingConstraint<double>> guard;
+            guard.push_back(ConstraintMaker(0) < 3.);
 
             automaton.states[1]->next[0][0] = {
                 std::move(stringConstraints),
@@ -108,8 +108,8 @@ struct CopyFixture {
             NonSymbolic::Update<int> update;
             std::vector<VariableID> resetVars;
 
-            std::vector<TimingConstraint> guard;
-            guard.push_back(ConstraintMaker(0) < 3);
+            std::vector<TimingConstraint<double>> guard;
+            guard.push_back(ConstraintMaker(0) < 3.);
 
             automaton.states[1]->next[0][1] = {
                 std::move(stringConstraints),
@@ -132,8 +132,8 @@ struct CopyFixture {
             NonSymbolic::Update<int> update;
             std::vector<VariableID> resetVars;
 
-            std::vector<TimingConstraint> guard;
-            guard.push_back(ConstraintMaker(0) < 3);
+            std::vector<TimingConstraint<double>> guard;
+            guard.push_back(ConstraintMaker(0) < 3.);
 
             automaton.states[1]->next[0][2] = {
                 std::move(stringConstraints),
@@ -159,8 +159,8 @@ struct CopyFixture {
             NonSymbolic::Update<int> update;
             std::vector<VariableID> resetVars;
 
-            std::vector<TimingConstraint> guard;
-            guard.push_back(ConstraintMaker(0) <= 5);
+            std::vector<TimingConstraint<double>> guard;
+            guard.push_back(ConstraintMaker(0) <= 5.);
 
             automaton.states[2]->next[0][0] = {
                 std::move(stringConstraints),
@@ -181,8 +181,8 @@ struct CopyFixture {
             NonSymbolic::Update<int> update;
             std::vector<VariableID> resetVars;
 
-            std::vector<TimingConstraint> guard;
-            guard.push_back(ConstraintMaker(0) <= 5);
+            std::vector<TimingConstraint<double>> guard;
+            guard.push_back(ConstraintMaker(0) <= 5.);
 
             automaton.states[2]->next[0][1] = {
                 std::move(stringConstraints),
@@ -205,8 +205,8 @@ struct CopyFixture {
             NonSymbolic::Update<int> update;
             std::vector<VariableID> resetVars;
 
-            std::vector<TimingConstraint> guard;
-            guard.push_back(ConstraintMaker(0) < 3);
+            std::vector<TimingConstraint<double>> guard;
+            guard.push_back(ConstraintMaker(0) < 3.);
 
             automaton.states[2]->next[0][2] = {
                 std::move(stringConstraints),
@@ -225,8 +225,8 @@ struct CopyFixture {
             NonSymbolic::Update<int> update;
             std::vector<VariableID> resetVars;
 
-            std::vector<TimingConstraint> guard;
-            guard.push_back(ConstraintMaker(0) > 5);
+            std::vector<TimingConstraint<double>> guard;
+            guard.push_back(ConstraintMaker(0) > 5.);
 
             automaton.states[2]->next[0][3] = {
                 std::move(stringConstraints),
@@ -239,13 +239,13 @@ struct CopyFixture {
         }
     }
 
-    NonParametricTA<int> automaton;
+    NonParametricTA<int, double> automaton;
     std::unique_ptr<Signature> signature;
 };
 
 
 struct DataParametricCopy {
-    DataParametricTA automaton;
+    DataParametricTA<double> automaton;
     std::unique_ptr<Signature> signature;
 
     DataParametricCopy() {
@@ -257,7 +257,7 @@ struct DataParametricCopy {
         // Construct automaton
         automaton.states.resize(4);
         for (auto &state: automaton.states) {
-            state = std::make_shared<DataParametricTAState>(false);
+            state = std::make_shared<DataParametricTAState<double>>(false);
         }
         automaton.initialStates = {automaton.states.front()};
         automaton.states[0]->isMatch = false;
@@ -312,8 +312,8 @@ struct DataParametricCopy {
             std::vector<NumberConstraint> numConstraints;
             numConstraints.push_back(Variable(0) > Variable(1));
 
-            std::vector<TimingConstraint> guard;
-            guard.push_back(ConstraintMaker(0) < 3);
+            std::vector<TimingConstraint<double>> guard;
+            guard.push_back(ConstraintMaker(0) < 3.);
 
             automaton.states[1]->next[0][0] = {
                 std::move(stringConstraints),
@@ -336,8 +336,8 @@ struct DataParametricCopy {
             std::vector<NumberConstraint> numConstraints;
             numConstraints.push_back(Variable(0) < Variable(1));
 
-            std::vector<TimingConstraint> guard;
-            guard.push_back(ConstraintMaker(0) < 3);
+            std::vector<TimingConstraint<double>> guard;
+            guard.push_back(ConstraintMaker(0) < 3.);
 
             automaton.states[1]->next[0][1] = {
                 std::move(stringConstraints),
@@ -358,8 +358,8 @@ struct DataParametricCopy {
 
             std::vector<NumberConstraint> numConstraints;
 
-            std::vector<TimingConstraint> guard;
-            guard.push_back(ConstraintMaker(0) < 3);
+            std::vector<TimingConstraint<double>> guard;
+            guard.push_back(ConstraintMaker(0) < 3.);
 
             automaton.states[1]->next[0][2] = {
                 std::move(stringConstraints),
@@ -382,8 +382,8 @@ struct DataParametricCopy {
             std::vector<NumberConstraint> numConstraints;
             numConstraints.push_back(Variable(0) == Variable(1));
 
-            std::vector<TimingConstraint> guard;
-            guard.push_back(ConstraintMaker(0) < 3);
+            std::vector<TimingConstraint<double>> guard;
+            guard.push_back(ConstraintMaker(0) < 3.);
 
             automaton.states[1]->next[0][3] = {
                 std::move(stringConstraints),
@@ -409,8 +409,8 @@ struct DataParametricCopy {
             std::vector<NumberConstraint> numConstraints;
             numConstraints.push_back(Variable(0) == Variable(1));
 
-            std::vector<TimingConstraint> guard;
-            guard.push_back(ConstraintMaker(0) < 5);
+            std::vector<TimingConstraint<double>> guard;
+            guard.push_back(ConstraintMaker(0) < 5.);
 
             automaton.states[2]->next[0][0] = {
                 std::move(stringConstraints),
@@ -431,8 +431,8 @@ struct DataParametricCopy {
 
             std::vector<NumberConstraint> numConstraints;
 
-            std::vector<TimingConstraint> guard;
-            guard.push_back(ConstraintMaker(0) < 5);
+            std::vector<TimingConstraint<double>> guard;
+            guard.push_back(ConstraintMaker(0) < 5.);
 
             automaton.states[2]->next[0][1] = {
                 std::move(stringConstraints),
@@ -455,8 +455,8 @@ struct DataParametricCopy {
             std::vector<NumberConstraint> numConstraints;
             numConstraints.push_back(Variable(0) > Variable(1));
 
-            std::vector<TimingConstraint> guard;
-            guard.push_back(ConstraintMaker(0) < 3);
+            std::vector<TimingConstraint<double>> guard;
+            guard.push_back(ConstraintMaker(0) < 3.);
 
             automaton.states[2]->next[0][2] = {
                 std::move(stringConstraints),
@@ -479,8 +479,8 @@ struct DataParametricCopy {
             std::vector<NumberConstraint> numConstraints;
             numConstraints.push_back(Variable(0) < Variable(1));
 
-            std::vector<TimingConstraint> guard;
-            guard.push_back(ConstraintMaker(0) < 3);
+            std::vector<TimingConstraint<double>> guard;
+            guard.push_back(ConstraintMaker(0) < 3.);
 
             automaton.states[2]->next[0][3] = {
                 std::move(stringConstraints),
@@ -499,8 +499,8 @@ struct DataParametricCopy {
             std::vector<StringConstraint> stringConstraints;
             std::vector<NumberConstraint> numConstraints;
 
-            std::vector<TimingConstraint> guard;
-            guard.push_back(ConstraintMaker(0) > 5);
+            std::vector<TimingConstraint<double>> guard;
+            guard.push_back(ConstraintMaker(0) > 5.);
 
             automaton.states[2]->next[0][4] = {
                 std::move(stringConstraints),

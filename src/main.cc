@@ -109,6 +109,7 @@ int execute(const std::string &timedAutomatonFileName, const std::string &signat
 
 int main(int argc, char *argv[]) {
   using Number = double;
+  using Timestamp = double;
 #ifdef NDEBUG
   const auto programName = "SyMon (relase build)";
 #else
@@ -169,15 +170,15 @@ int main(int argc, char *argv[]) {
                      Symbolic::Update>(timedAutomatonFileName, signatureFileName, timedWordFileName, true);
     } else if (vm.count("dataparametric")) {
       // data parametric with new syntax
-      return execute<DataParametricTA, DataParametricBoostTA, PPLRational, double, DataParametricMonitor,
-                     DataParametricPrinter, Symbolic::StringConstraint, Symbolic::NumberConstraint,
-                     std::vector<TimingConstraint>, Symbolic::Update>(timedAutomatonFileName, signatureFileName,
+      return execute<DataParametricTA<Timestamp>, DataParametricBoostTA<Number>, PPLRational, Timestamp, DataParametricMonitor<Timestamp>,
+                     DataParametricPrinter<Timestamp>, Symbolic::StringConstraint, Symbolic::NumberConstraint,
+                     std::vector<TimingConstraint<Timestamp>>, Symbolic::Update>(timedAutomatonFileName, signatureFileName,
                                                                       timedWordFileName, true);
     } else {
       // boolean with new syntax
-      return execute<NonParametricTA<Number>, NonParametricBoostTA<Number>, Number, double, BooleanMonitor<Number>,
-                     BooleanPrinter<Number>, NonSymbolic::StringConstraint, NonSymbolic::NumberConstraint<Number>,
-                     std::vector<TimingConstraint>, NonSymbolic::Update<Number>>(timedAutomatonFileName, signatureFileName,
+      return execute<NonParametricTA<Number, Timestamp>, NonParametricBoostTA<Number, Timestamp>, Number, Timestamp, BooleanMonitor<Number, Timestamp>,
+                     BooleanPrinter<Number, Timestamp>, NonSymbolic::StringConstraint, NonSymbolic::NumberConstraint<Number>,
+                     std::vector<TimingConstraint<Timestamp>>, NonSymbolic::Update<Number>>(timedAutomatonFileName, signatureFileName,
                                                                          timedWordFileName, true);
     }
   } else if (vm.count("parametric")) {
@@ -187,15 +188,15 @@ int main(int argc, char *argv[]) {
                    Symbolic::Update>(timedAutomatonFileName, signatureFileName, timedWordFileName, false);
   } else if (vm.count("dataparametric")) {
     // data parametric
-    return execute<DataParametricTA, DataParametricBoostTA, PPLRational, double, DataParametricMonitor,
-                   DataParametricPrinter, Symbolic::StringConstraint, Symbolic::NumberConstraint,
-                   std::vector<TimingConstraint>, Symbolic::Update>(timedAutomatonFileName, signatureFileName,
+    return execute<DataParametricTA<Timestamp>, DataParametricBoostTA<Number>, PPLRational, Timestamp, DataParametricMonitor<Timestamp>,
+                   DataParametricPrinter<Timestamp>, Symbolic::StringConstraint, Symbolic::NumberConstraint,
+                   std::vector<TimingConstraint<Timestamp>>, Symbolic::Update>(timedAutomatonFileName, signatureFileName,
                                                                     timedWordFileName, false);
   } else {
     // boolean
-    return execute<NonParametricTA<Number>, NonParametricBoostTA<Number>, Number, double, BooleanMonitor<Number>,
-                   BooleanPrinter<Number>, NonSymbolic::StringConstraint, NonSymbolic::NumberConstraint<Number>,
-                   std::vector<TimingConstraint>, NonSymbolic::Update<Number>>(timedAutomatonFileName, signatureFileName,
+    return execute<NonParametricTA<Number, Timestamp>, NonParametricBoostTA<Number, Timestamp>, Number, Timestamp, BooleanMonitor<Number, Timestamp>,
+                   BooleanPrinter<Number, Timestamp>, NonSymbolic::StringConstraint, NonSymbolic::NumberConstraint<Number>,
+                   std::vector<TimingConstraint<Timestamp>>, NonSymbolic::Update<Number>>(timedAutomatonFileName, signatureFileName,
                                                                        timedWordFileName, false);
   }
   return 0;

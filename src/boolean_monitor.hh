@@ -9,22 +9,22 @@
 #include "timed_word_subject.hh"
 #include <boost/unordered_set.hpp>
 
-template <class Number> struct BooleanMonitorResult {
+template <class Number, typename Timestamp> struct BooleanMonitorResult {
   std::size_t index;
-  double timestamp;
+  Timestamp timestamp;
   NonSymbolic::NumberValuation<Number> numberValuation;
   NonSymbolic::StringValuation stringValuation;
 };
 
 namespace NonSymbolic {
-  template <typename Number>
-  class BooleanMonitor : public SingleSubject<BooleanMonitorResult<Number>>, public Observer<TimedWordEvent<Number>> {
+  template <typename Number, typename Timestamp>
+  class BooleanMonitor : public SingleSubject<BooleanMonitorResult<Number, Timestamp>>, public Observer<TimedWordEvent<Number, Timestamp>> {
   public:
     static const constexpr std::size_t unobservableActionID = 127;
-    BooleanMonitor(const NonParametricTA<Number> &automaton) : automaton(automaton) {
+    BooleanMonitor(const NonParametricTA<Number, Timestamp> &automaton) : automaton(automaton) {
       configurations.clear();
       // configurations.reserve(automaton.initialStates.size());
-      std::vector<double> initCVal(automaton.clockVariableSize);
+      std::vector<Timestamp> initCVal(automaton.clockVariableSize);
       // by default, initSEnv is no violating set (variant)
       StringValuation initSEnv(automaton.stringVariableSize);
       // by default, initNEnv is unset (optional)
@@ -36,11 +36,11 @@ namespace NonSymbolic {
     virtual ~BooleanMonitor() {
       epsilonTransition(configurations);
     }
-    void notify(const TimedWordEvent<Number> &event) {
+    void notify(const TimedWordEvent<Number, Timestamp> &event) {
       const Action actionId = event.actionId;
       const std::vector<std::string> &strings = event.strings;
       const std::vector<Number> &numbers = event.numbers;
-      const double timestamp = event.timestamp;
+      const Timestamp timestamp = event.timestamp;
 
       boost::unordered_set<Configuration> nextConfigurations;
       configurations.merge(epsilonTransition(configurations));
@@ -52,7 +52,7 @@ namespace NonSymbolic {
         if (timestamp < absTime) {
           continue;
         }
-        for (double &d: clockValuation) {
+        for (Timestamp &d: clockValuation) {
           d += timestamp - absTime;
         }
         auto stringEnv = std::get<2>(conf); // conf.stringEnv;
@@ -94,12 +94,12 @@ namespace NonSymbolic {
     }
 
   private:
-    const NonParametricTA<Number> automaton;
-    using Configuration = std::tuple<std::shared_ptr<NonParametricTAState<Number>>, std::vector<double>,
+    const NonParametricTA<Number, Timestamp> automaton;
+    using Configuration = std::tuple<std::shared_ptr<NonParametricTAState<Number, Timestamp>>, std::vector<Timestamp>,
                                      StringValuation, NumberValuation<Number>, double>;
     // struct Configuration {
     //   std::shared_ptr<AutomatonState<Number>> state;
-    //   std::vector<double> clockValuation;
+    //   std::vector<Timestamp> clockValuation;
     //   StringValuation stringEnv;
     //   NumberValuation<Number> numberEnv;
     //   bool operator==(const Configuration x) const {

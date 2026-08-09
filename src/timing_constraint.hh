@@ -15,26 +15,26 @@ inline bool toBool(Order odr) {
   return odr == Order::EQ;
 }
 
-//! @brief A constraint in a guard of transitions
-struct TimingConstraint {
-  enum class Order { lt, le, ge, gt, eq };
-  using Timestamp = double;
+enum class TimingConstraintOrder { lt, le, ge, gt, eq };
 
+//! @brief A constraint in a guard of transitions
+template <typename Timestamp>
+struct TimingConstraint {
   ClockVariables x;
-  Order odr;
+  TimingConstraintOrder odr;
   Timestamp c;
 
   [[nodiscard]] bool satisfy(Timestamp d) const {
     switch (odr) {
-      case Order::lt:
+      case TimingConstraintOrder::lt:
         return d < c;
-      case Order::le:
+      case TimingConstraintOrder::le:
         return d <= c;
-      case Order::gt:
+      case TimingConstraintOrder::gt:
         return d > c;
-      case Order::ge:
+      case TimingConstraintOrder::ge:
         return d >= c;
-      case Order::eq:
+      case TimingConstraintOrder::eq:
         return d == c;
     }
     return false;
@@ -45,7 +45,7 @@ struct TimingConstraint {
   ::Order operator()(Interpretation val) const {
     if (satisfy(val.at(x))) {
       return ::Order::EQ;
-    } else if (odr == Order::lt || odr == Order::le) {
+    } else if (odr == TimingConstraintOrder::lt || odr == TimingConstraintOrder::le) {
       return ::Order::GT;
     } else {
       return ::Order::LT;
@@ -69,31 +69,35 @@ struct TimingConstraint {
 
 // An interface to write an inequality constrait easily
 class ConstraintMaker {
-  using Timestamp = TimingConstraint::Timestamp;
   ClockVariables x;
 
 public:
   explicit ConstraintMaker(ClockVariables x) : x(x) {
   }
 
-  TimingConstraint operator<(Timestamp c) {
-    return TimingConstraint{x, TimingConstraint::Order::lt, c};
+  template<typename Timestamp = double>
+  TimingConstraint<Timestamp> operator<(Timestamp c) {
+    return TimingConstraint<Timestamp>{x, TimingConstraintOrder::lt, c};
   }
 
-  TimingConstraint operator<=(Timestamp c) {
-    return TimingConstraint{x, TimingConstraint::Order::le, c};
+  template<typename Timestamp = double>
+  TimingConstraint<Timestamp> operator<=(Timestamp c) {
+    return TimingConstraint<Timestamp>{x, TimingConstraintOrder::le, c};
   }
 
-  TimingConstraint operator>(Timestamp c) {
-    return TimingConstraint{x, TimingConstraint::Order::gt, c};
+  template<typename Timestamp = double>
+  TimingConstraint<Timestamp> operator>(Timestamp c) {
+    return TimingConstraint<Timestamp>{x, TimingConstraintOrder::gt, c};
   }
 
-  TimingConstraint operator>=(Timestamp c) {
-    return TimingConstraint{x, TimingConstraint::Order::ge, c};
+  template<typename Timestamp = double>
+  TimingConstraint<Timestamp> operator>=(Timestamp c) {
+    return TimingConstraint<Timestamp>{x, TimingConstraintOrder::ge, c};
   }
 
-  TimingConstraint operator==(Timestamp c) {
-    return TimingConstraint{x, TimingConstraint::Order::eq, c};
+  template<typename Timestamp = double>
+  TimingConstraint<Timestamp> operator==(Timestamp c) {
+    return TimingConstraint<Timestamp>{x, TimingConstraintOrder::eq, c};
   }
 };
 
@@ -105,12 +109,13 @@ public:
 //         return g.odr == TimingConstraint::Order::ge || g.odr == TimingConstraint::Order::gt;
 //     }), guard.end());
 // }
+template <typename Timestamp>
+using TimingValuation = std::vector<Timestamp>;
 
-using TimingValuation = std::vector<TimingConstraint::Timestamp>;
-
-static bool eval(const TimingValuation &clockValuation, const std::vector<TimingConstraint> &guard) {
+template<typename Timestamp>
+static bool eval(const TimingValuation<Timestamp> &clockValuation, const std::vector<TimingConstraint<Timestamp>> &guard) {
   return std::all_of(guard.begin(), guard.end(),
-                     [&clockValuation](const TimingConstraint &g) { return g.satisfy(clockValuation.at(g.x)); });
+                     [&clockValuation](const TimingConstraint<Timestamp> &g) { return g.satisfy(clockValuation.at(g.x)); });
 }
 
 /*!
@@ -122,10 +127,11 @@ static bool eval(const TimingValuation &clockValuation, const std::vector<Timing
   and throws if any non-equality constraint is present.
 
 */
-static std::optional<double> diff(const TimingValuation &clockValuation, const std::vector<TimingConstraint> &guard) {
+template<typename Timestamp>
+static std::optional<double> diff(const TimingValuation<Timestamp> &clockValuation, const std::vector<TimingConstraint<Timestamp>> &guard) {
   std::optional<double> result = std::nullopt;
   for (auto&& g: guard) {
-    if(g.odr != TimingConstraint::Order::eq) {
+    if(g.odr != TimingConstraintOrder::eq) {
       throw std::runtime_error("TimingConstraint: unsupported guard with inequality constraints on unobservable transition");
     }
     auto timeDiff = g.c - clockValuation.at(g.x);
@@ -148,8 +154,9 @@ static std::optional<double> diff(const TimingValuation &clockValuation, const s
  * @param width the width to shift the clock variable id
  * @return a new vector of TimingConstraint with the clock variables shifted
  */
-static std::vector<TimingConstraint> shift(const std::vector<TimingConstraint> &guard, const ClockVariables width) {
-  std::vector<TimingConstraint> shiftedGuard;
+template<typename Timestamp>
+static std::vector<TimingConstraint<Timestamp>> shift(const std::vector<TimingConstraint<Timestamp>> &guard, const ClockVariables width) {
+  std::vector<TimingConstraint<Timestamp>> shiftedGuard;
   shiftedGuard.reserve(guard.size());
   for (const auto &g: guard) {
     shiftedGuard.push_back(g.shift(width));
@@ -165,9 +172,10 @@ static std::vector<TimingConstraint> shift(const std::vector<TimingConstraint> &
  * @param right the second vector of TimingConstraint
  * @return a new vector containing all TimingConstraints from both vectors
  */
-static std::vector<TimingConstraint> operator&&(const std::vector<TimingConstraint> &left,
-                                                const std::vector<TimingConstraint> &right) {
-  std::vector<TimingConstraint> result = left;
+ template<typename Timestamp>
+static std::vector<TimingConstraint<Timestamp>> operator&&(const std::vector<TimingConstraint<Timestamp>> &left,
+                                                const std::vector<TimingConstraint<Timestamp>> &right) {
+  std::vector<TimingConstraint<Timestamp>> result = left;
   result.reserve(left.size() + right.size());
   std::copy_if(right.begin(), right.end(), std::back_inserter(result),
                [&left](const auto &guard) { return std::find(left.begin(), left.end(), guard) == left.end(); });
@@ -181,7 +189,42 @@ static std::vector<TimingConstraint> operator&&(const std::vector<TimingConstrai
  * @param size the size to adjust the guard to
  * @return a new vector of TimingConstraint with the clock variables adjusted
  */
-static std::vector<TimingConstraint> adjustDimension(const std::vector<TimingConstraint> &guard,
+template<typename Timestamp>
+static std::vector<TimingConstraint<Timestamp>> adjustDimension(const std::vector<TimingConstraint<Timestamp>> &guard,
                                                      const ClockVariables size) {
   return guard;
 }
+
+
+// T の参照/const/volatile を除去
+template<typename T>
+using remove_cvref_t = std::remove_cv_t<std::remove_reference_t<T>>;
+
+template<typename T>
+struct is_vector_of_timingconstraint_impl : std::false_type {};
+
+template<typename Timestamp>
+struct is_vector_of_timingconstraint_impl<std::vector<TimingConstraint<Timestamp>>> : std::true_type {};
+
+// T が std::vector<TimingConstraint<Timestamp>> の形かどうか
+template<typename T>
+constexpr bool is_vector_of_timingconstraint_v =
+    is_vector_of_timingconstraint_impl< remove_cvref_t<T> >::value;
+
+template<typename T>
+struct timingconstraint_timestamp_impl;
+
+template<typename Timestamp>
+struct timingconstraint_timestamp_impl<std::vector<TimingConstraint<Timestamp>>> {
+  using type = Timestamp;
+  using timingconstraint_type = TimingConstraint<Timestamp>;
+};
+
+// std::vector<TimingConstraint<Timestamp>> の Timestamp 型を取得
+template<typename T>
+using timingconstraint_timestamp_t =
+    typename timingconstraint_timestamp_impl< remove_cvref_t<T> >::type;
+
+template<typename T>
+using timingconstraint_t =
+    typename timingconstraint_timestamp_impl< remove_cvref_t<T> >::timingconstraint_type;

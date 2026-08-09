@@ -137,21 +137,23 @@ struct TimedAutomaton<StringConstraint, NumberConstraint, ParametricTimingConstr
 #include "non_symbolic_string_constraint.hh"
 #include "non_symbolic_update.hh"
 
-template <typename Number>
+template <typename Number, typename Timestamp>
 using NonParametricTA = TimedAutomaton<NonSymbolic::StringConstraint, NonSymbolic::NumberConstraint<Number>,
-                                       std::vector<TimingConstraint>, NonSymbolic::Update<Number>>;
-template <typename Number>
+                                       std::vector<TimingConstraint<Timestamp>>, NonSymbolic::Update<Number>>;
+template <typename Number, typename Timestamp>
 using NonParametricTAState = AutomatonState<NonSymbolic::StringConstraint, NonSymbolic::NumberConstraint<Number>,
-                                            std::vector<TimingConstraint>, NonSymbolic::Update<Number>>;
+                                            std::vector<TimingConstraint<Timestamp>>, NonSymbolic::Update<Number>>;
 
 #include "symbolic_number_constraint.hh"
 #include "symbolic_string_constraint.hh"
 #include "symbolic_update.hh"
 
+template<typename Timestamp>
 using DataParametricTA = TimedAutomaton<Symbolic::StringConstraint, Symbolic::NumberConstraint,
-                                        std::vector<TimingConstraint>, Symbolic::Update>;
+                                        std::vector<TimingConstraint<Timestamp>>, Symbolic::Update>;
+template<typename Timestamp>
 using DataParametricTAState = AutomatonState<Symbolic::StringConstraint, Symbolic::NumberConstraint,
-                                             std::vector<TimingConstraint>, Symbolic::Update>;
+                                             std::vector<TimingConstraint<Timestamp>>, Symbolic::Update>;
 
 #include "parametric_timing_constraint.hh"
 

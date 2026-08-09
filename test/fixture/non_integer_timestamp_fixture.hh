@@ -12,7 +12,7 @@ namespace NonParametric {
     @brief Automaton with a guard restricting time to non-integer values.
     */
     struct NonIntegerTimestampFixture {
-        NonParametricTA<double> automaton;
+        NonParametricTA<double, double> automaton;
         std::unique_ptr<Signature> signature;
         NonIntegerTimestampFixture() {
             // Construct signature
@@ -23,7 +23,7 @@ namespace NonParametric {
             // Construct automaton with 2 states
             automaton.states.resize(2);
             for (auto &state: automaton.states) {
-                state = std::make_shared<NonParametricTAState<double> >(false);
+                state = std::make_shared<NonParametricTAState<double, double> >(false);
             }
             automaton.initialStates = {automaton.states[0]};
             automaton.states[0]->isMatch = false;  // Initial state is not final
@@ -56,7 +56,7 @@ namespace NonParametric {
                 std::vector<NonSymbolic::NumberConstraint<double> > numConstraints;
                 NonSymbolic::Update<double> update;
                 std::vector<VariableID> resetVars;
-                std::vector<TimingConstraint> guard;
+                std::vector<TimingConstraint<double>> guard;
                 guard.push_back(ConstraintMaker(0) >= 1.1);
                 guard.push_back(ConstraintMaker(0) < 1.2);
                 
@@ -79,7 +79,7 @@ namespace Parametric {
     @brief Data parametric version of the non-integer timestamp automaton fixture.
     */
     struct DataParametricNonIntegerTimestampFixture {
-        DataParametricTA automaton;
+        DataParametricTA<double> automaton;
         std::unique_ptr<Signature> signature;
         DataParametricNonIntegerTimestampFixture() {
             using namespace Symbolic;
@@ -93,7 +93,7 @@ namespace Parametric {
             // Construct automaton with 2 states
             automaton.states.resize(2);
             for (auto &state: automaton.states) {
-                state = std::make_shared<DataParametricTAState>(false);
+                state = std::make_shared<DataParametricTAState<double>>(false);
             }
             automaton.initialStates = {automaton.states[0]};
             automaton.states[0]->isMatch = false;  // Initial state is not final
@@ -126,7 +126,7 @@ namespace Parametric {
                 std::vector<NumberConstraint> numConstraints;
                 Update update;
                 std::vector<VariableID> resetVars;
-                std::vector<TimingConstraint> guard;
+                std::vector<TimingConstraint<double>> guard;
                 guard.push_back(ConstraintMaker(0) >= 1.1);
                 guard.push_back(ConstraintMaker(0) < 1.2);
                 

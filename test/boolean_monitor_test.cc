@@ -22,23 +22,23 @@ struct DummyTimedWordSubject : public SingleSubject<TimedWordEvent> {
   std::vector<TimedWordEvent> vec;
 };
 
-template<typename Number>
-struct DummyBooleanMonitorObserver : public Observer<BooleanMonitorResult<Number>> {
+template<typename Number, typename Timestamp>
+struct DummyBooleanMonitorObserver : public Observer<BooleanMonitorResult<Number, Timestamp>> {
   DummyBooleanMonitorObserver() {
   }
   virtual ~DummyBooleanMonitorObserver() {
   }
-  void notify(const BooleanMonitorResult<Number> &result) {
+  void notify(const BooleanMonitorResult<Number, Timestamp> &result) {
     resultVec.push_back(result);
   }
-  std::vector<BooleanMonitorResult<Number>> resultVec;
+  std::vector<BooleanMonitorResult<Number, Timestamp>> resultVec;
 };
 
-template<typename Number, typename TimedWordEvent>
+template<typename Number, typename Timestamp, typename TimedWordEvent>
 struct BooleanMonitorFixture {
-  void feed(const NonParametricTA<Number> &automaton, std::vector<TimedWordEvent> &&vec) {
-    auto monitor = std::make_shared<NonSymbolic::BooleanMonitor<Number>>(automaton);
-    std::shared_ptr<DummyBooleanMonitorObserver<Number>> observer = std::make_shared<DummyBooleanMonitorObserver<Number>>();
+  void feed(const NonParametricTA<Number, Timestamp> &automaton, std::vector<TimedWordEvent> &&vec) {
+    auto monitor = std::make_shared<NonSymbolic::BooleanMonitor<Number, Timestamp>>(automaton);
+    std::shared_ptr<DummyBooleanMonitorObserver<Number, Timestamp>> observer = std::make_shared<DummyBooleanMonitorObserver<Number, Timestamp>>();
     monitor->addObserver(observer);
     DummyTimedWordSubject<TimedWordEvent> subject{std::move(vec)};
     subject.addObserver(monitor);
@@ -48,13 +48,14 @@ struct BooleanMonitorFixture {
     monitor.reset();            // release local ownership
     resultVec = std::move(observer->resultVec);
   }
-  std::vector<BooleanMonitorResult<Number>> resultVec;
+  std::vector<BooleanMonitorResult<Number, Timestamp>> resultVec;
 };
 
 namespace IntTest {
   using Number = int;
-  using TimedWordEvent = TimedWordEvent<Number, double>;
-  using BooleanMonitorFixture = BooleanMonitorFixture<Number, TimedWordEvent>;
+  using Timestamp = double;
+  using TimedWordEvent = TimedWordEvent<Number, Timestamp>;
+  using BooleanMonitorFixture = BooleanMonitorFixture<Number, Timestamp, TimedWordEvent>;
 
   BOOST_AUTO_TEST_SUITE(BooleanMonitorTest)
     BOOST_FIXTURE_TEST_CASE(test1, BooleanMonitorFixture)
@@ -167,8 +168,9 @@ namespace IntTest {
 
 namespace DoubleTest {
   using Number = double;
-  using TimedWordEvent = TimedWordEvent<Number, double>;
-  using BooleanMonitorFixture = BooleanMonitorFixture<Number, TimedWordEvent>;
+  using Timestamp = double;
+  using TimedWordEvent = TimedWordEvent<Number, Timestamp>;
+  using BooleanMonitorFixture = BooleanMonitorFixture<Number, Timestamp, TimedWordEvent>;
 
   BOOST_AUTO_TEST_SUITE(BooleanMonitorTest)
     BOOST_FIXTURE_TEST_CASE(non_integer_timestamp_test, BooleanMonitorFixture) {

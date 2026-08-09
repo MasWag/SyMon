@@ -3,6 +3,7 @@
 #include "automaton.hh"
 #include "common_types.hh"
 #include "parametric_timing_constraint.hh"
+#include "timing_constraint.hh"
 #include <ostream>
 #include <ppl.hh>
 
@@ -261,7 +262,7 @@ concatenate(TimedAutomaton<StringConstraint, NumberConstraint, TimingConstraint,
     for (auto &[label, transitions]: sourceState->next) {
       for (auto &transition: transitions) {
         // Update the guard to include the new clock variable
-        if constexpr (std::is_same_v<TimingConstraint, std::vector<::TimingConstraint>>) {
+        if constexpr (is_vector_of_timingconstraint_v<TimingConstraint>) {
           transition.guard = adjustDimension(transition.guard, left.clockVariableSize);
         } else if constexpr (std::is_same_v<TimingConstraint, ParametricTimingConstraint>) {
           transition.guard = adjustDimension(transition.guard, left.clockVariableSize + left.parameterSize);
@@ -358,8 +359,9 @@ timeRestriction(TimedAutomaton<StringConstraint, NumberConstraint, TimingConstra
 
   bool acceptEmpty = acceptsEmptyWord(given);
 
-  if constexpr (std::is_same_v<TimingConstraint, std::vector<::TimingConstraint>>) {
-    TimingValuation clockValuation(given.clockVariableSize, 0);
+  if constexpr (is_vector_of_timingconstraint_v<TimingConstraint>) {
+    using TimeStamp = timingconstraint_timestamp_t<TimingConstraint>;
+    TimingValuation<TimeStamp> clockValuation(given.clockVariableSize, 0);
     acceptEmpty = acceptEmpty && eval(clockValuation, guard);
   }
   if constexpr (std::is_same_v<TimingConstraint, ParametricTimingConstraint>) {
@@ -375,7 +377,7 @@ timeRestriction(TimedAutomaton<StringConstraint, NumberConstraint, TimingConstra
   auto newFinalState =
       std::make_shared<AutomatonState<StringConstraint, NumberConstraint, TimingConstraint, Update>>(true);
   given.states.push_back(newFinalState);
-  if constexpr (std::is_same_v<TimingConstraint, std::vector<::TimingConstraint>>) {
+  if constexpr (is_vector_of_timingconstraint_v<TimingConstraint>) {
     guard = adjustDimension(guard, given.clockVariableSize); // Adjust the guard to include the new clock variable
   }
   if constexpr (std::is_same_v<TimingConstraint, ParametricTimingConstraint>) {
@@ -389,7 +391,7 @@ timeRestriction(TimedAutomaton<StringConstraint, NumberConstraint, TimingConstra
       std::vector<AutomatonTransition<StringConstraint, NumberConstraint, TimingConstraint, Update>> newTransitions;
       for (auto it = transitions.begin(); it != transitions.end();) {
         // Update the guard to include the new clock variable
-        if constexpr (std::is_same_v<TimingConstraint, std::vector<::TimingConstraint>>) {
+        if constexpr (is_vector_of_timingconstraint_v<TimingConstraint>) {
           it->guard = adjustDimension(it->guard, given.clockVariableSize);
         }
         if constexpr (std::is_same_v<TimingConstraint, ParametricTimingConstraint>) {
@@ -480,7 +482,7 @@ addConstraintToAllTransitions(TimedAutomaton<StringConstraint, NumberConstraint,
 
   TimingConstraint adjustedConstraint = constraint;
   // Ensure the constraint has the correct dimension for the automaton
-  if constexpr (std::is_same_v<TimingConstraint, std::vector<::TimingConstraint>>) {
+  if constexpr (is_vector_of_timingconstraint_v<TimingConstraint>) {
     adjustedConstraint = adjustDimension(constraint, automaton.clockVariableSize);
   } else if constexpr (std::is_same_v<TimingConstraint, ParametricTimingConstraint>) {
     adjustedConstraint = adjustDimension(constraint, automaton.parameterSize + automaton.clockVariableSize);

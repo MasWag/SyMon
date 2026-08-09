@@ -21,7 +21,7 @@ struct StarAutomatonFixture {
         // Construct automaton with 3 states
         automaton.states.resize(3);
         for (auto &state: automaton.states) {
-            state = std::make_shared<NonParametricTAState<int> >(false);
+            state = std::make_shared<NonParametricTAState<int, int> >(false);
         }
         automaton.initialStates = {automaton.states[0]};
         automaton.states[0]->isMatch = false;  // Initial state is not final
@@ -73,7 +73,7 @@ struct StarAutomatonFixture {
         }
     }
 
-    NonParametricTA<int> automaton;
+    NonParametricTA<int, int> automaton;
     std::unique_ptr<Signature> signature;
 };
 
@@ -96,7 +96,7 @@ struct DataParametricStarAutomaton {
         // Construct automaton with 3 states
         automaton.states.resize(3);
         for (auto &state: automaton.states) {
-            state = std::make_shared<DataParametricTAState>(false);
+            state = std::make_shared<DataParametricTAState<int>>(false);
         }
         automaton.initialStates = {automaton.states[0]};
         automaton.states[0]->isMatch = false;  // Initial state is not final
@@ -148,7 +148,7 @@ struct DataParametricStarAutomaton {
         }
     }
 
-    DataParametricTA automaton;
+    DataParametricTA<int> automaton;
     std::unique_ptr<Signature> signature;
 };
 
